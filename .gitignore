@@ -9,3 +9,5 @@ coverage/
 out/
 bench/results/*.json
 !bench/results/.gitkeep
+
+.mneme/

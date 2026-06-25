@@ -1,0 +1,62 @@
+[
+  {
+    "sha": "c0redux1",
+    "daysAgo": 40,
+    "message": "wire up global store",
+    "diff": "diff --git a/src/store.ts b/src/store.ts\n@@\n+import { createStore } from 'react-redux'\n+export const store = createStore(reducer)"
+  },
+  {
+    "sha": "c1class2",
+    "daysAgo": 38,
+    "message": "add Profile component",
+    "diff": "diff --git a/src/Profile.tsx b/src/Profile.tsx\n@@\n+class Profile extends React.Component {\n+  render() { return <div>{this.props.name}</div> }\n+}"
+  },
+  {
+    "sha": "c2bun345",
+    "daysAgo": 36,
+    "message": "one-off data migration script",
+    "diff": "diff --git a/scripts/migrate.ts b/scripts/migrate.ts\n@@\n+#!/usr/bin/env bun\n+bun run ./scripts/migrate.ts"
+  },
+  {
+    "sha": "c3null01",
+    "daysAgo": 32,
+    "message": "fetch user profile",
+    "diff": "diff --git a/src/api/profile.ts b/src/api/profile.ts\n@@\n+  const res = await fetch(`/api/profile/${id}`)\n+  const data = await res.json()\n+  return data.name"
+  },
+  {
+    "sha": "c4noorm5",
+    "daysAgo": 25,
+    "message": "perf: drop ORM in the request hot path",
+    "diff": "diff --git a/src/db/users.ts b/src/db/users.ts\n@@\n+  // no ORM here - raw sql for speed\n+  const rows = await db.query('select * from users where id = $1', [id])"
+  },
+  {
+    "sha": "c5null02",
+    "daysAgo": 19,
+    "message": "fetch orders for dashboard",
+    "diff": "diff --git a/src/api/orders.ts b/src/api/orders.ts\n@@\n+  const res = await fetch(`/api/orders?u=${id}`)\n+  const orders = await res.json()\n+  return orders.items"
+  },
+  {
+    "sha": "c6docs78",
+    "daysAgo": 12,
+    "message": "docs: update README setup",
+    "diff": "diff --git a/README.md b/README.md\n@@\n+## Setup\n+Run the install and start scripts."
+  },
+  {
+    "sha": "c7zust99",
+    "daysAgo": 9,
+    "message": "migrate state to zustand",
+    "diff": "diff --git a/src/store.ts b/src/store.ts\n@@\n+import { create } from 'zustand'\n+export const useStore = create((set) => ({}))"
+  },
+  {
+    "sha": "c8func10",
+    "daysAgo": 8,
+    "message": "refactor Profile to hooks",
+    "diff": "diff --git a/src/Profile.tsx b/src/Profile.tsx\n@@\n+export default function Profile(props) {\n+  return (\n+    <div>{props.name}</div>\n+  )\n+}"
+  },
+  {
+    "sha": "c9null03",
+    "daysAgo": 7,
+    "message": "fetch billing summary",
+    "diff": "diff --git a/src/api/billing.ts b/src/api/billing.ts\n@@\n+  const res = await fetch(`/api/billing/${id}`)\n+  const bill = await res.json()\n+  return bill.total"
+  }
+]
