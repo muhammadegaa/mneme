@@ -10,9 +10,9 @@ Updated every phase. 🟢 done · 🟡 in progress · 🔴 not started.
 | 1 | Public GitHub repo, MIT license detectable in About | 🟡 | [`LICENSE`](./LICENSE) (MIT). Repo to be pushed + license set in About. |
 | 2 | Backend runs on Alibaba Cloud; one file proving Alibaba Cloud API calls (Qwen + ≥1 infra svc) | 🟡 | [`alibaba/proof.ts`](./alibaba/proof.ts) — Qwen (DashScope) live; OSS/ApsaraDB wired in Phase 5. |
 | 3 | Architecture diagram (Mermaid + exported PNG) | 🟡 | Mermaid in [README](./README.md#architecture). PNG export pending Phase 6. |
-| 4 | ~3-min demo video script + shot list | 🔴 | Phase 6. |
-| 5 | ~30s "backend on Alibaba Cloud" proof recording script | 🔴 | Phase 5. |
-| 6 | README: problem, features, architecture, how-to-run, benchmark | 🟡 | [README](./README.md) skeleton up; benchmark table lands Phase 3. |
+| 4 | ~3-min demo video script + shot list | 🟢 | [`docs/VIDEO_SCRIPT.md`](./docs/VIDEO_SCRIPT.md) — recording pending. |
+| 5 | ~30s "backend on Alibaba Cloud" proof recording script | 🟢 | [`docs/PROOF_RECORDING.md`](./docs/PROOF_RECORDING.md) — recording pending cloud. |
+| 6 | README: problem, features, architecture, how-to-run, benchmark | 🟢 | [README](./README.md) leads with the live benchmark table. |
 | 7 | Qwen for ALL reasoning (max/plus agent, turbo cheap ops, Qwen embeddings) | 🟢 | [`qwen-client.ts`](./packages/memory-engine/src/model/qwen-client.ts) — tiered routing + embeddings. |
 
 ## Memory engine components (technical depth)
