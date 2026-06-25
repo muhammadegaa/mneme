@@ -86,13 +86,30 @@ flowchart LR
 ## 🚀 How to run
 
 ```bash
-cp .env.example .env        # add DASHSCOPE_API_KEY (mainland or -intl endpoint)
 npm install
-npm test                    # 27 deterministic tests for scoring/packing/decay/engine
+npm test                    # 29 deterministic tests (scoring/packing/decay/reinforce)
+npm run bench               # A/B/C benchmark — prints the table above (zero credits)
+
+# Headless CLI — the whole engine, offline:
+npm run mneme learn         # learn a developer from planted git history
+npm run mneme inspect       # salience bars, reinforcement, audit trail
+npm run mneme review        # memory-grounded review of a fresh diff
+npm run mneme forget        # run the decay job; watch a memory age out
+
+# Live Memory Inspector UI + API (the demo hero):
+npm run dev                 # → http://127.0.0.1:5273
+
+# Go live on Qwen / Alibaba Cloud (optional — works fully without):
+cp .env.example .env        # add DASHSCOPE_API_KEY (mainland or -intl endpoint)
 npm run hello               # live Qwen round-trip: chat + structured + embeddings
-npm run bench               # benchmark harness (Phase 3)
+npm run mneme review --qwen # same pipeline, live inference
 npm run proof               # Alibaba Cloud proof: Qwen + OSS (Phase 5)
 ```
+
+> **Mock-first by design.** Every command above runs deterministically with no
+> API key via a `MockMentorModel` behind the same `MentorModel` interface as
+> live Qwen. Add a key and pass `--qwen` (or `MNEME_BACKEND=qwen`) to swap in
+> real inference with zero code changes.
 
 ## 🧩 Project layout
 

@@ -1,0 +1,17 @@
+{
+  "name": "@mneme/api",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch server.ts",
+    "start": "tsx server.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "@mneme/memory-engine": "*",
+    "hono": "^4.6.14"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2"
+  }
+}

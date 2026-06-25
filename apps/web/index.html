@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mneme · Memory Inspector</title>
+<style>
+  :root{
+    --bg:#08080c; --panel:#0d0d16; --panel2:#11121d; --ink:#e7e9f5; --sub:#8a8da6; --line:#1c1d2b;
+    --red:#ff5c7a; --amber:#ffc15c; --green:#46e3a0; --cyan:#5cc9ff; --violet:#b18cff;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,"Inter",Segoe UI,Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(85% 60% at 18% -5%,#13132550 0,#08080c 60%);color:var(--ink);font-family:var(--sans);font-size:14px}
+  .top{display:flex;align-items:center;gap:13px;padding:13px 22px;border-bottom:1px solid var(--line)}
+  .brand{font-weight:700;display:flex;gap:9px;align-items:center;font-size:15px}
+  .brand .m{width:22px;height:22px;border-radius:50%;background:conic-gradient(from 0deg,#b18cff,#5cc9ff,#46e3a0,#ffc15c,#ff5c7a,#b18cff)}
+  .top .repo{color:var(--sub);font-size:12.5px;font-family:var(--mono)}
+  .badge{font-size:11px;font-family:var(--mono);padding:3px 9px;border-radius:20px;border:1px solid var(--line)}
+  .badge.mock{color:var(--amber);background:#1c160a}
+  .badge.qwen{color:var(--green);background:#0a1c14}
+  .top .right{margin-left:auto;display:flex;gap:8px}
+  button{font-family:var(--sans);font-size:12.5px;font-weight:600;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:7px 13px;cursor:pointer;transition:.12s}
+  button:hover{border-color:#33344a;background:#16172480}
+  button.primary{background:linear-gradient(135deg,#6f6ff0,#5b5bd6);border-color:#6f6ff0}
+  button.primary:hover{filter:brightness(1.08)}
+  button.ghost{background:transparent}
+  .wrap{display:grid;grid-template-columns:minmax(420px,1fr) 1.15fr;gap:16px;padding:16px 22px;max-width:1480px;margin:0 auto;align-items:start}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .card .hd{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600}
+  .card .hd .sub{margin-left:auto;color:var(--sub);font-size:11.5px;font-weight:400;font-family:var(--mono)}
+  /* review pane */
+  textarea{width:100%;min-height:120px;resize:vertical;background:#0a0a12;color:#c2c5da;border:0;border-bottom:1px solid var(--line);padding:12px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.55}
+  textarea:focus{outline:none}
+  .actions{padding:11px 16px;display:flex;gap:9px;align-items:center;border-bottom:1px solid var(--line)}
+  .actions .hint{color:var(--sub);font-size:11.5px;margin-left:auto}
+  .comments{padding:8px 10px;min-height:60px}
+  .empty{color:var(--sub);font-size:12.5px;padding:14px 8px}
+  .comment{border:1px solid var(--line);border-radius:11px;margin:8px 6px;overflow:hidden}
+  .comment .ch{display:flex;gap:8px;align-items:center;padding:8px 12px}
+  .comment.warn{border-left:3px solid var(--red)} .comment.warn .ch{background:#1c0e14}
+  .comment.info{border-left:3px solid var(--cyan)} .comment.info .ch{background:#0b1622}
+  .comment.praise{border-left:3px solid var(--green)} .comment.praise .ch{background:#0a1a13}
+  .sev{font-size:11px;font-weight:700;font-family:var(--mono)}
+  .sev.warn{color:var(--red)} .sev.info{color:var(--cyan)} .sev.praise{color:var(--green)}
+  .comment .cb{padding:10px 12px;font-size:13px;line-height:1.5}
+  .comment code{font-family:var(--mono);background:#00000055;border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12px}
+  .cite{margin-top:8px;font-size:11.5px;color:var(--sub);font-family:var(--mono)}
+  .cite b{color:var(--violet)}
+  /* memory field */
+  .field{position:relative;height:340px;overflow:hidden}
+  .field .axis{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;padding:7px 16px;color:var(--sub);font-size:10.5px;font-family:var(--mono);border-top:1px solid var(--line)}
+  .field .ylab{position:absolute;left:10px;top:12px;color:var(--sub);font-size:10px;font-family:var(--mono);writing-mode:vertical-rl;transform:rotate(180deg)}
+  .node{position:absolute;transform:translate(-50%,-50%);cursor:default;text-align:center;transition:.4s}
+  .orb{border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-weight:700;color:#08080c;position:relative;margin:auto}
+  .node .cap{margin-top:6px;font-size:10.5px;max-width:130px;line-height:1.25;color:var(--ink)}
+  .node.faded{opacity:.4}.node.faded .cap{text-decoration:line-through;color:var(--sub)}
+  .node.packed .orb{outline:2px solid #fff;outline-offset:3px}
+  .ring{position:absolute;inset:-9px;border-radius:50%;border:2px solid var(--red);animation:pulse 1.8s ease-out infinite}
+  .ring.r2{animation-delay:.9s}
+  @keyframes pulse{0%{transform:scale(.85);opacity:.75}100%{transform:scale(1.65);opacity:0}}
+  .rx{position:absolute;top:-13px;right:-12px;font-size:10px;font-family:var(--mono);color:var(--red);font-weight:700}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;padding:9px 16px;border-top:1px solid var(--line);color:var(--sub);font-size:11px;font-family:var(--mono)}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+  /* pack + list */
+  .pack{padding:12px 16px;border-top:1px solid var(--line)}
+  .pmeter{height:7px;border-radius:4px;background:#1c1d2b;overflow:hidden;margin:7px 0}
+  .pmeter i{display:block;height:100%;background:linear-gradient(90deg,#b18cff,#5cc9ff);transition:.4s}
+  .pr{display:flex;justify-content:space-between;font-size:11px;color:var(--sub);font-family:var(--mono)}
+  .mrow{display:flex;align-items:center;gap:9px;padding:6px 16px;font-size:12px;border-top:1px solid #14141f}
+  .mrow.drop{opacity:.5}
+  .knd{font-size:9.5px;font-family:var(--mono);text-transform:uppercase;padding:1px 7px;border-radius:9px;border:1px solid}
+  .k-mistake{color:var(--red);border-color:#5a2a3a}.k-tech{color:var(--cyan);border-color:#27506a}
+  .k-style{color:var(--green);border-color:#2a5a3a}.k-project{color:var(--violet);border-color:#4a2a5a}
+  .mrow .mt{flex:1}
+  .track{width:80px;height:6px;border-radius:4px;background:#1c1d2b;overflow:hidden}
+  .track i{display:block;height:100%}
+  .sv{font-family:var(--mono);font-size:11px;color:var(--sub);width:34px;text-align:right}
+  .reason{font-family:var(--mono);font-size:10px;color:var(--sub)}
+  .auditline{padding:6px 16px;font-size:11px;color:var(--sub);font-family:var(--mono);border-top:1px solid #14141f}
+  .auditline s{color:#55576e}
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand"><span class="m"></span> Mneme</div>
+    <span class="repo">payments-api · the memory of how you code</span>
+    <span id="badge" class="badge mock">backend: …</span>
+    <div class="right">
+      <button class="ghost" onclick="reset()">↻ Re-learn history</button>
+      <button class="ghost" onclick="forget()">🗑 Run forget</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <!-- LEFT: review -->
+    <div class="card">
+      <div class="hd">Review a diff <span class="sub" id="usage"></span></div>
+      <textarea id="diff"></textarea>
+      <div class="actions">
+        <button class="primary" onclick="review()">Review against memory →</button>
+        <span class="hint">retrieves → packs → grounds each comment in a memory</span>
+      </div>
+      <div class="comments" id="comments"><div class="empty">Run a review to see memory-grounded comments.</div></div>
+    </div>
+
+    <!-- RIGHT: memory inspector (hero) -->
+    <div class="card">
+      <div class="hd">Memory Inspector <span class="sub" id="memcount"></span></div>
+      <div class="field" id="field"><div class="ylab">▲ salience (strength)</div>
+        <div class="axis"><span>← older</span><span>recency →</span><span>now</span></div>
+      </div>
+      <div class="legend">
+        <span><i style="background:#ff5c7a"></i>mistake</span>
+        <span><i style="background:#5cc9ff"></i>tech</span>
+        <span><i style="background:#46e3a0"></i>style</span>
+        <span><i style="background:#b18cff"></i>project</span>
+        <span><i style="background:#2a2a38"></i>fading</span>
+        <span>○ outline = packed into review</span>
+      </div>
+      <div class="pack" id="pack" style="display:none">
+        <div class="pr"><span>knapsack pack</span><span id="packtok"></span></div>
+        <div class="pmeter"><i id="packbar" style="width:0%"></i></div>
+      </div>
+      <div id="memlist"></div>
+      <div id="audit"></div>
+    </div>
+  </div>
+
+<script>
+const KCOL = { mistake:"#ff5c7a", tech:"#5cc9ff", style:"#46e3a0", project:"#b18cff" };
+const REVIEW_DIFF = `diff --git a/src/api/users.ts b/src/api/users.ts
+@@ -20,3 +20,9 @@
+ export async function getUser(id: string) {
++  const res = await fetch(\`/api/users/\${id}\`)
++  const user = await res.json()
++  return user.profile
++}`;
+let packedIds = new Set();
+
+document.getElementById("diff").value = REVIEW_DIFF;
+
+async function api(path, opts){ const r = await fetch(path, opts); return r.json(); }
+
+function renderField(memories){
+  const field = document.getElementById("field");
+  [...field.querySelectorAll(".node")].forEach(n=>n.remove());
+  const W = field.clientWidth, H = field.clientHeight;
+  const padX = 60, padTop = 34, padBot = 56, maxAge = 44;
+  for(const m of memories){
+    const faded = m.status !== "active";
+    // x: recent (age 0) -> right; old -> left
+    const x = W - padX - (Math.min(m.ageDays, maxAge)/maxAge) * (W - 2*padX);
+    // y: high effectiveSalience -> top
+    const sal = faded ? m.salience*0.4 : m.effectiveSalience;
+    const y = padTop + (1 - Math.min(1, sal)) * (H - padTop - padBot);
+    const size = 26 + m.salience*64;
+    const node = document.createElement("div");
+    node.className = "node" + (faded?" faded":"") + (packedIds.has(m.id)?" packed":"");
+    node.style.left = x+"px"; node.style.top = y+"px";
+    const col = KCOL[m.kind] || "#888";
+    const glow = faded ? "none" : `0 0 ${10+m.salience*26}px ${col}66`;
+    const bg = faded ? "radial-gradient(circle at 35% 30%,#3a3a4a,#23232f)" : `radial-gradient(circle at 35% 30%, #fff8, ${col})`;
+    node.innerHTML =
+      `<div class="orb" style="width:${size}px;height:${size}px;font-size:${10+m.salience*4}px;background:${bg};box-shadow:${glow}">`
+      + (m.reinforcements>0 && !faded ? `<span class="ring"></span><span class="ring r2"></span><span class="rx">▲×${m.reinforcements}</span>`:"")
+      + (faded ? "⊘" : m.effectiveSalience.toFixed(2)) + `</div>`
+      + `<div class="cap">${m.text}</div>`;
+    field.appendChild(node);
+  }
+}
+
+function bar(v,col){ return `<div class="track"><i style="width:${Math.round(v*100)}%;background:${col}"></i></div>`; }
+
+function renderMemList(memories){
+  const active = memories.filter(m=>m.status==="active").sort((a,b)=>b.effectiveSalience-a.effectiveSalience);
+  document.getElementById("memlist").innerHTML = active.map(m=>{
+    const col = KCOL[m.kind]||"#888";
+    const rx = m.reinforcements>0?` <span style="color:#ff5c7a;font-family:var(--mono);font-size:10px">▲×${m.reinforcements}</span>`:"";
+    const pk = packedIds.has(m.id)?` <span style="color:#fff;font-size:10px">● packed</span>`:"";
+    return `<div class="mrow"><span class="knd k-${m.kind}">${m.kind}</span><span class="mt">${m.text}${rx}${pk}</span>${bar(m.effectiveSalience,col)}<span class="sv">${m.effectiveSalience.toFixed(2)}</span></div>`;
+  }).join("");
+  const sup = memories.filter(m=>m.status!=="active");
+  document.getElementById("audit").innerHTML = sup.map(m=>{
+    const tag = m.status==="superseded"?`⊳ superseded → ${m.supersededBy}`:"decayed · forgotten";
+    return `<div class="auditline">⊘ <s>${m.text}</s> · ${tag}</div>`;
+  }).join("");
+}
+
+async function load(){
+  const s = await api("/api/state");
+  document.getElementById("badge").className = "badge "+s.backend;
+  document.getElementById("badge").textContent = "backend: "+s.backend;
+  document.getElementById("memcount").textContent = s.memories.filter(m=>m.status==="active").length+" active · "+s.memories.filter(m=>m.status!=="active").length+" archived";
+  document.getElementById("usage").textContent = s.backend==="qwen" ? (s.usage.totalTokens+" tok · "+s.usage.calls+" calls") : "deterministic mock";
+  renderField(s.memories);
+  renderMemList(s.memories);
+}
+
+async function review(){
+  const diff = document.getElementById("diff").value;
+  const r = await api("/api/review",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({diff,file:"src/api/users.ts"})});
+  if(r.error){ return; }
+  packedIds = new Set(r.packed.map(p=>p.id));
+  // comments
+  document.getElementById("comments").innerHTML = r.comments.length ? r.comments.map(c=>{
+    const cite = c.citedMemoryId?`<div class="cite">↳ grounded in <b>${c.citedMemoryId}</b></div>`:"";
+    return `<div class="comment ${c.severity}"><div class="ch"><span class="sev ${c.severity}">${c.severity==="warn"?"⚠ WARN":c.severity==="praise"?"✓ PRAISE":"• INFO"}</span></div><div class="cb">${c.message.replace(/`([^`]+)`/g,"<code>$1</code>")}${cite}</div></div>`;
+  }).join("") : `<div class="empty">Clean — nothing flagged.</div>`;
+  // pack meter
+  document.getElementById("pack").style.display="block";
+  document.getElementById("packtok").textContent = r.usedTokens+" / "+r.budget+" tok · "+r.packed.length+" packed · "+r.dropped.length+" dropped";
+  document.getElementById("packbar").style.width = Math.min(100,(r.usedTokens/r.budget)*100)+"%";
+  // re-render with packed highlights + dropped list
+  const s = await api("/api/state");
+  renderField(s.memories);
+  renderMemList(s.memories);
+  const dl = document.getElementById("memlist");
+  dl.innerHTML += r.dropped.map(d=>`<div class="mrow drop"><span class="knd k-${d.kind}">${d.kind}</span><span class="mt">${d.text}</span><span class="reason">${d.reason}</span></div>`).join("");
+}
+
+async function forget(){ await api("/api/forget",{method:"POST"}); packedIds=new Set(); load(); }
+async function reset(){ await api("/api/reset",{method:"POST"}); packedIds=new Set(); document.getElementById("comments").innerHTML='<div class="empty">Run a review to see memory-grounded comments.</div>'; document.getElementById("pack").style.display="none"; load(); }
+
+load();
+window.addEventListener("resize", load);
+</script>
+</body>
+</html>
