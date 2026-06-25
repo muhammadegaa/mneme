@@ -6,7 +6,20 @@
  * dedup, contradiction resolution, and packing tractable.
  */
 
-export type MemoryKind = "preference" | "fact" | "event" | "episodic";
+/**
+ * Coding-mentor taxonomy (see spec.md). Two behavioral families:
+ *  - SUPERSEDABLE (`style` | `tech` | `project`): a newer fact in the same
+ *    (subject, predicate) slot supersedes the old one — the contradiction path.
+ *  - REINFORCING (`mistake`): a repeat occurrence does NOT supersede; it raises
+ *    the existing memory's salience. This is the demo hero — mistakes get louder.
+ */
+export type MemoryKind = "style" | "tech" | "mistake" | "project";
+
+/** Kinds whose slots are overwritten by a newer fact (contradiction resolution). */
+export const SUPERSEDABLE_KINDS: ReadonlySet<MemoryKind> = new Set(["style", "tech", "project"]);
+
+/** Kinds that reinforce (salience climbs) on a repeat occurrence instead of superseding. */
+export const REINFORCING_KINDS: ReadonlySet<MemoryKind> = new Set(["mistake"]);
 
 export interface MemoryInput {
   /** The atomic statement, e.g. "Acme prefers email over calls". */
@@ -33,6 +46,8 @@ export interface Memory extends MemoryInput {
   lastAccessedAt: number;
   /** Number of times retrieved. Reinforcement signal. */
   accessCount: number;
+  /** Times this memory was reinforced by a repeat occurrence (the "seen ×N" badge). */
+  reinforcements: number;
   /** Lifecycle. `superseded` keeps the audit trail; `forgotten` aged out by decay. */
   status: "active" | "superseded" | "forgotten";
   /** If superseded, the id of the memory that replaced it. */

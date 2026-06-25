@@ -63,10 +63,10 @@ describe("scoreMemory composition", () => {
   const weights: RetrievalWeights = { semantic: 0.6, recency: 0.2, salience: 0.2, recencyHalfLifeDays: 14 };
   const base: Memory = {
     id: "m1",
-    text: "Acme prefers email",
-    kind: "preference",
-    subject: "acme",
-    predicate: "contact_channel",
+    text: "prefers early-return over nested ifs",
+    kind: "style",
+    subject: "dev",
+    predicate: "control_flow",
     salience: 1,
     decayRate: 0,
     source: "s1",
@@ -74,6 +74,7 @@ describe("scoreMemory composition", () => {
     createdAt: 0,
     lastAccessedAt: 0,
     accessCount: 0,
+    reinforcements: 0,
     status: "active",
   };
 

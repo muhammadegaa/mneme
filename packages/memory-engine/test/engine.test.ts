@@ -22,8 +22,8 @@ class FakeEmbedder implements Embedder {
 
 function input(over: Partial<MemoryInput> & { text: string }): MemoryInput {
   return {
-    kind: "fact",
-    subject: "acme",
+    kind: "tech",
+    subject: "dev",
     salience: 0.8,
     decayRate: 0.01,
     source: "test",
@@ -44,52 +44,82 @@ function freshEngine() {
 describe("write path", () => {
   it("inserts a new memory", async () => {
     const { engine } = freshEngine();
-    const r = await engine.write(input({ text: "Acme prefers email", predicate: "contact_channel" }), 0);
+    const r = await engine.write(input({ text: "uses Zustand for state", predicate: "state_mgmt" }), 0);
     expect(r.action).toBe("inserted");
     expect(r.memory.id).toBe("id_0");
+    expect(r.memory.reinforcements).toBe(0);
   });
 
   it("dedupes an identical same-slot memory by reinforcing salience", async () => {
     const { engine, store } = freshEngine();
-    await engine.write(input({ text: "Acme prefers email", predicate: "contact_channel", salience: 0.5 }), 0);
-    const r = await engine.write(input({ text: "Acme prefers email", predicate: "contact_channel", salience: 0.5 }), 1000);
+    await engine.write(input({ text: "uses Zustand for state", predicate: "state_mgmt", salience: 0.5 }), 0);
+    const r = await engine.write(input({ text: "uses Zustand for state", predicate: "state_mgmt", salience: 0.5 }), 1000);
     expect(r.action).toBe("deduped");
     const all = (await store.all()).filter((m) => m.status === "active");
     expect(all).toHaveLength(1);
     expect(all[0]!.salience).toBeCloseTo(0.6, 10); // +0.1 reinforcement
   });
 
-  it("supersedes the old fact when a new one fills the same slot (audit trail kept)", async () => {
+  it("supersedes the old tech choice when a new one fills the same slot (audit trail kept)", async () => {
     const { engine, store } = freshEngine();
-    await engine.write(input({ text: "Acme renews in Jan 2027", predicate: "renewal_date" }), 0);
-    const r = await engine.write(input({ text: "Acme renews in March 2027", predicate: "renewal_date" }), 1000);
+    await engine.write(input({ text: "uses Redux for state", predicate: "state_mgmt" }), 0);
+    const r = await engine.write(input({ text: "uses Zustand for state", predicate: "state_mgmt" }), 1000);
     expect(r.action).toBe("superseding");
     expect(r.superseded).toHaveLength(1);
     const all = await store.all();
-    const old = all.find((m) => m.text.includes("Jan"))!;
+    const old = all.find((m) => m.text.includes("Redux"))!;
     expect(old.status).toBe("superseded");
     expect(old.supersededBy).toBe(r.memory.id);
     const active = all.filter((m) => m.status === "active");
     expect(active).toHaveLength(1);
-    expect(active[0]!.text).toContain("March");
+    expect(active[0]!.text).toContain("Zustand");
+  });
+});
+
+describe("reinforcement (the demo hero)", () => {
+  const mistake = (n: number) =>
+    input({ text: "forgets null checks on API responses", kind: "mistake", predicate: "null_check", salience: 0.4, decayRate: 0.03, source: `commit${n}` });
+
+  it("makes a recurring mistake LOUDER on each repeat instead of duplicating it", async () => {
+    const { engine, store } = freshEngine();
+    const first = await engine.write(mistake(1), 0);
+    expect(first.action).toBe("inserted");
+    const second = await engine.write(mistake(2), 1000);
+    const third = await engine.write(mistake(3), 2000);
+    expect(second.action).toBe("reinforced");
+    expect(third.action).toBe("reinforced");
+
+    const active = (await store.all()).filter((m) => m.status === "active");
+    expect(active).toHaveLength(1); // one memory, not three
+    const m = active[0]!;
+    expect(m.reinforcements).toBe(2); // reinforced twice after the initial insert
+    expect(m.salience).toBeCloseTo(0.4 + 0.15 * 2, 10); // climbed
+    expect(m.source).toBe("commit3"); // tracks most-recent evidence
+  });
+
+  it("does NOT supersede on repeat (a mistake is not a contradiction)", async () => {
+    const { engine } = freshEngine();
+    await engine.write(mistake(1), 0);
+    const r = await engine.write(mistake(2), 1000);
+    expect(r.superseded).toHaveLength(0);
   });
 });
 
 describe("retrieval + packing", () => {
   it("ranks the semantically matching memory first", async () => {
     const { engine } = freshEngine();
-    await engine.write(input({ text: "Acme prefers email over phone calls", predicate: "contact_channel" }), 0);
-    await engine.write(input({ text: "Acme office is in Berlin", predicate: "location" }), 0);
-    const { scored } = await engine.retrieve("how should I contact Acme by email", { now: 0, subject: "acme" });
-    expect(scored[0]!.memory.text).toContain("email");
+    await engine.write(input({ text: "uses Zustand for state management", predicate: "state_mgmt" }), 0);
+    await engine.write(input({ text: "deploys on Vercel", kind: "project", predicate: "deploy" }), 0);
+    const { scored } = await engine.retrieve("what state library do I use", { now: 0, subject: "dev" });
+    expect(scored[0]!.memory.text).toContain("Zustand");
   });
 
   it("packs under a tight token budget and reports what dropped", async () => {
     const { engine } = freshEngine();
     for (let i = 0; i < 5; i++) {
-      await engine.write(input({ text: `Acme fact number ${i} about contracts and email`, predicate: `p${i}` }), 0);
+      await engine.write(input({ text: `tech choice number ${i} about build tooling and bundlers`, predicate: `p${i}` }), 0);
     }
-    const { pack } = await engine.pack("Acme contract email", 40, { now: 0, subject: "acme" });
+    const { pack } = await engine.pack("build tooling bundler", 40, { now: 0, subject: "dev" });
     expect(pack.usedTokens).toBeLessThanOrEqual(40);
     expect(pack.packed.length + pack.dropped.length).toBe(5);
   });
@@ -98,13 +128,13 @@ describe("retrieval + packing", () => {
 describe("forgetting job", () => {
   it("ages out a low-salience fast-decaying memory across sessions", async () => {
     const { engine, store } = freshEngine();
-    await engine.write(input({ text: "passing remark", salience: 0.2, decayRate: 0.5, predicate: undefined }), 0);
-    await engine.write(input({ text: "Acme renews in March", salience: 0.95, decayRate: 0.01, predicate: "renewal_date" }), 0);
+    await engine.write(input({ text: "tried Bun once for a one-off", salience: 0.2, decayRate: 0.5, predicate: undefined }), 0);
+    await engine.write(input({ text: "repo has no ORM in hot path", kind: "project", salience: 0.95, decayRate: 0.01, predicate: "data_access" }), 0);
     const DAY = 86_400_000;
     const { forgotten } = await engine.runDecay(30 * DAY, 0.05);
     expect(forgotten).toHaveLength(1);
     const active = (await store.all()).filter((m) => m.status === "active");
     expect(active).toHaveLength(1);
-    expect(active[0]!.text).toContain("renews");
+    expect(active[0]!.text).toContain("ORM");
   });
 });

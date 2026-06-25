@@ -8,8 +8,8 @@ function mem(over: Partial<Memory>): Memory {
   return {
     id: "m",
     text: "t",
-    kind: "fact",
-    subject: "acme",
+    kind: "tech",
+    subject: "dev",
     salience: 1,
     decayRate: 0.1,
     source: "s",
@@ -17,6 +17,7 @@ function mem(over: Partial<Memory>): Memory {
     createdAt: 0,
     lastAccessedAt: 0,
     accessCount: 0,
+    reinforcements: 0,
     status: "active",
     ...over,
   };
@@ -51,22 +52,22 @@ describe("sameSlot", () => {
 
 describe("planContradictionResolution", () => {
   const incoming: MemoryInput = {
-    text: "Acme renews in March 2027",
-    kind: "fact",
-    subject: "acme",
-    predicate: "renewal_date",
+    text: "uses Zustand for state",
+    kind: "tech",
+    subject: "dev",
+    predicate: "state_mgmt",
     salience: 0.9,
     decayRate: 0.01,
     source: "s2",
   };
 
   it("supersedes the older same-slot fact with different text", () => {
-    const old = mem({ id: "old", text: "Acme renews in Jan 2027", predicate: "renewal_date" });
+    const old = mem({ id: "old", text: "uses Redux for state", predicate: "state_mgmt" });
     const r = planContradictionResolution([old], incoming);
     expect(r.supersede).toEqual(["old"]);
   });
   it("does not supersede a different slot", () => {
-    const other = mem({ id: "other", text: "Acme prefers email", predicate: "contact_channel" });
+    const other = mem({ id: "other", text: "prefers early-return", predicate: "control_flow" });
     expect(planContradictionResolution([other], incoming).supersede).toEqual([]);
   });
   it("treats identical text as a dedup (no supersede)", () => {

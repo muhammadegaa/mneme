@@ -1,5 +1,5 @@
 import type { Memory, MemoryInput, ScoredMemory, PackResult, RetrievalWeights } from "./types.js";
-import { DEFAULT_WEIGHTS } from "./types.js";
+import { DEFAULT_WEIGHTS, SUPERSEDABLE_KINDS, REINFORCING_KINDS } from "./types.js";
 import { cosineSimilarity, rankMemories } from "./scoring.js";
 import { packMemories } from "./packing.js";
 import { planDecay, planContradictionResolution, sameSlot } from "./decay.js";
@@ -14,6 +14,10 @@ export interface EngineOptions {
   weights?: RetrievalWeights;
   /** Cosine >= this against a same-slot memory = duplicate -> reinforce, don't re-insert. */
   dedupeThreshold?: number;
+  /** Salience added each time a `mistake` memory is reinforced by a repeat occurrence. */
+  reinforceStep?: number;
+  /** A new mistake reinforces an existing one if same-slot OR cosine >= this. */
+  reinforceSimThreshold?: number;
   /** Effective-salience floor for the forgetting job. */
   forgetFloor?: number;
   /** Candidate cap pulled from the store before reranking. */
@@ -22,7 +26,7 @@ export interface EngineOptions {
   idGen?: () => string;
 }
 
-export type WriteAction = "inserted" | "deduped" | "superseding";
+export type WriteAction = "inserted" | "deduped" | "superseding" | "reinforced";
 
 export interface WriteResult {
   memory: Memory;
@@ -44,6 +48,8 @@ const defaultIdGen = () => `m_${(counter++).toString(36)}_${Math.random().toStri
 export class MemoryEngine {
   private readonly weights: RetrievalWeights;
   private readonly dedupeThreshold: number;
+  private readonly reinforceStep: number;
+  private readonly reinforceSimThreshold: number;
   private readonly forgetFloor: number;
   private readonly candidateLimit: number;
   private readonly idGen: () => string;
@@ -55,6 +61,8 @@ export class MemoryEngine {
   ) {
     this.weights = opts.weights ?? DEFAULT_WEIGHTS;
     this.dedupeThreshold = opts.dedupeThreshold ?? 0.92;
+    this.reinforceStep = opts.reinforceStep ?? 0.15;
+    this.reinforceSimThreshold = opts.reinforceSimThreshold ?? 0.82;
     this.forgetFloor = opts.forgetFloor ?? 0.05;
     this.candidateLimit = opts.candidateLimit ?? 200;
     this.idGen = opts.idGen ?? defaultIdGen;
@@ -71,10 +79,30 @@ export class MemoryEngine {
     const subjectMemories = await this.store.bySubject(input.subject);
     const active = subjectMemories.filter((m) => m.status === "active");
 
-    // DEDUPE: a near-identical, same-slot memory already exists -> reinforce it.
+    // REINFORCE: a repeat occurrence of a recurring mistake makes it LOUDER, not
+    // duplicated. Match same-slot or semantically near. This is the demo hero.
+    if (REINFORCING_KINDS.has(input.kind)) {
+      const match = active.find(
+        (m) =>
+          m.kind === input.kind &&
+          (sameSlot(m, input) || cosineSimilarity(vec, m.embedding) >= this.reinforceSimThreshold),
+      );
+      if (match) {
+        const reinforced: Memory = {
+          ...match,
+          salience: Math.min(1, match.salience + this.reinforceStep),
+          reinforcements: match.reinforcements + 1,
+          lastAccessedAt: now,
+          source: input.source, // most-recent evidence
+        };
+        await this.store.insert(reinforced); // overwrite in place
+        return { memory: reinforced, action: "reinforced", superseded: [], mergedInto: match.id };
+      }
+    }
+
+    // DEDUPE: a near-identical, same-slot memory already exists -> light reinforce.
     for (const m of active) {
       if (sameSlot(m, input) && cosineSimilarity(vec, m.embedding) >= this.dedupeThreshold) {
-        await this.store.setStatus(m.id, "active");
         await this.store.touch([m.id], now);
         const reinforced = { ...m, salience: Math.min(1, m.salience + 0.1) };
         await this.store.insert(reinforced); // overwrite with bumped salience
@@ -89,11 +117,15 @@ export class MemoryEngine {
       createdAt: now,
       lastAccessedAt: now,
       accessCount: 0,
+      reinforcements: 0,
       status: "active",
     };
 
-    // CONTRADICTION: newer fact wins its (subject,predicate) slot; old -> superseded.
-    const { supersede } = planContradictionResolution(active, input);
+    // CONTRADICTION: only supersedable kinds. Newer fact wins its (subject,
+    // predicate) slot; the old one is kept as `superseded` (audit trail).
+    const supersede = SUPERSEDABLE_KINDS.has(input.kind)
+      ? planContradictionResolution(active, input).supersede
+      : [];
     for (const id of supersede) {
       await this.store.setStatus(id, "superseded", memory.id);
     }
