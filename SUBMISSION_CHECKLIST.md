@@ -7,9 +7,9 @@ Updated every phase. 🟢 done · 🟡 in progress · 🔴 not started.
 
 | # | Requirement | Status | Artifact |
 |---|---|---|---|
-| 1 | Public GitHub repo, MIT license detectable in About | 🟡 | [`LICENSE`](./LICENSE) (MIT). Repo to be pushed + license set in About. |
-| 2 | Backend runs on Alibaba Cloud; one file proving Alibaba Cloud API calls (Qwen + ≥1 infra svc) | 🟡 | [`alibaba/proof.ts`](./alibaba/proof.ts) — Qwen (DashScope) live; OSS/ApsaraDB wired in Phase 5. |
-| 3 | Architecture diagram (Mermaid + exported PNG) | 🟡 | Mermaid in [README](./README.md#architecture). PNG export pending Phase 6. |
+| 1 | Public GitHub repo, MIT license detectable in About | 🟢 | **https://github.com/muhammadegaa/mneme** (public, MIT [`LICENSE`](./LICENSE)). |
+| 2 | Backend runs on Alibaba Cloud; one file proving Alibaba Cloud API calls (Qwen + ≥1 infra svc) | 🟡 | Code complete: [`proof.ts`](./alibaba/proof.ts) (Qwen + OSS), [`pg-store.ts`](./packages/memory-engine/src/store/pg-store.ts) (ApsaraDB), [`Dockerfile`](./Dockerfile), [`docs/DEPLOY.md`](./docs/DEPLOY.md). Live run pending key + cloud account. |
+| 3 | Architecture diagram (Mermaid + exported PNG) | 🟡 | Mermaid in [README](./README.md#architecture) (renders on GitHub). PNG export optional. |
 | 4 | ~3-min demo video script + shot list | 🟢 | [`docs/VIDEO_SCRIPT.md`](./docs/VIDEO_SCRIPT.md) — recording pending. |
 | 5 | ~30s "backend on Alibaba Cloud" proof recording script | 🟢 | [`docs/PROOF_RECORDING.md`](./docs/PROOF_RECORDING.md) — recording pending cloud. |
 | 6 | README: problem, features, architecture, how-to-run, benchmark | 🟢 | [README](./README.md) leads with the live benchmark table. |

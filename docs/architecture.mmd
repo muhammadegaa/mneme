@@ -1,0 +1,24 @@
+%% Mneme architecture. Renders on GitHub as-is.
+%% Export a PNG with:  npx -y @mermaid-js/mermaid-cli -i docs/architecture.mmd -o docs/architecture.png
+flowchart LR
+    U[Developer] -->|git diff / commit| API[Hono API · Alibaba Cloud ECS/FC]
+    API --> ENG[Memory Engine]
+
+    subgraph QC[Qwen Cloud · DashScope]
+      LLM[qwen-max / qwen-plus / qwen-turbo]
+      EMB[text-embedding-v3]
+    end
+
+    ENG -->|extract · classify · review| LLM
+    ENG -->|embed| EMB
+
+    subgraph AC[Alibaba Cloud]
+      PG[(ApsaraDB PostgreSQL · pgvector)]
+      OSS[(OSS · blobs)]
+    end
+
+    ENG -->|write · retrieve · forget · reinforce| PG
+    ENG --> OSS
+
+    API --> WEB[Memory Inspector UI]
+    WEB -->|salience · decay · packed/dropped · audit trail| U
