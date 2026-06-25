@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mneme · Design 1 — IDE Dark</title>
+<style>
+  :root{
+    --bg:#1e1e1e; --bg2:#252526; --bg3:#2d2d30; --line:#333;
+    --txt:#d4d4d4; --dim:#858585; --blue:#4ec9b0; --acc:#569cd6;
+    --add:#1e3a23; --addtxt:#6a9955; --del:#3a1e1e;
+    --warn:#e2c08d; --warnbg:#3a3320; --red:#f48771; --mem:#c586c0;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--mono);font-size:13px;line-height:1.55}
+  .topbar{display:flex;align-items:center;gap:14px;height:38px;background:var(--bg3);border-bottom:1px solid var(--line);padding:0 14px;font-size:12px}
+  .topbar .logo{color:var(--blue);font-weight:700}
+  .topbar .crumb{color:var(--dim)}
+  .topbar .branch{margin-left:auto;color:var(--acc)}
+  .wrap{display:grid;grid-template-columns:1fr 380px;height:calc(100vh - 38px)}
+  /* diff */
+  .diff{overflow:auto;border-right:1px solid var(--line)}
+  .filehdr{position:sticky;top:0;background:var(--bg2);border-bottom:1px solid var(--line);padding:8px 14px;color:var(--dim);font-size:12px}
+  .filehdr b{color:var(--txt)}
+  .code{padding:6px 0}
+  .row{display:grid;grid-template-columns:44px 18px 1fr;white-space:pre}
+  .ln{color:#5a5a5a;text-align:right;padding-right:10px;user-select:none}
+  .sign{text-align:center;color:#5a5a5a}
+  .row.add{background:var(--add)} .row.add .sign{color:var(--addtxt)}
+  .row.del{background:var(--del)} .row.del .sign{color:var(--red)}
+  .row.flag{background:var(--warnbg)}
+  .tok-k{color:var(--acc)} .tok-f{color:#dcdcaa} .tok-s{color:#ce9178} .tok-c{color:#6a9955}
+  /* inline comment */
+  .comment{margin:4px 14px 12px 62px;background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:6px;padding:10px 12px}
+  .comment .who{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--warn);margin-bottom:6px}
+  .comment .who .badge{background:var(--warnbg);color:var(--warn);border:1px solid #5a4a25;border-radius:10px;padding:1px 8px}
+  .comment p{margin:0 0 8px;color:var(--txt);white-space:normal}
+  .comment .cite{font-size:11px;color:var(--dim);white-space:normal}
+  .comment .cite a{color:var(--mem);text-decoration:none}
+  /* inspector */
+  .insp{background:var(--bg2);overflow:auto}
+  .insp h2{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:0;padding:12px 14px 6px}
+  .budget{margin:0 14px 10px;background:var(--bg3);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:11px;color:var(--dim)}
+  .budget .bar{height:6px;background:#3a3a3a;border-radius:3px;margin-top:6px;overflow:hidden}
+  .budget .bar i{display:block;height:100%;width:92%;background:linear-gradient(90deg,#4ec9b0,#569cd6)}
+  .mcard{margin:0 14px 8px;background:var(--bg3);border:1px solid var(--line);border-radius:6px;padding:9px 10px}
+  .mcard.dropped{opacity:.5}
+  .mcard .top{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+  .tag{font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;padding:1px 6px;border-radius:9px;border:1px solid}
+  .tag.mistake{color:var(--red);border-color:#5a2e2a;background:#2a1c1a}
+  .tag.tech{color:var(--acc);border-color:#2a3f5a;background:#1a2230}
+  .tag.style{color:var(--blue);border-color:#2a5a4f;background:#152826}
+  .tag.proj{color:var(--mem);border-color:#4a2a4a;background:#241624}
+  .mcard .txt{color:var(--txt);font-size:12px;white-space:normal;margin-bottom:7px}
+  .sal{display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--dim)}
+  .sal .track{flex:1;height:5px;background:#3a3a3a;border-radius:3px;overflow:hidden}
+  .sal .track i{display:block;height:100%}
+  .up i{background:#f48771} .mid i{background:#569cd6} .low i{background:#6a6a6a}
+  .reinforced{color:var(--red);font-size:10px;margin-left:auto}
+  .superseded{color:var(--dim);font-size:11px;white-space:normal;margin-top:6px;border-top:1px dashed #444;padding-top:6px}
+  .superseded s{color:#6a6a6a}
+  .pill{font-size:9px;color:#000;background:var(--warn);border-radius:8px;padding:1px 6px;font-weight:700}
+  .drophdr{padding:4px 14px;color:var(--dim);font-size:10.5px}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="logo">◐ Mneme</span>
+    <span class="crumb">acme/payments-api ⟩ review</span>
+    <span class="branch">⌥ feat/user-fetch · 3 files</span>
+  </div>
+  <div class="wrap">
+    <!-- DIFF -->
+    <div class="diff">
+      <div class="filehdr">📄 <b>src/api/users.ts</b> &nbsp;<span style="color:var(--addtxt)">+12</span> <span style="color:var(--red)">−2</span></div>
+      <div class="code">
+        <div class="row"><span class="ln">21</span><span class="sign"> </span><span><span class="tok-k">export async function</span> <span class="tok-f">getUser</span>(id: <span class="tok-k">string</span>) {</div>
+        <div class="row add"><span class="ln">22</span><span class="sign">+</span><span>  <span class="tok-k">const</span> res = <span class="tok-k">await</span> <span class="tok-f">fetch</span>(<span class="tok-s">`/api/users/${id}`</span>);</div>
+        <div class="row add flag"><span class="ln">23</span><span class="sign">+</span><span>  <span class="tok-k">const</span> user = <span class="tok-k">await</span> res.<span class="tok-f">json</span>();   <span class="tok-c">// ← no guard</span></div>
+        <div class="row add"><span class="ln">24</span><span class="sign">+</span><span>  <span class="tok-k">return</span> user.profile;</div>
+        <div class="row"><span class="ln">25</span><span class="sign"> </span><span>}</div>
+      </div>
+      <div class="comment">
+        <div class="who"><span class="badge">⚠ recurring mistake</span> Mneme · qwen-plus</div>
+        <p><b>Missing null/ok check on a fetch response.</b> If the request 404s, <code>res.json()</code> throws or <code>user</code> is null and <code>.profile</code> explodes. Guard with <code>if (!res.ok) …</code> then null-check <code>user</code>.</p>
+        <div class="cite">grounded in <a href="#">memory m_07</a> · “forgets null checks on API responses” · salience <b style="color:var(--red)">0.91</b> — you’ve shipped this exact gap <b>3×</b> (commits <code>a1f2</code>, <code>9cb0</code>, <code>3de4</code>).</div>
+      </div>
+      <div class="filehdr" style="border-top:1px solid var(--line)">📄 <b>src/store/session.ts</b> &nbsp;<span style="color:var(--addtxt)">+4</span></div>
+      <div class="code">
+        <div class="row add"><span class="ln">3</span><span class="sign">+</span><span><span class="tok-k">import</span> { create } <span class="tok-k">from</span> <span class="tok-s">'zustand'</span>;</div>
+        <div class="row"><span class="ln">4</span><span class="sign"> </span><span><span class="tok-c">// state store</span></div>
+      </div>
+      <div class="comment" style="border-left-color:var(--mem)">
+        <div class="who" style="color:var(--mem)"><span class="badge" style="color:var(--mem);background:#241624;border-color:#4a2a4a">↳ memory updated</span> Mneme</div>
+        <p>Consistent with your current choice. Recorded <b>Zustand</b> as your state library — this <b>supersedes</b> the earlier “uses Redux”, kept in the audit trail.</p>
+      </div>
+    </div>
+
+    <!-- INSPECTOR -->
+    <div class="insp">
+      <h2>Memory Inspector · this review</h2>
+      <div class="budget">packed <b style="color:var(--txt)">1,840</b> / 2,000 tokens · 3 of 7 candidates
+        <div class="bar"><i></i></div>
+      </div>
+
+      <div class="mcard">
+        <div class="top"><span class="tag mistake">recurring mistake</span><span class="reinforced">▲ reinforced ×3</span></div>
+        <div class="txt">Forgets null checks on API responses.</div>
+        <div class="sal up"><span>salience</span><span class="track"><i style="width:91%"></i></span><b style="color:var(--red)">0.91</b></div>
+      </div>
+
+      <div class="mcard">
+        <div class="top"><span class="tag tech">tech choice</span><span class="pill">PACKED</span></div>
+        <div class="txt">Uses Zustand for state management.</div>
+        <div class="sal mid"><span>salience</span><span class="track"><i style="width:70%"></i></span><b>0.70</b></div>
+        <div class="superseded">⊳ supersedes <s>“uses Redux for state”</s> · m_02 · 2026-04 → 2026-06</div>
+      </div>
+
+      <div class="mcard">
+        <div class="top"><span class="tag style">style</span><span class="pill">PACKED</span></div>
+        <div class="txt">Prefers early-return over nested conditionals.</div>
+        <div class="sal mid"><span>salience</span><span class="track"><i style="width:64%"></i></span><b>0.64</b></div>
+      </div>
+
+      <div class="drophdr">▾ dropped (under budget / low value)</div>
+
+      <div class="mcard dropped">
+        <div class="top"><span class="tag proj">project</span></div>
+        <div class="txt">Repo decision: no ORM in the request hot path.</div>
+        <div class="sal mid"><span>salience</span><span class="track"><i style="width:55%"></i></span><b>0.55</b></div>
+        <div style="font-size:10px;color:var(--dim);margin-top:5px">dropped · not relevant to this diff</div>
+      </div>
+
+      <div class="mcard dropped">
+        <div class="top"><span class="tag tech">tech choice</span></div>
+        <div class="txt">Tried Bun once for a one-off script.</div>
+        <div class="sal low"><span>salience</span><span class="track"><i style="width:8%"></i></span><b>0.08</b></div>
+        <div style="font-size:10px;color:var(--warn);margin-top:5px">decaying → will be forgotten in ~2 days</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

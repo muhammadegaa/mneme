@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mneme · Design Explorations — compare</title>
+<style>
+  :root{--mono:"SF Mono",ui-monospace,Menlo,monospace;--sans:-apple-system,Inter,Segoe UI,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:#0b0c10;color:#e7e9f5;font-family:var(--sans)}
+  header{padding:16px 22px;border-bottom:1px solid #20222e}
+  header h1{margin:0;font-size:16px}
+  header p{margin:5px 0 0;color:#8a8da6;font-size:13px}
+  header .same{font-family:var(--mono);font-size:12px;color:#ffc15c}
+  .board{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px}
+  .cell{border:1px solid #20222e;border-radius:12px;overflow:hidden;background:#000;display:flex;flex-direction:column}
+  .cap{display:flex;align-items:center;gap:10px;padding:9px 13px;background:#13141c;border-bottom:1px solid #20222e}
+  .cap .n{width:22px;height:22px;border-radius:6px;background:#2a2c3a;display:grid;place-items:center;font-family:var(--mono);font-size:12px;color:#b18cff}
+  .cap .ttl{font-weight:600;font-size:13px}
+  .cap .vibe{color:#8a8da6;font-size:12px}
+  .cap a{margin-left:auto;color:#5cc9ff;font-size:12px;text-decoration:none;font-family:var(--mono)}
+  .frame{position:relative;height:440px;background:#fff}
+  iframe{position:absolute;top:0;left:0;width:200%;height:880px;border:0;transform:scale(.5);transform-origin:top left}
+</style>
+</head>
+<body>
+  <header>
+    <h1>Mneme — 4 design directions for the review view + Memory Inspector</h1>
+    <p>Phase 2 (Planning). Same hero scenario in every mockup so the comparison is fair:
+      <span class="same">a fetch with no null-check → Mneme flags it because you've shipped that gap 3× (reinforced memory, salience 0.91); Inspector also shows Zustand⊳Redux supersession + a decaying Bun memory.</span>
+    </p>
+  </header>
+  <div class="board">
+    <div class="cell">
+      <div class="cap"><span class="n">1</span><span class="ttl">IDE Dark</span><span class="vibe">VS Code / PR diff · familiar, dense</span><a href="design-1-ide.html" target="_blank">open ↗</a></div>
+      <div class="frame"><iframe src="design-1-ide.html"></iframe></div>
+    </div>
+    <div class="cell">
+      <div class="cap"><span class="n">2</span><span class="ttl">Terminal / TUI</span><span class="vibe">CLI-native · hacker, leans on our headless core</span><a href="design-2-terminal.html" target="_blank">open ↗</a></div>
+      <div class="frame"><iframe src="design-2-terminal.html"></iframe></div>
+    </div>
+    <div class="cell">
+      <div class="cap"><span class="n">3</span><span class="ttl">Clean SaaS</span><span class="vibe">Linear/Vercel · fundable-product polish</span><a href="design-3-saas.html" target="_blank">open ↗</a></div>
+      <div class="frame"><iframe src="design-3-saas.html"></iframe></div>
+    </div>
+    <div class="cell">
+      <div class="cap"><span class="n">4</span><span class="ttl">Memory-first</span><span class="vibe">the engine IS the hero · most novel</span><a href="design-4-memory-graph.html" target="_blank">open ↗</a></div>
+      <div class="frame"><iframe src="design-4-memory-graph.html"></iframe></div>
+    </div>
+  </div>
+</body>
+</html>

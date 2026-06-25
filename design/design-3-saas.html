@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mneme · Design 3 — Clean SaaS</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --card:#fff; --ink:#1a1d24; --sub:#6b7280; --line:#e8eaed;
+    --brand:#5b5bd6; --brandsoft:#eef0fe;
+    --red:#dc2626; --redsoft:#fef2f2; --amber:#d97706; --ambersoft:#fffbeb;
+    --green:#059669; --greensoft:#ecfdf5; --violet:#7c3aed; --violetsoft:#f5f3ff;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,"Inter",Segoe UI,Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .nav{display:flex;align-items:center;gap:12px;padding:14px 28px;background:var(--card);border-bottom:1px solid var(--line)}
+  .nav .brand{font-weight:700;display:flex;align-items:center;gap:8px}
+  .nav .brand .mark{width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,#7b7bf0,#5b5bd6);display:grid;place-items:center;color:#fff;font-size:13px}
+  .nav .repo{color:var(--sub);font-size:13px}
+  .nav .right{margin-left:auto;display:flex;gap:8px}
+  .chip{font-size:12px;color:var(--sub);background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:4px 11px}
+  .wrap{display:grid;grid-template-columns:1fr 400px;gap:20px;padding:24px 28px;max-width:1280px;margin:0 auto;align-items:start}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .card .hd{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .card .hd .fname{font-family:var(--mono);font-size:13px;font-weight:600}
+  .card .hd .stat{margin-left:auto;font-family:var(--mono);font-size:12px}
+  .stat .a{color:var(--green)} .stat .d{color:var(--red)}
+  /* diff */
+  .diff{font-family:var(--mono);font-size:12.5px;padding:8px 0}
+  .dl{display:grid;grid-template-columns:40px 1fr;padding:1px 18px;white-space:pre;color:#374151}
+  .dl .n{color:#b6bcc6;text-align:right;padding-right:14px}
+  .dl.add{background:var(--greensoft)} .dl.flag{background:var(--ambersoft)}
+  .kw{color:#7c3aed}.fn{color:#2563eb}.str{color:#059669}.cm{color:#9aa1ac}
+  .annot{margin:8px 18px 14px 58px;border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:10px;overflow:hidden}
+  .annot .ah{display:flex;align-items:center;gap:8px;padding:9px 13px;background:var(--ambersoft)}
+  .annot .ah .who{font-weight:600;font-size:12.5px}
+  .annot .ah .tag{font-size:11px;color:var(--amber);background:#fff;border:1px solid #f3d9a8;border-radius:20px;padding:1px 9px}
+  .annot .ab{padding:11px 13px;font-size:13px}
+  .annot code{font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12px}
+  .annot .cite{margin-top:9px;font-size:12px;color:var(--sub);background:var(--bg);border-radius:8px;padding:8px 10px}
+  .annot .cite b{color:var(--red)} .annot .cite .mid{font-family:var(--mono);color:var(--violet)}
+  /* inspector */
+  .insp .hd{justify-content:space-between}
+  .insp h3{margin:0;font-size:13px}
+  .budget{padding:14px 18px;border-bottom:1px solid var(--line)}
+  .budget .row{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-bottom:7px}
+  .budget .row b{color:var(--ink);font-family:var(--mono)}
+  .meter{height:8px;border-radius:5px;background:var(--line);overflow:hidden}
+  .meter i{display:block;height:100%;width:92%;background:linear-gradient(90deg,#7b7bf0,#5b5bd6);border-radius:5px}
+  .mlist{padding:10px}
+  .mem{border:1px solid var(--line);border-radius:11px;padding:12px 13px;margin:8px 6px;transition:.15s}
+  .mem.dropped{opacity:.55;background:#fbfcfd}
+  .mem .mtop{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .kind{font-size:10.5px;font-weight:600;letter-spacing:.02em;padding:2px 9px;border-radius:20px}
+  .kind.mistake{color:var(--red);background:var(--redsoft)}
+  .kind.tech{color:var(--brand);background:var(--brandsoft)}
+  .kind.style{color:var(--green);background:var(--greensoft)}
+  .kind.project{color:var(--violet);background:var(--violetsoft)}
+  .state{margin-left:auto;font-size:10.5px;font-weight:600;padding:2px 9px;border-radius:20px}
+  .state.packed{color:var(--green);background:var(--greensoft)}
+  .state.drop{color:var(--sub);background:var(--bg)}
+  .mem .mtext{font-size:13px;margin-bottom:10px}
+  .salrow{display:flex;align-items:center;gap:9px;font-size:11px;color:var(--sub)}
+  .salrow .track{flex:1;height:6px;border-radius:4px;background:var(--line);overflow:hidden}
+  .salrow .track i{display:block;height:100%;border-radius:4px}
+  .hi i{background:var(--red)} .md i{background:var(--brand)} .lo i{background:#cbd2da}
+  .salrow .v{font-family:var(--mono);font-weight:600;color:var(--ink)}
+  .rein{font-size:10.5px;color:var(--red);font-weight:600;background:var(--redsoft);border-radius:20px;padding:1px 8px}
+  .audit{margin-top:9px;font-size:11.5px;color:var(--sub);border-top:1px dashed var(--line);padding-top:8px}
+  .audit s{color:#aab0ba}
+  .decay{margin-top:8px;font-size:11px;color:var(--amber)}
+  .secLbl{padding:6px 16px 2px;font-size:11px;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.04em}
+</style>
+</head>
+<body>
+  <div class="nav">
+    <div class="brand"><span class="mark">◐</span> Mneme</div>
+    <span class="repo">payments-api · feat/user-fetch</span>
+    <div class="right">
+      <span class="chip">7 memories in scope</span>
+      <span class="chip">qwen-plus</span>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <!-- REVIEW -->
+    <div class="card">
+      <div class="hd"><span class="fname">src/api/users.ts</span><span class="stat"><span class="a">+12</span> <span class="d">−2</span></span></div>
+      <div class="diff">
+        <div class="dl"><span class="n">21</span><span><span class="kw">export async function</span> <span class="fn">getUser</span>(id) {</span></div>
+        <div class="dl add"><span class="n">22</span><span>  <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">`/api/users/${id}`</span>);</span></div>
+        <div class="dl add flag"><span class="n">23</span><span>  <span class="kw">const</span> user = <span class="kw">await</span> res.<span class="fn">json</span>();  <span class="cm">// no guard</span></span></div>
+        <div class="dl add"><span class="n">24</span><span>  <span class="kw">return</span> user.profile;</span></div>
+        <div class="dl"><span class="n">25</span><span>}</span></div>
+      </div>
+      <div class="annot">
+        <div class="ah"><span class="who">Mneme</span><span class="tag">recurring mistake</span></div>
+        <div class="ab">
+          <b>Add a null / <code>res.ok</code> guard before reading the body.</b> A 404 makes <code>res.json()</code> throw or leaves <code>user</code> null, and <code>user.profile</code> will crash the request.
+          <div class="cite">Flagged because of <span class="mid">m_07</span> — “forgets null checks on API responses”, salience <b>0.91</b>. You’ve shipped this exact gap <b>3×</b> (a1f2, 9cb0, 3de4). Each repeat made this memory louder.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INSPECTOR -->
+    <div class="card insp">
+      <div class="hd"><h3>Memory Inspector</h3><span class="chip">live</span></div>
+      <div class="budget">
+        <div class="row"><span>Context packed</span><span><b>1,840</b> / 2,000 tok</span></div>
+        <div class="meter"><i></i></div>
+        <div class="row" style="margin-top:8px;margin-bottom:0"><span>3 packed · 2 dropped · 2 out of scope</span><span>knapsack ✓</span></div>
+      </div>
+
+      <div class="secLbl">Packed into this review</div>
+      <div class="mlist">
+        <div class="mem">
+          <div class="mtop"><span class="kind mistake">mistake</span><span class="rein">▲ reinforced ×3</span><span class="state packed">packed</span></div>
+          <div class="mtext">Forgets null checks on API responses.</div>
+          <div class="salrow hi"><span>salience</span><span class="track"><i style="width:91%"></i></span><span class="v">0.91</span></div>
+        </div>
+        <div class="mem">
+          <div class="mtop"><span class="kind tech">tech</span><span class="state packed">packed</span></div>
+          <div class="mtext">Uses Zustand for state management.</div>
+          <div class="salrow md"><span>salience</span><span class="track"><i style="width:70%"></i></span><span class="v">0.70</span></div>
+          <div class="audit">⊳ supersedes <s>“uses Redux for state”</s> · recorded 2026-06, audit kept</div>
+        </div>
+        <div class="mem">
+          <div class="mtop"><span class="kind style">style</span><span class="state packed">packed</span></div>
+          <div class="mtext">Prefers early-return over nested conditionals.</div>
+          <div class="salrow md"><span>salience</span><span class="track"><i style="width:64%"></i></span><span class="v">0.64</span></div>
+        </div>
+      </div>
+
+      <div class="secLbl">Dropped</div>
+      <div class="mlist">
+        <div class="mem dropped">
+          <div class="mtop"><span class="kind project">project</span><span class="state drop">out of scope</span></div>
+          <div class="mtext">Repo decision: no ORM in the request hot path.</div>
+          <div class="salrow md"><span>salience</span><span class="track"><i style="width:55%"></i></span><span class="v">0.55</span></div>
+        </div>
+        <div class="mem dropped">
+          <div class="mtop"><span class="kind tech">tech</span><span class="state drop">decaying</span></div>
+          <div class="mtext">Tried Bun once for a one-off script.</div>
+          <div class="salrow lo"><span>salience</span><span class="track"><i style="width:8%"></i></span><span class="v">0.08</span></div>
+          <div class="decay">↓ below relevance floor — forgotten in ~2 days</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
