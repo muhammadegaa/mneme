@@ -7,6 +7,8 @@ export * from "./extract.js";
 export * from "./store/interface.js";
 export { InMemoryStore } from "./store/memory-store.js";
 export { JsonFileStore } from "./store/json-store.js";
+export { PgVectorStore } from "./store/pg-store.js";
+export { createStore } from "./store/factory.js";
 export { QwenClient, configFromEnv } from "./model/qwen-client.js";
 export type { QwenConfig, QwenUsage, Tier } from "./model/qwen-client.js";
 export * from "./model/mentor.js";

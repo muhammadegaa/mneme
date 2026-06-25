@@ -21,6 +21,9 @@
     "dev:web": "npm run dev --workspace apps/web",
     "proof": "tsx alibaba/proof.ts"
   },
+  "dependencies": {
+    "ali-oss": "^6.21.0"
+  },
   "devDependencies": {
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",

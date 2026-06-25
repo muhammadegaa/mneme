@@ -12,7 +12,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import {
   MemoryEngine,
-  InMemoryStore,
+  createStore,
   MockMentorModel,
   QwenMentorModel,
   QwenClient,
@@ -22,6 +22,7 @@ import {
   recencyScore,
   DEFAULT_WEIGHTS,
   type Memory,
+  type MemoryStore,
   type MentorModel,
   type CommitSource,
 } from "@mneme/memory-engine";
@@ -41,16 +42,12 @@ function makeModel(): MentorModel {
 
 interface Session {
   model: MentorModel;
-  store: InMemoryStore;
+  store: MemoryStore;
   engine: MemoryEngine;
   log: string[];
 }
 
-async function seed(): Promise<Session> {
-  const model = makeModel();
-  const store = new InMemoryStore();
-  const engine = new MemoryEngine(store, model, {});
-  const log: string[] = [];
+async function learnHistory(engine: MemoryEngine, model: MentorModel, log: string[]): Promise<void> {
   const commits = JSON.parse(readFileSync(resolve(ROOT, "bench/data/history.json"), "utf8")) as Array<CommitSource & { daysAgo: number }>;
   commits.sort((a, b) => b.daysAgo - a.daysAgo);
   for (const commit of commits) {
@@ -59,6 +56,21 @@ async function seed(): Promise<Session> {
       const r = await engine.write(input, now);
       log.push(`${commit.sha.slice(0, 7)} ${input.kind} "${input.text}" → ${r.action}`);
     }
+  }
+}
+
+async function seed(force = false): Promise<Session> {
+  const model = makeModel();
+  const store = createStore();
+  const engine = new MemoryEngine(store, model, {});
+  const log: string[] = [];
+  // Cross-session: a persistent store (postgres/json) already has memories from
+  // a prior run -> don't relearn. This is the "survives restart" proof on cloud.
+  const existing = await store.all();
+  if (force || existing.length === 0) {
+    await learnHistory(engine, model, log);
+  } else {
+    log.push(`restored ${existing.length} memories from ${process.env.MEMORY_STORE ?? "memory"} store (cross-session)`);
   }
   return { model, store, engine, log };
 }
@@ -100,7 +112,7 @@ app.get("/api/state", async (c) => {
 });
 
 app.post("/api/reset", async (c) => {
-  session = await seed();
+  session = await seed(true);
   return c.json({ ok: true, count: (await session.store.all()).length });
 });
 

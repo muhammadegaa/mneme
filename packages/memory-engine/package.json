@@ -14,9 +14,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "openai": "^4.77.0"
+    "openai": "^4.77.0",
+    "pg": "^8.13.1"
   },
   "devDependencies": {
+    "@types/pg": "^8.11.10",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
