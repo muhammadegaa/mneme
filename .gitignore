@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+.DS_Store
+coverage/
+.next/
+out/
+bench/results/*.json
+!bench/results/.gitkeep

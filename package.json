@@ -1,0 +1,26 @@
+{
+  "name": "mneme",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mneme — a persistent MemoryAgent with a benchmarkable memory engine. Built on Qwen + Alibaba Cloud.",
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspace packages/memory-engine",
+    "bench": "npm run bench --workspace packages/memory-engine",
+    "hello": "tsx scripts/hello-qwen.ts",
+    "dev:api": "npm run dev --workspace apps/api",
+    "dev:web": "npm run dev --workspace apps/web",
+    "proof": "tsx alibaba/proof.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
