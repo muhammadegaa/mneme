@@ -96,6 +96,11 @@ function view(m: Memory) {
   };
 }
 
+// The one number that climbs from real work (WIN.md): repeat mistakes caught
+// before they shipped. Incremented only when a review flags a warn grounded in
+// a memory of a mistake the dev has made before. Persists across reviews.
+let catches = 0;
+
 const app = new Hono();
 app.use("/api/*", cors());
 
@@ -105,6 +110,7 @@ app.get("/api/state", async (c) => {
   const all = await session.store.all();
   return c.json({
     backend: session.model.backend,
+    catches,
     memories: all.map(view),
     usage: session.model.usage(),
     learnLog: session.log,
@@ -113,6 +119,7 @@ app.get("/api/state", async (c) => {
 
 app.post("/api/reset", async (c) => {
   session = await seed(true);
+  catches = 0;
   return c.json({ ok: true, count: (await session.store.all()).length });
 });
 
@@ -128,13 +135,29 @@ app.post("/api/review", async (c) => {
 
   const { scored, degraded } = await session.engine.retrieve(diff, { now: NOW, limit: 50 });
   const pack = packMemories(scored, BUDGET);
+  const packedById = new Map(pack.packed.map((p) => [p.memory.id, p.memory]));
   const { comments } = await session.model.review({ diff, file: body.file, memories: pack.packed.map((p) => p.memory) });
+
+  // A "catch" = a warn grounded in a memory of a mistake the dev has made before.
+  const caught = comments.filter((cm) => {
+    if (cm.severity !== "warn" || !cm.citedMemoryId) return false;
+    return packedById.get(cm.citedMemoryId)?.kind === "mistake";
+  });
+  catches += caught.length;
+
+  // Attach the cited memory (with its "seen N×") to each comment for the catch card.
+  const richComments = comments.map((cm) => ({
+    ...cm,
+    cited: cm.citedMemoryId ? view(packedById.get(cm.citedMemoryId)!) : undefined,
+  }));
 
   return c.json({
     degraded,
+    catches,
+    newCatches: caught.length,
     budget: pack.budget,
     usedTokens: pack.usedTokens,
-    comments,
+    comments: richComments,
     packed: pack.packed.map((p) => ({ ...view(p.memory), score: p.score, tokens: p.tokens, breakdown: p.breakdown })),
     dropped: pack.dropped.map((d) => ({ ...view(d.memory), score: d.score, tokens: d.tokens, reason: d.reason })),
   });

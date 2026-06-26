@@ -3,228 +3,300 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Mneme · Memory Inspector</title>
+<title>Mneme — the reviewer that remembers you</title>
 <style>
   :root{
-    --bg:#08080c; --panel:#0d0d16; --panel2:#11121d; --ink:#e7e9f5; --sub:#8a8da6; --line:#1c1d2b;
-    --red:#ff5c7a; --amber:#ffc15c; --green:#46e3a0; --cyan:#5cc9ff; --violet:#b18cff;
-    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
-    --sans:-apple-system,"Inter",Segoe UI,Roboto,sans-serif;
+    --bg:#0E0E0D; --bg2:#161513; --card:#17161300; --line:#272521;
+    --ink:#EDEAE3; --mut:#9A968C; --faint:#615D54;
+    --coral:#FF5C57; --coral-dim:#3a1f1d;
+    --blue:#7CA7FF; --sage:#7FD1A8; --lilac:#B79CFF;
+    --serif:ui-serif,"Iowan Old Style",Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Inter",Segoe UI,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:radial-gradient(85% 60% at 18% -5%,#13132550 0,#08080c 60%);color:var(--ink);font-family:var(--sans);font-size:14px}
-  .top{display:flex;align-items:center;gap:13px;padding:13px 22px;border-bottom:1px solid var(--line)}
-  .brand{font-weight:700;display:flex;gap:9px;align-items:center;font-size:15px}
-  .brand .m{width:22px;height:22px;border-radius:50%;background:conic-gradient(from 0deg,#b18cff,#5cc9ff,#46e3a0,#ffc15c,#ff5c7a,#b18cff)}
-  .top .repo{color:var(--sub);font-size:12.5px;font-family:var(--mono)}
-  .badge{font-size:11px;font-family:var(--mono);padding:3px 9px;border-radius:20px;border:1px solid var(--line)}
-  .badge.mock{color:var(--amber);background:#1c160a}
-  .badge.qwen{color:var(--green);background:#0a1c14}
-  .top .right{margin-left:auto;display:flex;gap:8px}
-  button{font-family:var(--sans);font-size:12.5px;font-weight:600;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:7px 13px;cursor:pointer;transition:.12s}
-  button:hover{border-color:#33344a;background:#16172480}
-  button.primary{background:linear-gradient(135deg,#6f6ff0,#5b5bd6);border-color:#6f6ff0}
-  button.primary:hover{filter:brightness(1.08)}
-  button.ghost{background:transparent}
-  .wrap{display:grid;grid-template-columns:minmax(420px,1fr) 1.15fr;gap:16px;padding:16px 22px;max-width:1480px;margin:0 auto;align-items:start}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
-  .card .hd{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600}
-  .card .hd .sub{margin-left:auto;color:var(--sub);font-size:11.5px;font-weight:400;font-family:var(--mono)}
-  /* review pane */
-  textarea{width:100%;min-height:120px;resize:vertical;background:#0a0a12;color:#c2c5da;border:0;border-bottom:1px solid var(--line);padding:12px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.55}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:radial-gradient(120% 90% at 50% -10%,#1a1916 0,#0E0E0D 55%);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  ::selection{background:var(--coral);color:#0E0E0D}
+  a{color:inherit}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 32px}
+  /* top bar */
+  .top{position:sticky;top:0;z-index:20;backdrop-filter:blur(12px);background:#0e0e0dcc;border-bottom:1px solid var(--line)}
+  .top .row{display:flex;align-items:center;gap:14px;height:60px}
+  .mark{font-family:var(--serif);font-size:21px;font-weight:600;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+  .mark .dot{width:9px;height:9px;border-radius:50%;background:var(--coral);box-shadow:0 0 0 0 var(--coral);animation:beat 2.4s infinite}
+  @keyframes beat{0%{box-shadow:0 0 0 0 #ff5c5755}70%{box-shadow:0 0 0 7px #ff5c5700}100%{box-shadow:0 0 0 0 #ff5c5700}}
+  .top .spacer{flex:1}
+  .badge{font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--mut)}
+  .badge.qwen{color:var(--sage);border-color:#264436}
+  .badge.mock{color:#d8a24a;border-color:#3e3014}
+  .ghostbtn{font-family:var(--sans);font-size:13px;color:var(--mut);background:none;border:1px solid var(--line);border-radius:9px;padding:7px 12px;cursor:pointer}
+  .ghostbtn:hover{color:var(--ink);border-color:var(--faint)}
+  /* hero */
+  .hero{padding:72px 0 26px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--coral);margin-bottom:22px}
+  .num{font-family:var(--serif);font-size:clamp(80px,15vw,168px);line-height:.92;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+  .hero h1{font-family:var(--serif);font-weight:500;font-size:clamp(24px,3.4vw,38px);line-height:1.18;letter-spacing:-.015em;margin:10px 0 0;max-width:18ch}
+  .hero h1 .hl{color:var(--coral)}
+  .hero p.lede{color:var(--mut);font-size:17px;max-width:54ch;margin:20px 0 0}
+  .hero .cueline{margin-top:30px;font-family:var(--mono);font-size:12.5px;color:var(--faint);display:flex;gap:10px;align-items:center}
+  .hero .cueline b{color:var(--mut);font-weight:500}
+  /* section scaffolding */
+  section{padding:54px 0;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+  h2.sec{font-family:var(--serif);font-weight:500;font-size:27px;letter-spacing:-.01em;margin:0 0 4px}
+  .sub{color:var(--mut);max-width:60ch;margin:0 0 26px}
+  /* try panel */
+  .try{display:grid;grid-template-columns:1.1fr 1fr;gap:22px;align-items:start}
+  @media(max-width:860px){.try{grid-template-columns:1fr}}
+  .editor{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#121110}
+  .editor .eh{display:flex;align-items:center;gap:8px;padding:11px 15px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:12.5px;color:var(--mut)}
+  .editor .eh .fdot{width:9px;height:9px;border-radius:50%;background:#2c2a26}
+  textarea{width:100%;min-height:172px;resize:vertical;background:transparent;color:#e9e6df;border:0;padding:16px;font-family:var(--mono);font-size:13px;line-height:1.7}
   textarea:focus{outline:none}
-  .actions{padding:11px 16px;display:flex;gap:9px;align-items:center;border-bottom:1px solid var(--line)}
-  .actions .hint{color:var(--sub);font-size:11.5px;margin-left:auto}
-  .comments{padding:8px 10px;min-height:60px}
-  .empty{color:var(--sub);font-size:12.5px;padding:14px 8px}
-  .comment{border:1px solid var(--line);border-radius:11px;margin:8px 6px;overflow:hidden}
-  .comment .ch{display:flex;gap:8px;align-items:center;padding:8px 12px}
-  .comment.warn{border-left:3px solid var(--red)} .comment.warn .ch{background:#1c0e14}
-  .comment.info{border-left:3px solid var(--cyan)} .comment.info .ch{background:#0b1622}
-  .comment.praise{border-left:3px solid var(--green)} .comment.praise .ch{background:#0a1a13}
-  .sev{font-size:11px;font-weight:700;font-family:var(--mono)}
-  .sev.warn{color:var(--red)} .sev.info{color:var(--cyan)} .sev.praise{color:var(--green)}
-  .comment .cb{padding:10px 12px;font-size:13px;line-height:1.5}
-  .comment code{font-family:var(--mono);background:#00000055;border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12px}
-  .cite{margin-top:8px;font-size:11.5px;color:var(--sub);font-family:var(--mono)}
-  .cite b{color:var(--violet)}
-  /* memory field */
-  .field{position:relative;height:340px;overflow:hidden}
-  .field .axis{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;padding:7px 16px;color:var(--sub);font-size:10.5px;font-family:var(--mono);border-top:1px solid var(--line)}
-  .field .ylab{position:absolute;left:10px;top:12px;color:var(--sub);font-size:10px;font-family:var(--mono);writing-mode:vertical-rl;transform:rotate(180deg)}
-  .node{position:absolute;transform:translate(-50%,-50%);cursor:default;text-align:center;transition:.4s}
-  .orb{border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-weight:700;color:#08080c;position:relative;margin:auto}
-  .node .cap{margin-top:6px;font-size:10.5px;max-width:130px;line-height:1.25;color:var(--ink)}
-  .node.faded{opacity:.4}.node.faded .cap{text-decoration:line-through;color:var(--sub)}
-  .node.packed .orb{outline:2px solid #fff;outline-offset:3px}
-  .ring{position:absolute;inset:-9px;border-radius:50%;border:2px solid var(--red);animation:pulse 1.8s ease-out infinite}
-  .ring.r2{animation-delay:.9s}
-  @keyframes pulse{0%{transform:scale(.85);opacity:.75}100%{transform:scale(1.65);opacity:0}}
-  .rx{position:absolute;top:-13px;right:-12px;font-size:10px;font-family:var(--mono);color:var(--red);font-weight:700}
-  .legend{display:flex;gap:14px;flex-wrap:wrap;padding:9px 16px;border-top:1px solid var(--line);color:var(--sub);font-size:11px;font-family:var(--mono)}
-  .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
-  /* pack + list */
-  .pack{padding:12px 16px;border-top:1px solid var(--line)}
-  .pmeter{height:7px;border-radius:4px;background:#1c1d2b;overflow:hidden;margin:7px 0}
-  .pmeter i{display:block;height:100%;background:linear-gradient(90deg,#b18cff,#5cc9ff);transition:.4s}
-  .pr{display:flex;justify-content:space-between;font-size:11px;color:var(--sub);font-family:var(--mono)}
-  .mrow{display:flex;align-items:center;gap:9px;padding:6px 16px;font-size:12px;border-top:1px solid #14141f}
-  .mrow.drop{opacity:.5}
-  .knd{font-size:9.5px;font-family:var(--mono);text-transform:uppercase;padding:1px 7px;border-radius:9px;border:1px solid}
-  .k-mistake{color:var(--red);border-color:#5a2a3a}.k-tech{color:var(--cyan);border-color:#27506a}
-  .k-style{color:var(--green);border-color:#2a5a3a}.k-project{color:var(--violet);border-color:#4a2a5a}
-  .mrow .mt{flex:1}
-  .track{width:80px;height:6px;border-radius:4px;background:#1c1d2b;overflow:hidden}
-  .track i{display:block;height:100%}
-  .sv{font-family:var(--mono);font-size:11px;color:var(--sub);width:34px;text-align:right}
-  .reason{font-family:var(--mono);font-size:10px;color:var(--sub)}
-  .auditline{padding:6px 16px;font-size:11px;color:var(--sub);font-family:var(--mono);border-top:1px solid #14141f}
-  .auditline s{color:#55576e}
+  .runrow{display:flex;align-items:center;gap:14px;padding:13px 15px;border-top:1px solid var(--line)}
+  .run{font-family:var(--sans);font-weight:600;font-size:14px;color:#0E0E0D;background:var(--ink);border:0;border-radius:10px;padding:11px 18px;cursor:pointer;transition:.15s}
+  .run:hover{background:#fff;transform:translateY(-1px)}
+  .run:active{transform:translateY(0)}
+  .runrow .note{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+  /* catch card */
+  .verdict{min-height:172px;border:1px solid var(--line);border-radius:14px;padding:6px;display:flex;flex-direction:column;justify-content:center}
+  .resting{color:var(--faint);font-family:var(--mono);font-size:13px;text-align:center;padding:30px 18px;line-height:1.7}
+  .catch{border:1px solid var(--coral-dim);background:linear-gradient(180deg,#1d1413,#160f0e);border-radius:11px;padding:18px 18px;animation:rise .5s cubic-bezier(.2,.8,.2,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .catch .tag{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--coral)}
+  .catch .said{font-family:var(--serif);font-size:21px;line-height:1.3;margin:11px 0 8px;letter-spacing:-.01em}
+  .catch .body{font-size:14px;color:#d7d2c8}
+  .catch code{font-family:var(--mono);font-size:12.5px;background:#0e0c0b;border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+  .catch .ev{margin-top:13px;font-family:var(--mono);font-size:12px;color:var(--mut);border-top:1px solid #2a1c1a;padding-top:11px}
+  .catch .ev b{color:var(--coral)}
+  .info{border-radius:11px;padding:13px 16px;margin-top:9px;border:1px solid var(--line);font-size:13.5px;color:var(--mut)}
+  .info b{color:var(--ink);font-weight:600}
+  /* memory book */
+  .grp{margin-bottom:30px}
+  .grp .gh{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+  .grp .gh .name{font-family:var(--serif);font-size:18px}
+  .grp .gh .cnt{font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .mem{display:flex;align-items:center;gap:16px;padding:13px 0;border-top:1px solid var(--line)}
+  .mem .voice{flex:1;font-size:15px}
+  .mem .voice .seen{font-family:var(--mono);font-size:11px;color:var(--coral);margin-left:8px}
+  .mem .strength{display:flex;align-items:center;gap:9px;width:160px;justify-content:flex-end}
+  .mem .strength .w{font-family:var(--mono);font-size:11px;color:var(--mut);width:50px;text-align:right}
+  .mem .strength .track{width:80px;height:5px;border-radius:3px;background:#222019;overflow:hidden}
+  .mem .strength .track i{display:block;height:100%;border-radius:3px;transition:width .6s}
+  .pulse{animation:pulseRow 1.3s ease}
+  @keyframes pulseRow{0%{background:#1d1413}100%{background:transparent}}
+  .dot-k{width:7px;height:7px;border-radius:50%;flex:none}
+  /* changed-mind + fade */
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+  @media(max-width:860px){.twocol{grid-template-columns:1fr}}
+  .receipt{font-size:15px;padding:14px 0;border-top:1px solid var(--line)}
+  .receipt .old{color:var(--faint);text-decoration:line-through}
+  .receipt .arrow{color:var(--mut);font-family:var(--mono);font-size:12px;margin:5px 0}
+  .receipt .new{color:var(--ink)}
+  .fade .voice{color:var(--faint)}
+  .fadebtn{font-family:var(--sans);font-size:13px;color:var(--mut);background:none;border:1px dashed var(--faint);border-radius:9px;padding:8px 13px;cursor:pointer;margin-top:14px}
+  .fadebtn:hover{color:var(--coral);border-color:var(--coral)}
+  /* footer */
+  footer{padding:46px 0 70px;color:var(--faint);font-size:13px}
+  footer .line{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
+  footer a{color:var(--mut);text-decoration:none;border-bottom:1px solid var(--line)}
+  footer a:hover{color:var(--ink)}
+  .mono{font-family:var(--mono)}
 </style>
 </head>
 <body>
-  <div class="top">
-    <div class="brand"><span class="m"></span> Mneme</div>
-    <span class="repo">payments-api · the memory of how you code</span>
-    <span id="badge" class="badge mock">backend: …</span>
-    <div class="right">
-      <button class="ghost" onclick="reset()">↻ Re-learn history</button>
-      <button class="ghost" onclick="forget()">🗑 Run forget</button>
-    </div>
-  </div>
+  <div class="top"><div class="wrap"><div class="row">
+    <div class="mark"><span class="dot"></span>Mneme</div>
+    <div class="spacer"></div>
+    <span id="badge" class="badge">backend …</span>
+    <button class="ghostbtn" onclick="reset()">↻ relearn</button>
+  </div></div></div>
 
   <div class="wrap">
-    <!-- LEFT: review -->
-    <div class="card">
-      <div class="hd">Review a diff <span class="sub" id="usage"></span></div>
-      <textarea id="diff"></textarea>
-      <div class="actions">
-        <button class="primary" onclick="review()">Review against memory →</button>
-        <span class="hint">retrieves → packs → grounds each comment in a memory</span>
-      </div>
-      <div class="comments" id="comments"><div class="empty">Run a review to see memory-grounded comments.</div></div>
-    </div>
+    <!-- HERO -->
+    <header class="hero">
+      <div class="eyebrow">a code reviewer with a memory of you</div>
+      <div class="num" id="heroNum">—</div>
+      <h1>times you'd have shipped the <span class="hl">same bug</span>. Mneme caught every one.</h1>
+      <p class="lede">Linters know the language. Copilot forgets you the moment the session ends. Mneme reads your git history and remembers how <em>you</em> code — your style, your tools, the mistake you keep making — then catches it on your next diff.</p>
+      <div class="cueline">↓ <b>try it</b> — edit the diff, hit review, watch the number climb</div>
+    </header>
 
-    <!-- RIGHT: memory inspector (hero) -->
-    <div class="card">
-      <div class="hd">Memory Inspector <span class="sub" id="memcount"></span></div>
-      <div class="field" id="field"><div class="ylab">▲ salience (strength)</div>
-        <div class="axis"><span>← older</span><span>recency →</span><span>now</span></div>
+    <!-- TRY IT -->
+    <section id="try">
+      <div class="kicker">the live catch</div>
+      <h2 class="sec">Write the bug. Watch it get stopped.</h2>
+      <p class="sub">This is a real diff fed to a real review. Mneme retrieves what it knows about you, packs it under a token budget, and grounds every comment in a specific memory.</p>
+      <div class="try">
+        <div class="editor">
+          <div class="eh"><span class="fdot"></span><span class="fdot"></span><span class="fdot"></span>&nbsp; src/api/users.ts</div>
+          <textarea id="diff" spellcheck="false"></textarea>
+          <div class="runrow">
+            <button class="run" onclick="review()">Review with memory →</button>
+            <span class="note" id="runnote">retrieve · pack · ground</span>
+          </div>
+        </div>
+        <div class="verdict" id="verdict">
+          <div class="resting">no review yet.<br>hit <b style="color:var(--mut)">Review with memory</b> and meet the mentor who remembers.</div>
+        </div>
       </div>
-      <div class="legend">
-        <span><i style="background:#ff5c7a"></i>mistake</span>
-        <span><i style="background:#5cc9ff"></i>tech</span>
-        <span><i style="background:#46e3a0"></i>style</span>
-        <span><i style="background:#b18cff"></i>project</span>
-        <span><i style="background:#2a2a38"></i>fading</span>
-        <span>○ outline = packed into review</span>
+    </section>
+
+    <!-- WHAT IT KNOWS -->
+    <section id="book">
+      <div class="kicker">what mneme knows about you</div>
+      <h2 class="sec">A model of how you code — earned, not configured.</h2>
+      <p class="sub">Every memory was extracted from a real commit. Strength rises when you repeat something and decays when you stop. Nothing here was typed in by hand.</p>
+      <div id="groups"></div>
+    </section>
+
+    <!-- CHANGES MIND + FORGETS -->
+    <section>
+      <div class="twocol">
+        <div>
+          <div class="kicker">it changes its mind</div>
+          <h2 class="sec">You evolve. It keeps the receipt.</h2>
+          <p class="sub">When a newer decision overrides an old one, the old memory isn't deleted — it's superseded, with an audit trail.</p>
+          <div id="audit"></div>
+        </div>
+        <div>
+          <div class="kicker">it forgets, on purpose</div>
+          <h2 class="sec">A tool you tried once shouldn't haunt every review.</h2>
+          <p class="sub">Low-salience memories decay below a floor and age out, so old noise stops polluting advice.</p>
+          <div id="fading"></div>
+          <button class="fadebtn" onclick="forget()">run the forgetting job →</button>
+        </div>
       </div>
-      <div class="pack" id="pack" style="display:none">
-        <div class="pr"><span>knapsack pack</span><span id="packtok"></span></div>
-        <div class="pmeter"><i id="packbar" style="width:0%"></i></div>
+    </section>
+
+    <footer>
+      <div class="line">
+        <span class="mono" style="color:var(--mut)">Mneme</span>
+        <span id="engineLine">hybrid retrieval · reinforcement · knapsack packing</span>
+        <a href="https://github.com/muhammadegaa/mneme" target="_blank">GitHub ↗</a>
+        <span>MIT</span>
+        <span>Qwen · Alibaba Cloud</span>
+        <span id="usage" class="mono"></span>
       </div>
-      <div id="memlist"></div>
-      <div id="audit"></div>
-    </div>
+    </footer>
   </div>
 
 <script>
-const KCOL = { mistake:"#ff5c7a", tech:"#5cc9ff", style:"#46e3a0", project:"#b18cff" };
-const REVIEW_DIFF = `diff --git a/src/api/users.ts b/src/api/users.ts
-@@ -20,3 +20,9 @@
- export async function getUser(id: string) {
-+  const res = await fetch(\`/api/users/\${id}\`)
-+  const user = await res.json()
-+  return user.profile
-+}`;
-let packedIds = new Set();
-
+const KIND = {
+  mistake:{c:"#FF5C57", name:"Mistakes you repeat", voice:m=>m.text},
+  tech:{c:"#7CA7FF", name:"Tools you've chosen", voice:m=>m.text},
+  style:{c:"#7FD1A8", name:"Your style", voice:m=>m.text},
+  project:{c:"#B79CFF", name:"About this codebase", voice:m=>m.text},
+};
+function strengthWord(v){ return v>0.66?"strong":v>0.33?"holding":v>0.12?"fading":"almost gone"; }
+const REVIEW_DIFF = [
+  "export async function getUser(id: string) {",
+  "  const res = await fetch(`/api/users/${id}`)",
+  "  const user = await res.json()",
+  "  return user.profile",
+  "}",
+].join("\n");
 document.getElementById("diff").value = REVIEW_DIFF;
 
-async function api(path, opts){ const r = await fetch(path, opts); return r.json(); }
+let baseRepeats = 0;       // historical repeats, from the mistake memories
+let serverCatches = 0;     // live catches this session
+const $ = (id)=>document.getElementById(id);
+const api = (p,o)=>fetch(p,o).then(r=>r.json());
 
-function renderField(memories){
-  const field = document.getElementById("field");
-  [...field.querySelectorAll(".node")].forEach(n=>n.remove());
-  const W = field.clientWidth, H = field.clientHeight;
-  const padX = 60, padTop = 34, padBot = 56, maxAge = 44;
-  for(const m of memories){
-    const faded = m.status !== "active";
-    // x: recent (age 0) -> right; old -> left
-    const x = W - padX - (Math.min(m.ageDays, maxAge)/maxAge) * (W - 2*padX);
-    // y: high effectiveSalience -> top
-    const sal = faded ? m.salience*0.4 : m.effectiveSalience;
-    const y = padTop + (1 - Math.min(1, sal)) * (H - padTop - padBot);
-    const size = 26 + m.salience*64;
-    const node = document.createElement("div");
-    node.className = "node" + (faded?" faded":"") + (packedIds.has(m.id)?" packed":"");
-    node.style.left = x+"px"; node.style.top = y+"px";
-    const col = KCOL[m.kind] || "#888";
-    const glow = faded ? "none" : `0 0 ${10+m.salience*26}px ${col}66`;
-    const bg = faded ? "radial-gradient(circle at 35% 30%,#3a3a4a,#23232f)" : `radial-gradient(circle at 35% 30%, #fff8, ${col})`;
-    node.innerHTML =
-      `<div class="orb" style="width:${size}px;height:${size}px;font-size:${10+m.salience*4}px;background:${bg};box-shadow:${glow}">`
-      + (m.reinforcements>0 && !faded ? `<span class="ring"></span><span class="ring r2"></span><span class="rx">▲×${m.reinforcements}</span>`:"")
-      + (faded ? "⊘" : m.effectiveSalience.toFixed(2)) + `</div>`
-      + `<div class="cap">${m.text}</div>`;
-    field.appendChild(node);
-  }
+function countUp(el, to){
+  const from = Number(String(el.textContent).replace(/\D/g,"")) || 0;
+  if(from===to){ el.textContent=to; return; }
+  const steps=Math.max(1,Math.abs(to-from)), dur=520; let i=0;
+  const t=setInterval(()=>{ i++; el.textContent = Math.round(from+(to-from)*(i/steps)); if(i>=steps){el.textContent=to;clearInterval(t);} }, dur/steps);
 }
 
-function bar(v,col){ return `<div class="track"><i style="width:${Math.round(v*100)}%;background:${col}"></i></div>`; }
+function renderGroups(memories){
+  const active = memories.filter(m=>m.status==="active");
+  let html="";
+  for(const k of ["mistake","tech","style","project"]){
+    const items = active.filter(m=>m.kind===k).sort((a,b)=>b.effectiveSalience-a.effectiveSalience);
+    if(!items.length) continue;
+    const meta=KIND[k];
+    html+=`<div class="grp"><div class="gh"><span class="dot-k" style="background:${meta.c}"></span><span class="name">${meta.name}</span><span class="cnt">${items.length}</span></div>`;
+    for(const m of items){
+      const seen = m.reinforcements>0?`<span class="seen">seen ${m.reinforcements+1}×</span>`:"";
+      const v=m.effectiveSalience;
+      html+=`<div class="mem" data-id="${m.id}"><div class="voice">${meta.voice(m)}${seen}</div>
+        <div class="strength"><span class="w">${strengthWord(v)}</span><div class="track"><i style="width:${Math.round(v*100)}%;background:${meta.c}"></i></div></div></div>`;
+    }
+    html+=`</div>`;
+  }
+  $("groups").innerHTML=html;
+}
 
-function renderMemList(memories){
-  const active = memories.filter(m=>m.status==="active").sort((a,b)=>b.effectiveSalience-a.effectiveSalience);
-  document.getElementById("memlist").innerHTML = active.map(m=>{
-    const col = KCOL[m.kind]||"#888";
-    const rx = m.reinforcements>0?` <span style="color:#ff5c7a;font-family:var(--mono);font-size:10px">▲×${m.reinforcements}</span>`:"";
-    const pk = packedIds.has(m.id)?` <span style="color:#fff;font-size:10px">● packed</span>`:"";
-    return `<div class="mrow"><span class="knd k-${m.kind}">${m.kind}</span><span class="mt">${m.text}${rx}${pk}</span>${bar(m.effectiveSalience,col)}<span class="sv">${m.effectiveSalience.toFixed(2)}</span></div>`;
-  }).join("");
-  const sup = memories.filter(m=>m.status!=="active");
-  document.getElementById("audit").innerHTML = sup.map(m=>{
-    const tag = m.status==="superseded"?`⊳ superseded → ${m.supersededBy}`:"decayed · forgotten";
-    return `<div class="auditline">⊘ <s>${m.text}</s> · ${tag}</div>`;
-  }).join("");
+function renderAudit(memories){
+  const sup = memories.filter(m=>m.status==="superseded");
+  const active = memories.filter(m=>m.status==="active");
+  $("audit").innerHTML = sup.length ? sup.map(m=>{
+    const now = active.find(a=>a.id===m.supersededBy);
+    return `<div class="receipt"><div class="old">${m.text}</div><div class="arrow">↓ you changed your mind</div><div class="new">${now?now.text:"(current choice)"}</div></div>`;
+  }).join("") : `<div class="receipt" style="color:var(--faint)">no changes of mind yet.</div>`;
+}
+
+function renderFading(memories){
+  const fading = memories.filter(m=>m.status==="active" && m.effectiveSalience<0.2)
+    .concat(memories.filter(m=>m.status==="forgotten"));
+  $("fading").innerHTML = fading.length ? fading.map(m=>{
+    const gone = m.status==="forgotten";
+    return `<div class="mem fade"><div class="voice">${m.text} ${gone?'<span class="seen" style="color:var(--faint)">forgotten</span>':'<span class="seen" style="color:#d8a24a">fading</span>'}</div></div>`;
+  }).join("") : `<div class="receipt" style="color:var(--faint)">nothing fading right now.</div>`;
+}
+
+function setHero(memories){
+  baseRepeats = memories.filter(m=>m.kind==="mistake").reduce((s,m)=>s+(m.reinforcements>0?m.reinforcements+1:0),0);
+  countUp($("heroNum"), baseRepeats + serverCatches);
 }
 
 async function load(){
   const s = await api("/api/state");
-  document.getElementById("badge").className = "badge "+s.backend;
-  document.getElementById("badge").textContent = "backend: "+s.backend;
-  document.getElementById("memcount").textContent = s.memories.filter(m=>m.status==="active").length+" active · "+s.memories.filter(m=>m.status!=="active").length+" archived";
-  document.getElementById("usage").textContent = s.backend==="qwen" ? (s.usage.totalTokens+" tok · "+s.usage.calls+" calls") : "deterministic mock";
-  renderField(s.memories);
-  renderMemList(s.memories);
+  serverCatches = s.catches||0;
+  $("badge").className="badge "+s.backend;
+  $("badge").textContent="backend: "+s.backend;
+  $("usage").textContent = s.backend==="qwen" ? `${s.usage.totalTokens} tok` : "deterministic mock";
+  renderGroups(s.memories); renderAudit(s.memories); renderFading(s.memories); setHero(s.memories);
 }
 
 async function review(){
-  const diff = document.getElementById("diff").value;
+  const diff = $("diff").value;
+  $("runnote").textContent="thinking…";
   const r = await api("/api/review",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({diff,file:"src/api/users.ts"})});
+  $("runnote").textContent="retrieve · pack · ground";
   if(r.error){ return; }
-  packedIds = new Set(r.packed.map(p=>p.id));
-  // comments
-  document.getElementById("comments").innerHTML = r.comments.length ? r.comments.map(c=>{
-    const cite = c.citedMemoryId?`<div class="cite">↳ grounded in <b>${c.citedMemoryId}</b></div>`:"";
-    return `<div class="comment ${c.severity}"><div class="ch"><span class="sev ${c.severity}">${c.severity==="warn"?"⚠ WARN":c.severity==="praise"?"✓ PRAISE":"• INFO"}</span></div><div class="cb">${c.message.replace(/`([^`]+)`/g,"<code>$1</code>")}${cite}</div></div>`;
-  }).join("") : `<div class="empty">Clean — nothing flagged.</div>`;
-  // pack meter
-  document.getElementById("pack").style.display="block";
-  document.getElementById("packtok").textContent = r.usedTokens+" / "+r.budget+" tok · "+r.packed.length+" packed · "+r.dropped.length+" dropped";
-  document.getElementById("packbar").style.width = Math.min(100,(r.usedTokens/r.budget)*100)+"%";
-  // re-render with packed highlights + dropped list
+  serverCatches = r.catches;
+  const warn = r.comments.find(c=>c.severity==="warn");
+  const infos = r.comments.filter(c=>c.severity==="info");
+  let html="";
+  if(warn){
+    const seen = warn.cited ? (warn.cited.reinforcements+1) : null;
+    html += `<div class="catch"><span class="tag">⚠ caught — before it shipped</span>
+      <div class="said">${seen?`I've seen this one. ${seen} times.`:"I've seen this one before."}</div>
+      <div class="body">${warn.message.replace(/`([^`]+)`/g,"<code>$1</code>")}</div>
+      ${warn.cited?`<div class="ev">grounded in your memory <b>${warn.cited.id}</b> — "${warn.cited.text}". Not a generic rule. Yours.</div>`:""}</div>`;
+  }
+  for(const ci of infos){
+    html += `<div class="info">✓ <b>consistent with you.</b> ${ci.message.replace(/`([^`]+)`/g,"<code>$1</code>")}</div>`;
+  }
+  if(!warn && !infos.length) html=`<div class="resting">clean. nothing worth flagging.</div>`;
+  $("verdict").innerHTML = html;
+
+  // tick the number, then refresh + pulse the memory that fired
+  countUp($("heroNum"), baseRepeats + serverCatches);
   const s = await api("/api/state");
-  renderField(s.memories);
-  renderMemList(s.memories);
-  const dl = document.getElementById("memlist");
-  dl.innerHTML += r.dropped.map(d=>`<div class="mrow drop"><span class="knd k-${d.kind}">${d.kind}</span><span class="mt">${d.text}</span><span class="reason">${d.reason}</span></div>`).join("");
+  renderGroups(s.memories); renderAudit(s.memories); renderFading(s.memories);
+  if(warn?.cited){ const row=document.querySelector(`.mem[data-id="${warn.cited.id}"]`); if(row) row.classList.add("pulse"); }
 }
 
-async function forget(){ await api("/api/forget",{method:"POST"}); packedIds=new Set(); load(); }
-async function reset(){ await api("/api/reset",{method:"POST"}); packedIds=new Set(); document.getElementById("comments").innerHTML='<div class="empty">Run a review to see memory-grounded comments.</div>'; document.getElementById("pack").style.display="none"; load(); }
+async function forget(){ await api("/api/forget",{method:"POST"}); load(); }
+async function reset(){ await api("/api/reset",{method:"POST"}); serverCatches=0;
+  $("verdict").innerHTML=`<div class="resting">no review yet.<br>hit <b style="color:var(--mut)">Review with memory</b> and meet the mentor who remembers.</div>`; load(); }
 
 load();
-window.addEventListener("resize", load);
 </script>
 </body>
 </html>

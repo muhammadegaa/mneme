@@ -77,13 +77,17 @@ export function hashEmbed(text: string, dim = DIM): number[] {
   return v;
 }
 
-/** Added lines only (so review judges what changed, not pre-existing code). */
+/**
+ * Lines to judge. For a unified diff: the added (`+`) lines only. For a raw code
+ * snippet (no `+` markers — e.g. the live "review this" box), the whole text.
+ */
 function addedLines(diff: string): string {
-  return diff
+  const added = diff
     .split("\n")
     .filter((l) => l.startsWith("+") && !l.startsWith("+++"))
-    .map((l) => l.slice(1))
-    .join("\n");
+    .map((l) => l.slice(1));
+  if (added.length) return added.join("\n");
+  return diff.replace(/^@@.*$/gm, "").replace(/^[-+]{3}.*$/gm, "");
 }
 
 export class MockMentorModel implements MentorModel {
