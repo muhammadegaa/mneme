@@ -16,18 +16,23 @@
  */
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
+import { loadEnv } from "../scripts/load-env.js";
 import {
   MemoryEngine,
   InMemoryStore,
   MockMentorModel,
+  QwenMentorModel,
+  QwenClient,
+  configFromEnv,
   estimateTokens,
   cosineSimilarity,
   packMemories,
-  scoreMemory,
-  DEFAULT_WEIGHTS,
+  type Embedder,
   type Memory,
   type CommitSource,
 } from "../packages/memory-engine/src/index.js";
+
+loadEnv();
 
 const DAY = 86_400_000;
 const NOW = 1_700_000_000_000; // fixed clock -> fully reproducible
@@ -53,26 +58,44 @@ const PROBES: Probe[] = [
 
 const STALE_MARKERS = ["Redux", "class components", "Bun"];
 
-async function buildMemory() {
-  const model = new MockMentorModel();
+/**
+ * Build the memory set. Extraction is deterministic (MockMentorModel = the
+ * planted, controlled ground-truth facts). EMBEDDINGS come from `embedder` —
+ * live Qwen text-embedding-v3 when a key is present, the deterministic hash
+ * embedder otherwise. This isolates the variable that matters for retrieval
+ * quality (real semantic similarity) while keeping the dataset controlled.
+ */
+async function buildMemory(embedder: Embedder) {
+  const extract = new MockMentorModel();
   const store = new InMemoryStore();
-  const engine = new MemoryEngine(store, model, {});
+  const engine = new MemoryEngine(store, embedder, {});
   const commits = JSON.parse(readFileSync(resolve("bench/data/history.json"), "utf8")) as Array<CommitSource & { daysAgo: number }>;
   commits.sort((a, b) => b.daysAgo - a.daysAgo);
   for (const commit of commits) {
     const now = NOW - commit.daysAgo * DAY;
-    for (const input of await model.extractFromCommit(commit, { defaultSubject: "dev" })) {
+    for (const input of await extract.extractFromCommit(commit, { defaultSubject: "dev" })) {
       await engine.write(input, now);
     }
   }
   await engine.runDecay(NOW); // age out the one-off
-  return { model, store, engine, commits };
+  return { store, engine, commits };
+}
+
+/** Live Qwen embeddings when DASHSCOPE_API_KEY is set; deterministic mock otherwise. */
+function pickEmbedder(): { embedder: Embedder; backend: "qwen" | "mock" } {
+  try {
+    const cfg = configFromEnv();
+    return { embedder: new QwenMentorModel(new QwenClient(cfg)), backend: "qwen" };
+  } catch {
+    return { embedder: new MockMentorModel(), backend: "mock" };
+  }
 }
 
 type Packed = { memories: Memory[]; tokens: number };
 
 async function main() {
-  const { model, store, engine, commits } = await buildMemory();
+  const { embedder, backend } = pickEmbedder();
+  const { store, engine, commits } = await buildMemory(embedder);
   const all = await store.all();
 
   // Strategy A: full-context stuffing — every raw commit diff.
@@ -85,7 +108,7 @@ async function main() {
 
   // Strategy B: naive top-k cosine, status-blind (no forgetting, no salience/recency, no knapsack).
   const bPack = async (q: string): Promise<Packed> => {
-    const [qv] = await model.embed([q]);
+    const [qv] = await embedder.embed([q]);
     const ranked = [...all]
       .map((m) => ({ m, s: cosineSimilarity(qv!, m.embedding) }))
       .sort((x, y) => y.s - x.s)
@@ -151,14 +174,14 @@ async function main() {
     ...rows.map((r) => line(cols.map((c) => r[c]!))),
   ].join("\n");
 
-  console.log(`\nMneme benchmark · backend=${model.backend} · ${PROBES.length} probes · budget=${BUDGET}t · k=${K}\n`);
+  console.log(`\nMneme benchmark · backend=${backend} · embeddings=${backend === "qwen" ? "text-embedding-v3 (live)" : "deterministic mock"} · ${PROBES.length} probes · budget=${BUDGET}t · k=${K}\n`);
   console.log(md + "\n");
   console.log("Read: C matches A's recall and contradiction handling at a fraction of the tokens,");
   console.log("with stale leakage driven to zero by forgetting + supersession.\n");
 
   mkdirSync(resolve("bench/results"), { recursive: true });
-  writeFileSync(resolve("bench/results/latest.json"), JSON.stringify({ k: K, budget: BUDGET, probes: PROBES.length, rows }, null, 2));
-  writeFileSync(resolve("bench/results/table.md"), md + "\n");
+  writeFileSync(resolve("bench/results/latest.json"), JSON.stringify({ backend, k: K, budget: BUDGET, probes: PROBES.length, rows }, null, 2));
+  writeFileSync(resolve("bench/results/table.md"), `<!-- backend=${backend} -->\n` + md + "\n");
   console.log("→ bench/results/latest.json · bench/results/table.md\n");
 }
 

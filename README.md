@@ -23,21 +23,27 @@ history with planted facts, a later contradiction (Redux → Zustand), a
 style flip (class → functional), a decaying one-off (Bun), and distractors.
 Three context strategies, identical inputs:
 
-| Config | Recall@5 | Contradiction acc. | Stale-fact leakage | Avg tokens |
-|---|---|---|---|---|
-| A — full-context stuffing | 100% | 50% | 100% | 446 |
-| B — naive vector top-k | 100% | 50% | 100% | 64 |
-| **C — Mneme (hybrid + forgetting + packing)** | **100%** | **100%** | **0%** | **69** |
+Embeddings are **live Qwen `text-embedding-v3`** on Alibaba Cloud; the dataset is
+synthetic and controlled. Three context strategies, identical inputs:
+
+| Config | Recall@5 | Contradiction acc. | Stale-fact leakage | Avg tokens | Avg latency |
+|---|---|---|---|---|---|
+| A — full-context stuffing | 100% | 50% | 100% | 446 | 0.02ms |
+| B — naive vector top-k | 100% | 50% | 100% | 67 | 292ms |
+| **C — Mneme (hybrid + forgetting + packing)** | **100%** | **100%** | **0%** | **69** | 318ms |
 
 **Read:** full-context never misses but re-injects superseded facts (100% stale
-leakage) at 6× the tokens. Naive top-k is cheap but status-blind — it still
+leakage) at ~6.5× the tokens. Naive top-k is cheap but status-blind — it still
 leaks the stale "Redux" and resolves the contradiction only half the time.
 **Mneme matches full-context recall, resolves every contradiction, and drives
 stale leakage to zero — at a fraction of the tokens.** Forgetting + supersession
-is what separates a memory *engine* from a vector lookup.
+is what separates a memory *engine* from a vector lookup. (Latency for B/C is a
+single live embedding round-trip; A skips embedding but then pays it back many
+times over in LLM tokens on every turn.)
 
-> Numbers above are the deterministic mock backend (zero-credit, reproducible).
-> The same harness runs against live Qwen with `--qwen` once a key is set.
+> Run it yourself: `npm run bench`. With `DASHSCOPE_API_KEY` set it reports
+> `backend=qwen` on live `text-embedding-v3` (numbers above); with no key it
+> falls back to a deterministic embedder so the harness still runs in CI.
 
 ---
 
