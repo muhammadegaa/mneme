@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { loadEnv } from "../../scripts/load-env.js";
 import {
   MemoryEngine,
   createStore,
@@ -29,6 +30,7 @@ import {
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "../..");
+loadEnv(resolve(ROOT, ".env")); // read DASHSCOPE_* for MNEME_BACKEND=qwen
 const DAY = 86_400_000;
 const NOW = Date.now();
 const BUDGET = Number(process.env.MNEME_BUDGET ?? 64); // tight enough that packing visibly drops

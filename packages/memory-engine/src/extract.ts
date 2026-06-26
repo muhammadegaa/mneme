@@ -49,20 +49,25 @@ export function parseExtraction(raw: unknown, source: string, defaultSubject: st
 }
 
 const SYSTEM = `You are the memory of a code-review mentor. From a single git commit (message + diff), extract durable, atomic facts about HOW THIS DEVELOPER codes — things worth recalling when reviewing their future diffs.
-Rules:
-- Each memory is ONE self-contained statement. Split compound observations.
-- "kind" is one of:
-  - "style": formatting/naming/paradigm preference (e.g. "prefers early-return over nested ifs").
-  - "tech": a library/framework/tool choice (e.g. "uses Zustand for state"). These change over time.
-  - "mistake": a recurring bug/anti-pattern the dev introduces (e.g. "forgets null checks on API responses"). Reinforced on repeat.
-  - "project": an architecture decision/constraint/fact about THIS repo (e.g. "no ORM in the request hot path").
-- "subject": "dev" for facts about the developer; a stable repo slug for project facts.
-- "predicate": a normalized SLOT slug.
-  - For "tech"/"style"/"project": the attribute a later commit could overwrite (e.g. "state_mgmt", "control_flow", "data_access").
-  - For "mistake": a stable class slug so repeats match (e.g. "null_check", "unhandled_promise", "off_by_one").
-- "salience": 0..1 long-term importance.
-- Only extract durable signal. Ignore one-off mechanical changes, version bumps, and noise.
-Return JSON: {"memories":[{"text","kind","subject","predicate","salience"}, ...]}. Empty list if the commit reveals nothing durable.`;
+
+Each memory is ONE self-contained statement with: text, kind, subject ("dev", or a repo slug for project facts), predicate (a stable SLOT slug — repeats and overrides MUST share the same slug), salience (0..1).
+
+kind = one of style | tech | mistake | project.
+
+DETECT THESE ANTI-PATTERNS as kind="mistake" whenever the ADDED code matches — use the EXACT predicate and text given (identical wording is required so repeat occurrences reinforce the same memory):
+- Added code reads an HTTP/fetch response body (e.g. \`await res.json()\`, \`response.data\`) WITHOUT first checking \`res.ok\`/status or null-guarding the parsed value before using it → predicate="null_check", text="forgets null/ok checks on API responses".
+- An empty catch block that swallows the error → predicate="error_handling", text="swallows errors in empty catch blocks".
+- Uses \`var\` for a declaration → predicate="var_usage", text="uses var instead of const/let".
+A missing guard is an OMISSION — judge the absence, not just the tokens present.
+
+For tech / style / project, use these CANONICAL slot predicates when applicable, so a newer choice supersedes the older one in the same slot:
+- state management library → predicate="state_mgmt" (e.g. "uses Redux for state management" / "uses Zustand for state management").
+- React component paradigm → predicate="component_style" ("writes class components" / "writes functional components with hooks").
+- data-access / ORM decision about the repo → kind="project", predicate="data_access".
+- runtime/tool experiments (a one-off tool) → predicate="runtime_experiment", lower salience.
+
+Rules: split compound observations; ignore pure mechanical noise (version bumps, doc-only edits); only durable signal.
+Return JSON: {"memories":[{"text","kind","subject","predicate","salience"}, ...]}. Empty list if nothing durable.`;
 
 export async function extractFromCommit(
   qwen: QwenClient,
