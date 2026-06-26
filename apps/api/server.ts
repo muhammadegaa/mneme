@@ -168,6 +168,8 @@ app.post("/api/review", async (c) => {
 // Memory Inspector UI (single self-contained page).
 app.get("/", (c) => c.html(readFileSync(resolve(__dirname, "../web/index.html"), "utf8")));
 
-const port = Number(process.env.PORT ?? 5273);
-serve({ fetch: app.fetch, port });
-console.log(`◐ Mneme API + UI on http://127.0.0.1:${port}  (backend=${session.model.backend})`);
+// FC_SERVER_PORT is injected by Function Compute custom-container; fall back to
+// PORT (ECS/local). Bind 0.0.0.0 so the container is reachable.
+const port = Number(process.env.FC_SERVER_PORT ?? process.env.PORT ?? 5273);
+serve({ fetch: app.fetch, port, hostname: "0.0.0.0" });
+console.log(`◐ Mneme API + UI on :${port}  (backend=${session.model.backend}, store=${process.env.MEMORY_STORE ?? "memory"})`);

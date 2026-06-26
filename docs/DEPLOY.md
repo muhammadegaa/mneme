@@ -41,11 +41,27 @@ npm install
 npm run start          # → :5273, reachable via the instance public IP / SLB
 ```
 
-### Option B — Function Compute / container
+### Option B — Function Compute (recommended, serverless) via Serverless Devs
+The repo ships an [`s.yaml`](../s.yaml) (FC 3.0, custom-container from the Dockerfile).
+```bash
+npm i -g @serverless-devs/s
+s config add                       # paste your AccessKey ID + Secret (alias: default)
+
+# secrets come from your shell env (s.yaml reads ${env.X}); never committed:
+export DASHSCOPE_API_KEY=...        DASHSCOPE_BASE_URL=https://ws-...maas.aliyuncs.com/compatible-mode/v1
+export OSS_REGION=oss-ap-southeast-1 OSS_BUCKET=...  OSS_ACCESS_KEY_ID=...  OSS_ACCESS_KEY_SECRET=...
+
+s deploy                           # builds the image, pushes to ACR, creates the FC function + HTTP trigger
+# → prints the public HTTP trigger URL. Open it = the live Memory Inspector on Alibaba Cloud.
+```
+The function listens on port 9000 (`FC_SERVER_PORT`, set in `s.yaml`); the server
+honors it automatically. For cross-session persistence in the cloud, set
+`MEMORY_STORE=postgres` + `DATABASE_URL` (ApsaraDB) in `s.yaml`.
+
+### Option C — local container (smoke test before FC)
 ```bash
 docker build -t mneme .
-docker run -p 5273:5273 --env-file .env mneme
-# push to ACR and deploy as a custom-container function or on ECS.
+docker run -p 5273:5273 --env-file .env mneme   # → http://localhost:5273
 ```
 
 ## 5. Verify it's live on Alibaba Cloud
