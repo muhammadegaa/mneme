@@ -31,19 +31,21 @@ export function parseExtraction(raw: unknown, source: string, defaultSubject: st
   for (const item of arr as RawMemory[]) {
     if (typeof item?.text !== "string" || item.text.trim() === "") continue;
     const kind = (KINDS as string[]).includes(item.kind as string) ? (item.kind as MemoryKind) : "style";
-    const salience = clamp01(Number(item.salience), 0.5);
-    // Durable preferences/decisions decay slowly; mistakes decay medium so a
-    // habit you've broken fades — unless it keeps recurring and gets reinforced.
-    const decayRate = kind === "mistake" ? 0.03 : 0.01;
-    out.push({
-      text: item.text.trim(),
-      kind,
-      subject: typeof item.subject === "string" && item.subject.trim() ? item.subject.trim() : defaultSubject,
-      predicate: typeof item.predicate === "string" && item.predicate.trim() ? item.predicate.trim() : undefined,
-      salience,
-      decayRate,
-      source,
-    });
+    const predicate = typeof item.predicate === "string" && item.predicate.trim() ? item.predicate.trim() : undefined;
+    const oneOff = predicate === "runtime_experiment";
+
+    // NORMALIZE SUBJECT: the model is inconsistent (it returns commit shas /
+    // filenames). A memory is about the DEVELOPER (style/tech/mistake) or the
+    // REPO (project) — force that so slot-based supersede/reinforce is reliable.
+    const subject = kind === "project" ? "repo" : "dev";
+
+    // A one-off tool experiment is transient regardless of what the model scored:
+    // cap salience low + decay fast so it ages out (the forgetting demo). Durable
+    // facts decay slowly; mistakes decay medium unless reinforced.
+    const salience = oneOff ? Math.min(clamp01(Number(item.salience), 0.2), 0.2) : clamp01(Number(item.salience), 0.5);
+    const decayRate = oneOff ? 0.06 : kind === "mistake" ? 0.03 : 0.01;
+
+    out.push({ text: item.text.trim(), kind, subject, predicate, salience, decayRate, source });
   }
   return out;
 }
