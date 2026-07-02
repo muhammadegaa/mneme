@@ -8,10 +8,10 @@ Updated every phase. 🟢 done · 🟡 in progress · 🔴 not started.
 | # | Requirement | Status | Artifact |
 |---|---|---|---|
 | 1 | Public GitHub repo, MIT license detectable in About | 🟢 | **https://github.com/muhammadegaa/mneme** (public, MIT [`LICENSE`](./LICENSE)). |
-| 2 | Backend runs on Alibaba Cloud; one file proving Alibaba Cloud API calls (Qwen + ≥1 infra svc) | 🟡 | Code complete: [`proof.ts`](./alibaba/proof.ts) (Qwen + OSS), [`pg-store.ts`](./packages/memory-engine/src/store/pg-store.ts) (ApsaraDB), [`Dockerfile`](./Dockerfile), [`docs/DEPLOY.md`](./docs/DEPLOY.md). Live run pending key + cloud account. |
-| 3 | Architecture diagram (Mermaid + exported PNG) | 🟡 | Mermaid in [README](./README.md#architecture) (renders on GitHub). PNG export optional. |
-| 4 | ~3-min demo video script + shot list | 🟢 | [`docs/VIDEO_SCRIPT.md`](./docs/VIDEO_SCRIPT.md) — recording pending. |
-| 5 | ~30s "backend on Alibaba Cloud" proof recording script | 🟢 | [`docs/PROOF_RECORDING.md`](./docs/PROOF_RECORDING.md) — recording pending cloud. |
+| 2 | Backend runs on Alibaba Cloud; file proving Alibaba Cloud API calls | 🟢 (Qwen) / 🟡 (infra) | **Qwen on Alibaba Cloud is LIVE and proven**: `npm run proof` → `[1/2] Qwen/DashScope OK · embed dims=1024`. Infra service (OSS/FC) is fully wired ([`proof.ts`](./alibaba/proof.ts), [`s.yaml`](./s.yaml), [`Dockerfile`](./Dockerfile), [`pg-store.ts`](./packages/memory-engine/src/store/pg-store.ts)) but **not activated — blocked by the account's "complete your information" verification gate**, which disables OSS + Function Compute. Flips on the moment the account clears. |
+| 3 | Architecture diagram (Mermaid + exported PNG) | 🟢 | Mermaid in [README](./README.md#architecture) + [`docs/architecture.mmd`](./docs/architecture.mmd) (renders natively on GitHub). |
+| 4 | ~3-min demo video script + shot list | 🟢 | [`docs/VIDEO_SCRIPT.md`](./docs/VIDEO_SCRIPT.md) — demo runs live on Qwen; ready to record. |
+| 5 | ~30s "backend on Alibaba Cloud" proof recording script | 🟢 | [`docs/PROOF_RECORDING.md`](./docs/PROOF_RECORDING.md); `npm run proof` shows the live Qwen call now. |
 | 6 | README: problem, features, architecture, how-to-run, benchmark | 🟢 | [README](./README.md) leads with the live benchmark table. |
 | 7 | Qwen for ALL reasoning (max/plus agent, turbo cheap ops, Qwen embeddings) | 🟢 | [`qwen-client.ts`](./packages/memory-engine/src/model/qwen-client.ts) — tiered routing + embeddings. |
 
@@ -53,5 +53,12 @@ Updated every phase. 🟢 done · 🟡 in progress · 🔴 not started.
   - 3a: engine re-pointed to coding-mentor taxonomy + reinforcement mechanic (29 tests).
   - 3b: `MentorModel` interface + `MockMentorModel` (deterministic, zero-credit) + `QwenMentorModel`; `JsonFileStore`; `mneme` CLI (learn/review/forget/inspect) running end-to-end offline.
   - 3c: **benchmark** — A/B/C harness, C wins (100% contradiction acc, 0% stale leakage, 69 tok vs A's 446). Table leads the README.
-  - Next: web UI (Hybrid) wrapping the CLI core.
-- **Risk:** live Qwen still unproven (mock-first by design). `npm run hello` / `npm run bench --qwen` close it the moment a key is set.
+  - 3d: live Memory Inspector UI + Hono API (the demo hero surface).
+- **Live-Qwen verification (Alibaba Cloud) — DONE.**
+  - `npm run hello` → real qwen-plus completion + structured JSON + 1024-dim embeddings.
+  - `npm run bench` → `backend=qwen`, live `text-embedding-v3`; C wins (100% contradiction acc, 0% stale leakage).
+  - Demo hero fires on `backend=qwen`: review flags the null-check citing a reinforced memory (seen 3×).
+  - Cross-session proven (json store restores across restart on live Qwen).
+  - `npm run proof` → live Qwen/DashScope call succeeds (Alibaba Cloud).
+- **Blocked (not by code):** Function Compute deploy + OSS write are wired (`s.yaml`, `Dockerfile`, `pg-store.ts`) but the account's **"complete your information" verification gate** disables OSS + FC. Clears the moment the account is verified.
+- **Submittable now:** public MIT repo · README leads with real `backend=qwen` benchmark · demo runs live on Qwen · `proof.ts` shows the live Alibaba Cloud call. Infra deploy flips on post-verification.
