@@ -96,10 +96,19 @@ A fresh adversarial judge-agent graded the demo (screenshots) + README + DEVPOST
 - **Seed non-determinism → SOLVED with a golden seed**: force-reseed re-runs Qwen extraction (non-deterministic → hero sometimes fails). Fix pattern: extract once with live Qwen, freeze the good state as a committed fixture (`.mneme/golden.json`), restore it deterministically on reset/first-boot. The live inference (review) still runs on Qwen — only the SEED is frozen. Honest + reproducible. Reliability probe: `_rel.mjs` (fires /api/review 5× via browser context, counts grounded catches). Always 5/5 now.
 - **Browser review latency ~3.8s**: live qwen-plus review is slow; don't add long UI staging on top. Screenshot/verify by waiting on the `.catch` selector, not a fixed timeout.
 
+## PACKING-CAUSALITY (backlog #1) — partial DONE
+- PACK trace step now NAMES the memory the knapsack drops ("cut the faded 'uses Bun…'") — salience-driven packing made concrete + honest (loud mistake kept, quiet one-off cut). Verified from real `dropped[]` telemetry.
+- Review prompt no longer bakes a count into prose (was stating a stale "18×" after reinforce-on-catch); the tally is UI-only now → hero/card/bar all read one consistent climbing number. Reliability 5/5, 29/29 tests.
+- STILL OPEN: the FULL before/after flip (memory literally dropped when quiet → catch MISSED → reinforce → packed → caught). Bigger, reliability-sensitive; do in fresh context, verify 5×, never fabricate the "was dropped" claim.
+
 ## LAST SESSION (resume pointer — stage 5)
 
-2026-07-06 · Loop iter 1 DONE. Shipped G3 (agent-state trace, vision-verified). Server live on
-Qwen. Vision-verify harness working (`_shot.mjs`). NEXT: (1) draft paste-ready Devpost text →
-G5. (2) verify README leads with benchmark + is skimmable in 20s → G4. (3) tighten video shot
-list to match current demo incl. the new trace → G6. Then independent-verifier pass on the
-whole demo (fresh sub-agent, grade against G1-G8). Reset demo to clean state before finishing.
+2026-07-06 · Loop iters 1–4 DONE (9 commits). All G1–G8 pass; 2 adversarial verifier rounds
+applied; demo bulletproof (5/5, golden seed, reproducible on clone) + clean; 29/29 tests; proof
+→ live Qwen OK. Submission is submittable, honest, winning-grade. NEXT (needs decision/fresh
+context): backlog #1 full packing before/after flip (risky — verify 5×); backlog #2 real-repo
+benchmark (burns Qwen credits — confirm cost with user first). User must record video + submit;
+Alibaba infra deploy still gated on account verification.
+To resume the loop: restart server (`MNEME_BACKEND=qwen MEMORY_STORE=json PORT=5273 npx tsx
+apps/api/server.ts`), read this file, pick the top backlog item, verify with `_shot.mjs`/`_rel.mjs`
++ an independent verifier sub-agent, write results back here.
