@@ -31,20 +31,29 @@ flip (class → functional components), a decaying one-off (a Bun experiment), a
 distractors. Embeddings are **live Qwen `text-embedding-v3` on Alibaba Cloud**;
 the dataset is synthetic and controlled. Three context strategies, identical inputs:
 
-| Config | Recall@5 | Contradiction acc. | Stale-fact leakage | Avg tokens | Avg latency |
+All three configs achieve perfect Recall@5 here (the planted facts are all
+retrievable) — so recall is *not* the differentiator. The engine earns its keep
+on the two columns a naive store can't touch: **contradiction accuracy** and
+**stale-fact leakage**.
+
+| Config | Contradiction acc. | Stale-fact leakage | Avg tokens | Recall@5 | Avg latency† |
 |---|---|---|---|---|---|
-| A — full-context stuffing | 100% | 50% | 100% | 446 | 0.02ms |
-| B — naive vector top-k | 100% | 50% | 100% | 67 | 292ms |
-| **C — Mneme (hybrid + forgetting + packing)** | **100%** | **100%** | **0%** | **69** | 318ms |
+| A — full-context stuffing | 50% | 100% | 446 | 100% | ~0ms† |
+| B — naive vector top-k | 50% | 100% | 67 | 100% | 292ms |
+| **C — Mneme (hybrid + forgetting + packing)** | **100%** | **0%** | **69** | **100%** | 318ms |
 
 **Read:** full-context never misses but re-injects superseded facts (100% stale
 leakage) at ~6.5× the tokens. Naive top-k is cheap but status-blind — it still
 leaks the stale "Redux" fact and resolves the contradiction only half the time.
-**Mneme matches full-context recall, resolves every contradiction, and drives
-stale leakage to zero — at a fraction of the tokens.** Forgetting + supersession
-is what separates a memory *engine* from a vector lookup. (Latency for B/C is a
-single live embedding round-trip; A skips embedding but pays it back many times
-over in LLM tokens on every turn.)
+**Mneme resolves every contradiction and drives stale leakage to zero — at a
+fraction of the tokens and matching recall.** Forgetting + supersession is what
+separates a memory *engine* from a vector lookup.
+
+> †Latency for B/C is one live Qwen embedding round-trip. Config A does **no**
+> embedding call (it stuffs raw text), so its retrieval step is ~free — but it
+> pays that back many times over in LLM input tokens on *every* turn (446 vs 69).
+> The point of the latency column is that Mneme's forgetting/packing adds
+> negligible overhead (318ms vs B's 292ms) while fixing what B gets wrong.
 
 > Run it yourself: `npm run bench`. With `DASHSCOPE_API_KEY` set it reports
 > `backend=qwen` on live `text-embedding-v3` (the numbers above); with no key it
