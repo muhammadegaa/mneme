@@ -22,14 +22,35 @@ Submission is READY when every criterion below is CONFIRMED by an *independent v
 - [x] **G7 · Honesty** — DONE. README/DEVPOST/video all honest; false OSS claim removed; mock labeled `backend: mock`; deploy caveat stated once; every claim maps to a runnable command.
 - [x] **G8 · It runs** — DONE. 29/29 tests pass; demo live on `backend: qwen`; catch fires 5/5 (reliability probe); clean state `catches:0 active:5 mistake seen 18×`; golden restores on fresh clone.
 
-## ALL G1–G8 PASS → submittable. WIN-HARDER BACKLOG (next-tier, ranked)
+## ALL G1–G8 PASS → submittable + honest. Two adversarial verifier rounds applied.
 
-The rubric floor is met and honest. To push from "solid" to "winning", the loop works these next (highest Technical-Depth/Innovation leverage first):
-1. **Real-repo benchmark** (Technical Depth) — the verifier's deepest hit: the bench is synthetic + self-designed. Run the engine over a real open-source git history (even one repo), report recall where baselines actually MISS, show a non-binary contradiction score. Biggest credibility lever. (Bigger lift — needs a real commit corpus.)
-2. **Second verifier pass** — confirm the 5 fixes landed on fresh screenshots; surface the next tier. (cheap, compounding — DO EACH ITERATION)
-3. **Problem-value evidence** (25%) — one concrete line/stat showing developers really do repeat the same mistake (not just asserted). Maybe cite a study or frame the git-history stat.
-4. **Budget realism** — 64-token budget reads as a toy; consider a more realistic budget that still visibly drops memories, or annotate why it's small (demo legibility).
-5. **`npm run proof` freshness** — confirm it still prints the live `Qwen/DashScope OK · embed dims=1024` line (G8 sub-item not re-run this session).
+VERIFIER ROUND 2 fixes (all DONE + DOM-verified): reinforce-on-catch (count climbs
+18→19→20 consistently across hero/card/bar — desync killed); live token meter refreshes
+(was stuck 0 tok); faded memories dropped from main list (Bun no longer double-labeled);
+DEVPOST benchmark table aligned to README order. Round-2 confirmed round-1 fixes all landed.
+
+## WIN-HARDER BACKLOG (next-tier, ranked — for continued loop iterations)
+
+1. **Reinforcement flips a packing decision** (BOTH verifiers' "one change"; 60% of rubric).
+   Show the null/ok memory get DROPPED by the knapsack when quiet (bug slips through), then
+   PACKED once reinforced loud (bug caught). Makes salience CAUSAL, not a tally, and proves the
+   packer is consequential. PLAN (honest, must be real not narrated): add a "quiet start" demo
+   mode or a small budget where a freshly-low-salience null_check is genuinely dropped, then a
+   "teach it" action reinforces until it crosses the threshold and starts catching. Risk: demo
+   reliability + must not fabricate the "was dropped before" claim. Do in fresh context, verify 5×.
+2. **Real-repo benchmark** (Technical Depth credibility — the bench is synthetic/self-designed).
+   Run the engine over a real OSS git history; report recall where baselines MISS + a non-binary
+   contradiction score. CAVEAT: live Qwen extraction over many commits burns credits ($40 coupon
+   is finite) — scope small (one repo / curated commits) and flag cost to the user before running.
+3. **Problem-value evidence** (25%) — one concrete stat/line that developers really repeat the
+   same mistake (not just asserted).
+4. **Budget realism** — 64-tok budget reads as a toy (verifier). Either raise it (still visibly
+   dropping) or annotate why it's small for demo legibility. (Overlaps #1.)
+
+## DONE THIS SESSION (loop iters 1–3)
+G3 trace · G4 README rewrite · G5 Devpost · G6 video script · golden-seed reliability ·
+verifier round 1 fixes · hero copy + benchmark clarity · verifier round 2 fixes.
+Demo clean + recording-ready on live Qwen. 29/29 tests. proof → live Qwen OK.
 
 ---
 
