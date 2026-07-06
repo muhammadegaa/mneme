@@ -1,30 +1,35 @@
-# 🧠 Mneme — the account manager that never forgets
+# 🧠 Mneme — the code reviewer that remembers you
 
 > A persistent **MemoryAgent** with a real, benchmarkable memory engine.
-> Built on **Qwen** (DashScope / Model Studio) and **Alibaba Cloud**.
+> Powered end-to-end by **Qwen** (DashScope / Model Studio) on **Alibaba Cloud**.
 > Qwen Cloud Global AI Hackathon — **Track 1: MemoryAgent**.
 
-Most "AI memory" is `topK(cosine)` over a vector store. Mneme is a memory
-**engine**: it extracts atomic memories, ranks them with a hybrid scoring
-function, **forgets** via time-decay, **resolves contradictions** with an audit
-trail, and **packs** an optimal memory set into a fixed token budget with a
-knapsack solver. Every decision is observable in a Memory Inspector.
+Linters know the language. Copilot forgets you the moment the session ends.
+**Mneme reads your git history and learns how _you_ code** — your style, your
+tools, and the mistake you keep making — then catches it on your next diff,
+*before it ships*.
 
-The vertical: a **B2B account manager** that remembers every client interaction
-across sessions — preferences, commitments, renewal dates — and stops re-asking
-what it was already told.
+Most "AI memory" is `topK(cosine)` over a vector store. Mneme is a memory
+**engine**: it extracts atomic memories from commits, ranks them with a hybrid
+scoring function, **reinforces** recurring mistakes so they get louder,
+**forgets** one-off noise via time-decay, **resolves contradictions** with an
+audit trail, and **packs** the optimal memory set into a fixed token budget with
+a 0/1 knapsack solver. Every decision is observable in a live Memory Inspector.
+
+**The hero:** a bug you've made before makes its memory *louder* every time it
+recurs. On a new diff, Mneme catches it and tells you exactly how many times
+you'd have shipped it — grounded in a specific memory of yours, not a generic
+lint rule.
 
 ---
 
 ## 📊 Benchmark (the headline)
 
 Reproducible harness (`npm run bench`) over a synthetic multi-session commit
-history with planted facts, a later contradiction (Redux → Zustand), a
-style flip (class → functional), a decaying one-off (Bun), and distractors.
-Three context strategies, identical inputs:
-
-Embeddings are **live Qwen `text-embedding-v3`** on Alibaba Cloud; the dataset is
-synthetic and controlled. Three context strategies, identical inputs:
+history with planted facts, a later contradiction (Redux → Zustand), a style
+flip (class → functional components), a decaying one-off (a Bun experiment), and
+distractors. Embeddings are **live Qwen `text-embedding-v3` on Alibaba Cloud**;
+the dataset is synthetic and controlled. Three context strategies, identical inputs:
 
 | Config | Recall@5 | Contradiction acc. | Stale-fact leakage | Avg tokens | Avg latency |
 |---|---|---|---|---|---|
@@ -34,88 +39,120 @@ synthetic and controlled. Three context strategies, identical inputs:
 
 **Read:** full-context never misses but re-injects superseded facts (100% stale
 leakage) at ~6.5× the tokens. Naive top-k is cheap but status-blind — it still
-leaks the stale "Redux" and resolves the contradiction only half the time.
+leaks the stale "Redux" fact and resolves the contradiction only half the time.
 **Mneme matches full-context recall, resolves every contradiction, and drives
 stale leakage to zero — at a fraction of the tokens.** Forgetting + supersession
 is what separates a memory *engine* from a vector lookup. (Latency for B/C is a
-single live embedding round-trip; A skips embedding but then pays it back many
-times over in LLM tokens on every turn.)
+single live embedding round-trip; A skips embedding but pays it back many times
+over in LLM tokens on every turn.)
 
 > Run it yourself: `npm run bench`. With `DASHSCOPE_API_KEY` set it reports
-> `backend=qwen` on live `text-embedding-v3` (numbers above); with no key it
+> `backend=qwen` on live `text-embedding-v3` (the numbers above); with no key it
 > falls back to a deterministic embedder so the harness still runs in CI.
 
 ---
 
-## ✨ Features
+## ✨ What it does
 
-- **Write path** — Qwen structured-output extraction → classification
-  (`preference｜fact｜event｜episodic`) → embedding → dedupe → store.
-- **Hybrid retrieval** — `score = 0.6·semantic + 0.2·recency + 0.2·salience`,
-  recency as half-life decay, salience time-decayed. Math exposed per result.
-- **Forgetting** — continuous salience decay ages memories out; new facts
-  supersede old ones in the same `(subject, predicate)` slot, audit trail kept.
-- **Context packing** — 0/1 knapsack selects the optimal memory set under a
-  token budget; shows what was packed, what dropped, and **why**.
-- **Cross-session** — memories persist on Alibaba Cloud and improve answers
-  across separate sessions.
-- **Graceful degradation** — if the vector index can't answer, the store falls
-  back to a candidate set and the engine still reranks.
+- **Learns from commits** — Qwen structured-output extraction turns each commit
+  (message + diff) into atomic memories, classified as
+  `style ｜ tech ｜ mistake ｜ project`. Nothing is typed in by hand.
+- **Hybrid retrieval** — `score = semantic + recency + salience`; recency as
+  half-life decay, salience time-decayed. The math is exposed per result.
+- **Reinforcement (the hero)** — a repeated mistake reinforces the *same* memory
+  (same `subject·predicate` slot / high cosine), so its salience climbs. The
+  louder it gets, the harder it is to miss on your next diff.
+- **Forgetting, on purpose** — continuous salience decay ages one-off noise (a
+  tool you tried once) below a floor so it stops polluting advice.
+- **Contradiction resolution** — a newer decision supersedes the old one in the
+  same slot (Redux → Zustand), old memory kept with an audit trail.
+- **Context packing** — a 0/1 knapsack selects the optimal memory set under a
+  token budget; the Inspector shows what was packed, what dropped, and **why**.
+- **Cross-session** — memories persist between runs (JSON store locally,
+  ApsaraDB pgvector on Alibaba Cloud) so each session resumes instead of restarts.
+- **Grounded review** — every review comment cites the specific memory it came
+  from. Live retrieve → pack → ground is visible as the engine works.
+
+## 🤖 How Qwen powers it (all reasoning)
+
+| Job | Model (DashScope) |
+|---|---|
+| Memory extraction from diffs (per-commit, cheap) | `qwen-turbo` |
+| Memory-grounded code review (the agent) | `qwen-plus` |
+| Heavy reasoning tier | `qwen-max` |
+| Embeddings for retrieval (1024-dim) | `text-embedding-v3` |
+
+One client (`qwen-client.ts`) handles tiered routing, retries, timeouts,
+JSON repair, and token accounting against the OpenAI-compatible DashScope
+endpoint. `npm run proof` makes a live call and prints
+`Qwen/DashScope OK · embed dims=1024`.
 
 ## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
-    U[User / Account Manager] -->|turn| API[Hono API · Alibaba Cloud ECS/FC]
+    U[Developer] -->|commit / diff| API[Hono API + Memory Inspector]
     API --> ENG[Memory Engine]
 
     subgraph Qwen Cloud · DashScope
-      LLM[qwen-max / qwen-plus / qwen-turbo]
+      LLM[qwen-plus · qwen-turbo · qwen-max]
       EMB[text-embedding-v3]
     end
 
-    ENG -->|extract · classify · pack| LLM
+    ENG -->|extract · review| LLM
     ENG -->|embed| EMB
 
     subgraph Alibaba Cloud
       PG[(ApsaraDB PostgreSQL · pgvector)]
-      OSS[(OSS · blobs)]
+      JSON[(JSON store · cross-session)]
     end
 
-    ENG -->|write / retrieve / forget| PG
-    ENG --> OSS
+    ENG -->|write / retrieve / reinforce / forget| PG
+    ENG --> JSON
 
-    API --> WEB[Next.js · Memory Inspector]
-    WEB -->|salience · decay · packed/dropped| U
+    API -->|salience · decay · packed/dropped · grounding| U
 ```
 
 ## 🚀 How to run
 
 ```bash
 npm install
-npm test                    # 29 deterministic tests (scoring/packing/decay/reinforce)
-npm run bench               # A/B/C benchmark — prints the table above (zero credits)
-
-# Headless CLI — the whole engine, offline:
-npm run mneme learn         # learn a developer from planted git history
-npm run mneme inspect       # salience bars, reinforcement, audit trail
-npm run mneme review        # memory-grounded review of a fresh diff
-npm run mneme forget        # run the decay job; watch a memory age out
+npm test                    # 29 deterministic tests (scoring / packing / decay / reinforce)
+npm run bench               # A/B/C benchmark — prints the table above
 
 # Live Memory Inspector UI + API (the demo hero):
 npm run dev                 # → http://127.0.0.1:5273
 
-# Go live on Qwen / Alibaba Cloud (optional — works fully without):
-cp .env.example .env        # add DASHSCOPE_API_KEY (mainland or -intl endpoint)
+# Headless CLI — the whole engine from the terminal:
+npm run mneme learn         # learn a developer from planted git history
+npm run mneme inspect       # salience bars, reinforcement counts, audit trail
+npm run mneme review        # memory-grounded review of a fresh diff
+npm run mneme forget        # run the decay job; watch a one-off memory age out
+
+# Go live on Qwen / Alibaba Cloud:
+cp .env.example .env        # add DASHSCOPE_API_KEY + DASHSCOPE_BASE_URL
 npm run hello               # live Qwen round-trip: chat + structured + embeddings
 npm run mneme review --qwen # same pipeline, live inference
-npm run proof               # Alibaba Cloud proof: Qwen + OSS (Phase 5)
+npm run proof               # proof of the live Alibaba Cloud (Qwen/DashScope) call
 ```
 
-> **Mock-first by design.** Every command above runs deterministically with no
-> API key via a `MockMentorModel` behind the same `MentorModel` interface as
-> live Qwen. Add a key and pass `--qwen` (or `MNEME_BACKEND=qwen`) to swap in
-> real inference with zero code changes.
+> **Live by default, mock for CI.** The demo and benchmark above run on **live
+> Qwen** when `DASHSCOPE_API_KEY` is set. Every command *also* runs with no key
+> via a deterministic `MockMentorModel` behind the same `MentorModel` interface
+> — so tests and CI are reproducible and free. The mock is labeled as such in the
+> UI (`backend: mock`); it is never presented as live intelligence.
+
+## ✅ Status (honest)
+
+- **Qwen on Alibaba Cloud is live and proven** — extraction, review, and
+  embeddings all run on DashScope; `npm run proof` shows the round-trip. The
+  demo hero, the benchmark, and cross-session persistence are all verified on
+  `backend=qwen`.
+- **Managed infra deploy (OSS + Function Compute) is wired but not yet
+  activated** — `s.yaml`, `Dockerfile`, and the pgvector store adapter are in the
+  repo, but the Alibaba Cloud account is behind a "complete your information"
+  verification gate that disables OSS and Function Compute. It flips on the
+  moment the account clears; no code change needed.
 
 ## 🧩 Project layout
 
@@ -124,20 +161,21 @@ packages/memory-engine/     standalone, unit-tested engine (the moat)
   src/scoring.ts            pure hybrid ranking (tested to exact numbers)
   src/packing.ts            0/1 knapsack context packer (tested)
   src/decay.ts              forgetting + contradiction resolution (tested)
-  src/engine.ts             write / retrieve / pack / forget orchestration
+  src/engine.ts             write / retrieve / reinforce / pack / forget
   src/extract.ts            Qwen structured-output memory extraction
-  src/model/qwen-client.ts  one client: retries, timeouts, JSON repair, token accounting
-  src/store/                MemoryStore interface · in-memory + pgvector adapters
-apps/api/                   Hono API (Phase 4)
-apps/web/                   Next.js + Memory Inspector (Phase 4)
-alibaba/proof.ts            Proof of Alibaba Cloud deployment
-bench/                      benchmark harness + dataset (Phase 3)
+  src/model/qwen-client.ts  one client: retries, timeouts, JSON repair, tokens
+  src/store/                MemoryStore interface · in-memory / JSON / pgvector
+apps/api/server.ts          Hono API + static Memory Inspector (the demo hero)
+apps/web/index.html         the Memory Inspector UI (self-contained)
+cli/mneme.ts                headless CLI (learn / review / forget / inspect)
+bench/                      benchmark harness + synthetic dataset
+alibaba/                    proof.ts + deploy config (s.yaml, Dockerfile)
 ```
 
 ## 🔧 Tech
 
 TypeScript · Qwen via DashScope (OpenAI-compatible) · ApsaraDB for PostgreSQL
-(pgvector) · OSS · Hono · Next.js + Tailwind + shadcn/ui.
+(pgvector) · Function Compute / OSS · Hono · self-contained HTML Inspector.
 
 ## 📄 License
 
