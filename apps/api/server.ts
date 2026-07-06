@@ -163,6 +163,17 @@ app.post("/api/review", async (c) => {
   });
   catches += caught.length;
 
+  // Catching the bug again IS another occurrence of it — so REINFORCE the memory:
+  // its salience climbs and the "seen N×" count rises, everywhere, from one source.
+  // This is the hero mechanic made causal (not a cosmetic counter): repeat it, it
+  // gets louder. Reset restores the golden seed, so each demo session starts fresh.
+  for (const cm of caught) {
+    const m = packedById.get(cm.citedMemoryId!)!;
+    const reinforced = { ...m, reinforcements: m.reinforcements + 1, salience: Math.min(1, m.salience + 0.15), lastAccessedAt: NOW };
+    await session.store.insert(reinforced);
+    packedById.set(m.id, reinforced); // so the returned card shows the new count
+  }
+
   // Attach the cited memory (with its "seen N×") to each comment for the catch card.
   const richComments = comments.map((cm) => ({
     ...cm,

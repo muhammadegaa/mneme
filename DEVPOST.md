@@ -63,15 +63,17 @@ API serving a self-contained Memory Inspector; memories persist across sessions
 
 We proved the moat with a **benchmark** (`npm run bench`, live `text-embedding-v3`):
 
-| Config | Recall@5 | Contradiction acc. | Stale-fact leakage | Avg tokens |
-|---|---|---|---|---|
-| A — full-context stuffing | 100% | 50% | 100% | 446 |
-| B — naive vector top-k | 100% | 50% | 100% | 67 |
-| **C — Mneme (hybrid + forget + pack)** | **100%** | **100%** | **0%** | **69** |
+All three configs hit 100% Recall@5 (the facts are retrievable) — so recall isn't
+the differentiator. The engine wins on the two columns a naive store can't touch:
 
-Mneme matches full-context recall, resolves *every* contradiction, and drives
-stale-fact leakage to zero — at ~1/6 the tokens. Forgetting + supersession is
-exactly what a vector lookup can't do.
+| Config | Contradiction acc. | Stale-fact leakage | Avg tokens | Recall@5 |
+|---|---|---|---|---|
+| A — full-context stuffing | 50% | 100% | 446 | 100% |
+| B — naive vector top-k | 50% | 100% | 67 | 100% |
+| **C — Mneme (hybrid + forget + pack)** | **100%** | **0%** | **69** | **100%** |
+
+Mneme resolves *every* contradiction and drives stale-fact leakage to zero — at
+~1/6 the tokens. Forgetting + supersession is exactly what a vector lookup can't do.
 
 ## Challenges we ran into
 
