@@ -34,6 +34,10 @@ loadEnv(resolve(ROOT, ".env")); // read DASHSCOPE_* for MNEME_BACKEND=qwen
 const DAY = 86_400_000;
 const NOW = Date.now();
 const BUDGET = Number(process.env.MNEME_BUDGET ?? 64); // tight enough that packing visibly drops
+// A mistake "seen once" — the salience a first, un-repeated write assigns (Qwen
+// extract default ~0.5; mock uses 0.45). Used only to compute the honest
+// counterfactual "what would this memory score if you'd never repeated it".
+const QUIET_SALIENCE = 0.45;
 
 function makeModel(): MentorModel {
   if (process.env.MNEME_BACKEND === "qwen") {
@@ -174,6 +178,34 @@ app.post("/api/review", async (c) => {
     packedById.set(m.id, reinforced); // so the returned card shows the new count
   }
 
+  // PACKING CAUSALITY (the differentiator): salience isn't a cosmetic tally — it's
+  // the ranking value the knapsack packs on. Prove it honestly: take the memory
+  // that grounded the catch, recompute its score as if it had been seen ONCE
+  // (never reinforced, gone stale), and re-run the SAME deterministic knapsack.
+  // If that quiet version gets dropped, the catch could not have fired — because a
+  // grounded catch requires the memory to be in the packed set. Real numbers, real
+  // packer; the counterfactual is computed, never asserted.
+  let packingCausality: unknown = undefined;
+  const cited = caught[0] ? scored.find((s) => s.memory.id === caught[0]!.citedMemoryId) : undefined;
+  if (cited) {
+    const m = cited.memory;
+    const ageMs = NOW - m.createdAt;
+    const quietScore =
+      DEFAULT_WEIGHTS.semantic * cited.breakdown.semantic +
+      DEFAULT_WEIGHTS.recency * recencyScore(ageMs, DEFAULT_WEIGHTS.recencyHalfLifeDays) +
+      DEFAULT_WEIGHTS.salience * effectiveSalience(QUIET_SALIENCE, m.decayRate, ageMs);
+    const quietScored = scored.map((s) => (s.memory.id === m.id ? { ...s, score: quietScore } : s));
+    const quietPack = packMemories(quietScored, BUDGET);
+    packingCausality = {
+      citedId: m.id,
+      packedScore: cited.score, // its ranking value reinforced (seen N×)
+      quietScore, // its ranking value if seen once (salience 0.45) + stale
+      tokens: cited.tokens, // same token cost either way — packer is token-aware, not a threshold
+      quietSalience: QUIET_SALIENCE,
+      quietWouldDrop: quietPack.dropped.some((d) => d.memory.id === m.id),
+    };
+  }
+
   // Attach the cited memory (with its "seen N×") to each comment for the catch card.
   const richComments = comments.map((cm) => ({
     ...cm,
@@ -186,6 +218,7 @@ app.post("/api/review", async (c) => {
     newCatches: caught.length,
     budget: pack.budget,
     usedTokens: pack.usedTokens,
+    packingCausality,
     comments: richComments,
     packed: pack.packed.map((p) => ({ ...view(p.memory), score: p.score, tokens: p.tokens, breakdown: p.breakdown })),
     dropped: pack.dropped.map((d) => ({ ...view(d.memory), score: d.score, tokens: d.tokens, reason: d.reason })),
