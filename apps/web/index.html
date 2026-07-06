@@ -312,7 +312,9 @@ async function review(){
   $("v0").innerHTML = `ranked <b>${scored}</b> memories by relevance · recency · salience`;
   $("st0").classList.remove("run"); $("st0").classList.add("on"); await wait(300);
   $("st1").classList.add("run"); await wait(70);
-  $("v1").innerHTML = `kept <b>${r.packed.length}</b>, dropped <b>${r.dropped.length}</b> to fit <b>${r.usedTokens}/${r.budget}</b> tokens`;
+  const drop = r.dropped && r.dropped[0];
+  const dropNote = drop ? ` — cut the faded <span style="color:var(--mut)">“${drop.text.length>20?drop.text.slice(0,20)+"…":drop.text}”</span>` : "";
+  $("v1").innerHTML = `kept <b>${r.packed.length}</b>, dropped <b>${r.dropped.length}</b> to fit <b>${r.usedTokens}/${r.budget}</b> tokens${dropNote}`;
   $("st1").classList.remove("run"); $("st1").classList.add("on"); await wait(300);
   $("st2").classList.add("run"); await wait(70);
   $("v2").innerHTML = warn?.cited ? `matched your memory <b>${warn.cited.id}</b>` : `no grounded match — clean`;
