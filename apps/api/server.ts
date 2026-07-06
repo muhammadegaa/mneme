@@ -4,7 +4,7 @@
  * deterministic mock by default; set DASHSCOPE_API_KEY + MNEME_BACKEND=qwen to
  * run live Qwen. Deployable as-is to ECS / Function Compute.
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, copyFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { serve } from "@hono/node-server";
@@ -77,6 +77,19 @@ async function seed(force = false): Promise<Session> {
   return { model, store, engine, log };
 }
 
+// Reproducible demo: a committed golden seed (extracted once by live Qwen) is the
+// canonical starting state. Restoring it is deterministic and instant — no live
+// re-extraction, so the hero catch fires every time. `reset demo` restores it;
+// a fresh clone restores it before the first boot.
+const GOLDEN = resolve(ROOT, ".mneme/golden.json");
+const STORE_PATH = resolve(ROOT, process.env.MNEME_STORE ?? ".mneme/memories.json");
+function restoreGolden(): boolean {
+  if ((process.env.MEMORY_STORE ?? "memory") !== "json" || !existsSync(GOLDEN)) return false;
+  copyFileSync(GOLDEN, STORE_PATH);
+  return true;
+}
+if (!existsSync(STORE_PATH)) restoreGolden(); // fresh clone → working demo, no relearn
+
 let session: Session = await seed();
 
 /** Shape a memory for the Inspector: include decayed salience + recency now. */
@@ -120,7 +133,10 @@ app.get("/api/state", async (c) => {
 });
 
 app.post("/api/reset", async (c) => {
-  session = await seed(true);
+  // Restore the golden seed deterministically (no live re-extraction) so the demo
+  // returns to a known-good state where the hero fires. Falls back to a live
+  // relearn only if no golden seed is present.
+  session = restoreGolden() ? await seed(false) : await seed(true);
   catches = 0;
   return c.json({ ok: true, count: (await session.store.all()).length });
 });

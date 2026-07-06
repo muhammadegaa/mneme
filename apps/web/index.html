@@ -124,7 +124,7 @@
     <div class="mark"><span class="dot"></span>Mneme</div>
     <div class="spacer"></div>
     <span id="badge" class="badge">backend …</span>
-    <button class="ghostbtn" onclick="reset()">↻ relearn</button>
+    <button class="ghostbtn" onclick="reset()">↻ reset demo</button>
   </div></div></div>
 
   <div class="wrap">
@@ -245,12 +245,20 @@ function renderGroups(memories){
 }
 
 function renderAudit(memories){
-  const sup = memories.filter(m=>m.status==="superseded");
   const active = memories.filter(m=>m.status==="active");
-  $("audit").innerHTML = sup.length ? sup.map(m=>{
-    const now = active.find(a=>a.id===m.supersededBy);
+  // One receipt per superseded SLOT (predicate) — a repeated flip in the history
+  // supersedes many times, but a judge should see the distinct changes of mind,
+  // not the same "Redux → Zustand" twenty times.
+  const bySlot = new Map();
+  for(const m of memories.filter(m=>m.status==="superseded")){
+    const slot = m.predicate || m.text;
+    if(!bySlot.has(slot)) bySlot.set(slot, m);
+  }
+  const rows = [...bySlot.values()].slice(0,4).map(m=>{
+    const now = active.find(a=>a.predicate && a.predicate===m.predicate) || active.find(a=>a.id===m.supersededBy);
     return `<div class="receipt"><div class="old">${m.text}</div><div class="arrow">↓ you changed your mind</div><div class="new">${now?now.text:"(current choice)"}</div></div>`;
-  }).join("") : `<div class="receipt" style="color:var(--faint)">no changes of mind yet.</div>`;
+  });
+  $("audit").innerHTML = rows.length ? rows.join("") : `<div class="receipt" style="color:var(--faint)">no changes of mind yet.</div>`;
 }
 
 function renderFading(memories){
@@ -298,13 +306,13 @@ async function review(){
   // Stage the reveal with the ACTUAL numbers the engine produced this call.
   const scored = (r.packed?.length||0) + (r.dropped?.length||0);
   $("v0").innerHTML = `ranked <b>${scored}</b> memories by relevance · recency · salience`;
-  $("st0").classList.remove("run"); $("st0").classList.add("on"); await wait(560);
-  $("st1").classList.add("run"); await wait(120);
+  $("st0").classList.remove("run"); $("st0").classList.add("on"); await wait(300);
+  $("st1").classList.add("run"); await wait(70);
   $("v1").innerHTML = `kept <b>${r.packed.length}</b>, dropped <b>${r.dropped.length}</b> to fit <b>${r.usedTokens}/${r.budget}</b> tokens`;
-  $("st1").classList.remove("run"); $("st1").classList.add("on"); await wait(560);
-  $("st2").classList.add("run"); await wait(120);
+  $("st1").classList.remove("run"); $("st1").classList.add("on"); await wait(300);
+  $("st2").classList.add("run"); await wait(70);
   $("v2").innerHTML = warn?.cited ? `matched your memory <b>${warn.cited.id}</b>` : `no grounded match — clean`;
-  $("st2").classList.remove("run"); $("st2").classList.add("on"); await wait(360);
+  $("st2").classList.remove("run"); $("st2").classList.add("on"); await wait(220);
 
   let html="";
   if(warn){

@@ -38,7 +38,7 @@ it runs a real memory pipeline you can watch happen:
 The hero mechanic is **reinforcement**: each time you repeat a mistake, it
 reinforces the *same* memory, so its salience climbs. The louder that memory
 gets, the harder it is to miss. When Mneme catches the bug on your next diff it
-says: *"I've seen this one. 15 times."* — the number is literally how many times
+says: *"I've seen this one. N times."* — where N is literally the number of times
 you'd have shipped the same bug. It also **forgets on purpose** (a tool you tried
 once decays away so it stops polluting advice) and **resolves contradictions**
 (Redux → Zustand supersedes the old choice, with an audit trail kept).
