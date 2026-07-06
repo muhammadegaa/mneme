@@ -31,13 +31,17 @@ DEVPOST benchmark table aligned to README order. Round-2 confirmed round-1 fixes
 
 ## WIN-HARDER BACKLOG (next-tier, ranked — for continued loop iterations)
 
-1. **Reinforcement flips a packing decision** (BOTH verifiers' "one change"; 60% of rubric).
-   Show the null/ok memory get DROPPED by the knapsack when quiet (bug slips through), then
-   PACKED once reinforced loud (bug caught). Makes salience CAUSAL, not a tally, and proves the
-   packer is consequential. PLAN (honest, must be real not narrated): add a "quiet start" demo
-   mode or a small budget where a freshly-low-salience null_check is genuinely dropped, then a
-   "teach it" action reinforces until it crosses the threshold and starts catching. Risk: demo
-   reliability + must not fabricate the "was dropped before" claim. Do in fresh context, verify 5×.
+1. **Reinforcement flips a packing decision** — DONE (reliable variant), commit `58f1341`.
+   Shipped as a COMPUTED counterfactual, not a live miss-then-catch (see LESSON: semantic
+   dominance made a live flip razor-thin fragile + would gut the proven instant-catch hero).
+   `/api/review` re-runs the REAL knapsack on the memory that grounded the catch, recomputed
+   as "seen once" (salience 0.45, stale) → reports quietWouldDrop. PACK trace shows it as
+   PACKED ✓ (reinforced 0.61) vs DROPPED ✗ (seen once 0.47) with token cost — "the catch only
+   fires because you kept making it." Honest (real DP re-run, baseline assumption stated), 5/5,
+   29/29. Judge-verified (fixed cut-line→topK misread, dropped Bun-coincidence lean).
+   OPTIONAL FUTURE (needs user decision — see resume pointer): the FULLER live miss→teach→catch
+   arc (hero starts low + climbs). Higher visceral ceiling but reshapes the recorded hero +
+   needs fat-margin seed surgery. Asked user; they were away; shipped the safe variant.
 2. **Real-repo benchmark** (Technical Depth credibility — the bench is synthetic/self-designed).
    Run the engine over a real OSS git history; report recall where baselines MISS + a non-binary
    contradiction score. CAVEAT: live Qwen extraction over many commits burns credits ($40 coupon
@@ -96,19 +100,52 @@ A fresh adversarial judge-agent graded the demo (screenshots) + README + DEVPOST
 - **Seed non-determinism → SOLVED with a golden seed**: force-reseed re-runs Qwen extraction (non-deterministic → hero sometimes fails). Fix pattern: extract once with live Qwen, freeze the good state as a committed fixture (`.mneme/golden.json`), restore it deterministically on reset/first-boot. The live inference (review) still runs on Qwen — only the SEED is frozen. Honest + reproducible. Reliability probe: `_rel.mjs` (fires /api/review 5× via browser context, counts grounded catches). Always 5/5 now.
 - **Browser review latency ~3.8s**: live qwen-plus review is slow; don't add long UI staging on top. Screenshot/verify by waiting on the `.catch` selector, not a fixed timeout.
 
-## PACKING-CAUSALITY (backlog #1) — partial DONE
+## PACKING-CAUSALITY (backlog #1) — DONE (reliable variant), commit `58f1341`
+- LESSON (design fork): a LIVE "quiet null_check → dropped → bug slips → reinforce → packed →
+  caught" flip is NOT robustly achievable with this seed. Weights are semantic 0.6 / recency 0.2
+  / salience 0.2, and the null_check memory's semantic sim to the diff is high, so lowering
+  salience alone can't drop it (floor ~0.55 > the cut memory Bun ~0.47). Even lowering recency
+  too, quiet-m_3 lands at 0.4737 vs Bun 0.4745 — a razor-thin 0.0008 margin that drifts with
+  time. Forcing it = fragile OR dishonest. Instead: prove causality with a COMPUTED counterfactual
+  — re-run the actual deterministic knapsack at the memory's "seen once" baseline and report the
+  real PACKED/DROPPED outcome. Deterministic, honest, zero extra Qwen, preserves the instant-catch
+  hero. This captures the causal-proof leverage without the reliability risk.
+- LESSON (judge pass): a "cut line" bar visual made the token-aware 0/1 knapsack read as
+  top-k-with-a-threshold — contradicting the "beats greedy top-k" claim. Fix: show real
+  PACKED ✓ / DROPPED ✗ outcome badges + token cost, label the axis "ranking value," say
+  "token-aware, not a threshold." Also: don't lean on coincidental equal scores (quiet-m_3
+  0.47 ≈ Bun 0.47) as "same fate" — reads as cherry-picked even when each number is real.
+- LESSON (honesty gate): the strong claim ("this catch never fires") is gated on the live
+  packer's quietWouldDrop; the non-drop branch shows a weaker always-true line. Never asserts
+  a drop the real DP didn't produce.
+
+## PACKING-CAUSALITY (older partial notes)
 - PACK trace step now NAMES the memory the knapsack drops ("cut the faded 'uses Bun…'") — salience-driven packing made concrete + honest (loud mistake kept, quiet one-off cut). Verified from real `dropped[]` telemetry.
 - Review prompt no longer bakes a count into prose (was stating a stale "18×" after reinforce-on-catch); the tally is UI-only now → hero/card/bar all read one consistent climbing number. Reliability 5/5, 29/29 tests.
 - STILL OPEN: the FULL before/after flip (memory literally dropped when quiet → catch MISSED → reinforce → packed → caught). Bigger, reliability-sensitive; do in fresh context, verify 5×, never fabricate the "was dropped" claim.
 
 ## LAST SESSION (resume pointer — stage 5)
 
-2026-07-06 · Loop iters 1–4 DONE (9 commits). All G1–G8 pass; 2 adversarial verifier rounds
-applied; demo bulletproof (5/5, golden seed, reproducible on clone) + clean; 29/29 tests; proof
-→ live Qwen OK. Submission is submittable, honest, winning-grade. NEXT (needs decision/fresh
-context): backlog #1 full packing before/after flip (risky — verify 5×); backlog #2 real-repo
-benchmark (burns Qwen credits — confirm cost with user first). User must record video + submit;
-Alibaba infra deploy still gated on account verification.
+2026-07-06 · Loop iter 5 DONE (commit `58f1341`). Backlog #1 (packing causality) SHIPPED in
+its reliable computed-counterfactual form: PACK trace now proves salience is causal (real
+knapsack re-run → PACKED/DROPPED at reinforced-vs-seen-once value), judge-verified, 5/5, 29/29.
+Demo left clean (catches 0, hero 18, backend qwen). All G1–G8 still pass; submission remains
+submittable + honest, now with a stronger Technical-Depth/Innovation asset.
+
+DECISION PENDING FOR USER (asked mid-iter; user was away → shipped the safe variant):
+Do you want the FULLER live "miss → teach it → catch" hero arc (bug visibly slips on first
+review, you reinforce, then it's caught)? Higher visceral ceiling but (a) reshapes the hero you
+record — headline can no longer be "18×, caught every one," it starts low + climbs; (b) needs
+fat-margin seed surgery because semantic dominance makes the flip razor-thin at this budget.
+If YES, that's the next iteration (verify 5×, adversarial judge, keep the computed panel too).
+If NO, the computed-counterfactual panel already proves the causality reliably — leave it.
+
+REMAINING BACKLOG: #2 real-repo benchmark (BURNS finite $40 Qwen coupon — confirm scope+cost
+with user before running); #3 problem-value evidence (safe, no blocker); #4 budget realism.
+Blocked-on-user: Alibaba infra deploy (account verification), video recording + submission.
+
 To resume the loop: restart server (`MNEME_BACKEND=qwen MEMORY_STORE=json PORT=5273 npx tsx
-apps/api/server.ts`), read this file, pick the top backlog item, verify with `_shot.mjs`/`_rel.mjs`
-+ an independent verifier sub-agent, write results back here.
+apps/api/server.ts`), read this file, pick the top UNBLOCKED backlog item (#3 if not pursuing
+#1's fuller arc; #2 only with credit approval), verify with `_shot.mjs`/`_rel.mjs` + an
+independent verifier sub-agent, write results back here. Loop tools: `_shot.mjs` (vision),
+`_rel.mjs` (5/5 reliability), `_probe.mjs` (scratch probe for scores/state — gitignored).
