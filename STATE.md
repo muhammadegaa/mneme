@@ -16,11 +16,20 @@ Submission is READY when every criterion below is CONFIRMED by an *independent v
 - [ ] **G1 · Hero clarity** — a judge understands what Mneme is + why it's novel in ≤3 seconds, no scroll. (Innovation/Presentation)
 - [ ] **G2 · Visceral catch** — the live "I've seen this one. N times." moment lands emotionally; the climbing number reads as "bugs you'd have shipped." (Problem Value/Presentation)
 - [x] **G3 · Agent-state transparency** — DONE. Review now stages a live trace: RETRIEVE (ranked N by relevance·recency·salience) → PACK (kept X / dropped Y to fit used/budget tokens) → GROUND (matched memory id), then the catch card. All real telemetry from /api/review (packed/dropped/usedTokens/budget). Vision-verified. Commit pending.
-- [x] **G4 · Depth legible** — DONE. README was STALE (described old "account manager" vertical + wrong taxonomy `preference|fact|event` + called UI "Next.js" when it's a static file + "mock-first" framing). Rewrote to a coherent coding-mentor story: leads with benchmark, adds a "How Qwen powers it" model-routing table, honest live-vs-mock + deploy-caveat sections, accurate stack + layout. Consistent with the demo now.
-- [ ] **G5 · Devpost text** — paste-ready description covering problem, what-it-does, Qwen/Alibaba usage, honest deploy caveat, all 4 rubric dimensions. (Presentation)
-- [ ] **G6 · Video** — recordable shot list matching the exact demo state, ≤3 min, visceral-first. (Presentation)
-- [ ] **G7 · Honesty** — nothing mock presented as live; deploy caveat stated once, clearly; every claim maps to a runnable command. (all — a caught lie tanks trust)
-- [ ] **G8 · It runs** — `npm test` green, demo server up on Qwen, review fires the catch, `npm run proof` shows the live Alibaba call. (Technical Depth)
+- [x] **G4 · Depth legible** — DONE. Rewrote stale README (was old "account manager" vertical) into a coherent coding-mentor story: benchmark lead, Qwen model-routing table, honest live-vs-mock + deploy caveat, accurate stack. Benchmark reordered to lead with the differentiator + 0.02ms footnoted.
+- [x] **G5 · Devpost text** — DONE. `DEVPOST.md`, paste-ready, all 4 rubric dims, number genericized to "N times", honest deploy caveat.
+- [x] **G6 · Video** — DONE. `docs/VIDEO_SCRIPT.md` rewritten to match current UI (the trace, `reset demo` button, real button labels), record-on-qwen-only, removed a FALSE `[2/2] OSS round-trip OK` claim, added honesty guardrails.
+- [x] **G7 · Honesty** — DONE. README/DEVPOST/video all honest; false OSS claim removed; mock labeled `backend: mock`; deploy caveat stated once; every claim maps to a runnable command.
+- [x] **G8 · It runs** — DONE. 29/29 tests pass; demo live on `backend: qwen`; catch fires 5/5 (reliability probe); clean state `catches:0 active:5 mistake seen 18×`; golden restores on fresh clone.
+
+## ALL G1–G8 PASS → submittable. WIN-HARDER BACKLOG (next-tier, ranked)
+
+The rubric floor is met and honest. To push from "solid" to "winning", the loop works these next (highest Technical-Depth/Innovation leverage first):
+1. **Real-repo benchmark** (Technical Depth) — the verifier's deepest hit: the bench is synthetic + self-designed. Run the engine over a real open-source git history (even one repo), report recall where baselines actually MISS, show a non-binary contradiction score. Biggest credibility lever. (Bigger lift — needs a real commit corpus.)
+2. **Second verifier pass** — confirm the 5 fixes landed on fresh screenshots; surface the next tier. (cheap, compounding — DO EACH ITERATION)
+3. **Problem-value evidence** (25%) — one concrete line/stat showing developers really do repeat the same mistake (not just asserted). Maybe cite a study or frame the git-history stat.
+4. **Budget realism** — 64-token budget reads as a toy; consider a more realistic budget that still visibly drops memories, or annotate why it's small (demo legibility).
+5. **`npm run proof` freshness** — confirm it still prints the live `Qwen/DashScope OK · embed dims=1024` line (G8 sub-item not re-run this session).
 
 ---
 
