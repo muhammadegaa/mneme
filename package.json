@@ -25,6 +25,7 @@
     "ali-oss": "^6.21.0"
   },
   "devDependencies": {
+    "playwright-core": "^1.61.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
