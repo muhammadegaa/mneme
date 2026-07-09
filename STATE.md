@@ -42,10 +42,14 @@ DEVPOST benchmark table aligned to README order. Round-2 confirmed round-1 fixes
    OPTIONAL FUTURE (needs user decision — see resume pointer): the FULLER live miss→teach→catch
    arc (hero starts low + climbs). Higher visceral ceiling but reshapes the recorded hero +
    needs fat-margin seed surgery. Asked user; they were away; shipped the safe variant.
-2. **Real-repo benchmark** (Technical Depth credibility — the bench is synthetic/self-designed).
-   Run the engine over a real OSS git history; report recall where baselines MISS + a non-binary
-   contradiction score. CAVEAT: live Qwen extraction over many commits burns credits ($40 coupon
-   is finite) — scope small (one repo / curated commits) and flag cost to the user before running.
+2. **Real-repo benchmark** — DONE (user-approved live run). Pointed Mneme at **codehere** (1,456-commit
+   repo it had never seen) via new `bench/from-repo.ts` (git→history.json, free) + `bench/real-run.ts`
+   (learn 29 oldest-first, hold out newest for review). Live Qwen: 37 memories, 1 REAL recurring
+   mistake ("swallows errors in empty catch blocks" — independently verified: codehere history is
+   full of empty `}catch(e){}`), 3 beliefs superseded. Cost 46,953 tok / 78 calls (~$0.02 of coupon).
+   HONESTY: the held-out review catch ("uses var") was a Qwen HALLUCINATION (no var in the fed diff) →
+   DISCARDED, documented in `bench/results/real-codehere.md`. Extraction signal real; review can still
+   hallucinate. Artifacts: `bench/results/real-codehere.{json,md}`.
 3. **Problem-value evidence** (25%) — one concrete stat/line that developers really repeat the
    same mistake (not just asserted).
 4. **Budget realism** — 64-tok budget reads as a toy (verifier). Either raise it (still visibly
@@ -99,6 +103,7 @@ A fresh adversarial judge-agent graded the demo (screenshots) + README + DEVPOST
 - **Depth is a perception**: the engine already retrieved/packed/grounded — surfacing those real numbers as a staged trace turned invisible work into a visible Technical-Depth signal. Cheap change, high score leverage. Look for more "make the real work visible" moves.
 - **Seed non-determinism → SOLVED with a golden seed**: force-reseed re-runs Qwen extraction (non-deterministic → hero sometimes fails). Fix pattern: extract once with live Qwen, freeze the good state as a committed fixture (`.mneme/golden.json`), restore it deterministically on reset/first-boot. The live inference (review) still runs on Qwen — only the SEED is frozen. Honest + reproducible. Reliability probe: `_rel.mjs` (fires /api/review 5× via browser context, counts grounded catches). Always 5/5 now.
 - **Browser review latency ~3.8s**: live qwen-plus review is slow; don't add long UI staging on top. Screenshot/verify by waiting on the `.catch` selector, not a fixed timeout.
+- **Real-repo run: extraction is grounded, live review can hallucinate**: on codehere (unseen), Qwen extraction over git history produced REAL, verifiable recurring-mistake memories, but the held-out review invented a "uses var" catch not present in the diff. Lesson: trust the learn/reinforce pipeline over real history; do NOT trust a single live review comment without checking it against the diff. The demo hero avoids this because it grounds against a memory the diff genuinely matches — always spot-check any real-repo review claim before quoting it. `bench/real-run.ts` + `bench/from-repo.ts` are the (gitignored-safe) harness; re-running costs coupon (~$0.02/repo) so DON'T re-run casually.
 
 ## PACKING-CAUSALITY (backlog #1) — DONE (reliable variant), commit `58f1341`
 - LESSON (design fork): a LIVE "quiet null_check → dropped → bug slips → reinforce → packed →
@@ -125,6 +130,12 @@ A fresh adversarial judge-agent graded the demo (screenshots) + README + DEVPOST
 - STILL OPEN: the FULL before/after flip (memory literally dropped when quiet → catch MISSED → reinforce → packed → caught). Bigger, reliability-sensitive; do in fresh context, verify 5×, never fabricate the "was dropped" claim.
 
 ## LAST SESSION (resume pointer — stage 5)
+
+2026-07-09 · Loop iter 6 DONE. Backlog #2 (real-repo benchmark) SHIPPED, user-approved live run.
+Built `bench/from-repo.ts` + `bench/real-run.ts`; ran on codehere (unseen, 1456 commits). Real
+result: 37 memories, 1 VERIFIED recurring mistake (empty catch blocks), 3 superseded, ~$0.02.
+Held-out review catch was a Qwen hallucination → discarded + documented (honesty). 29/29 tests
+still pass; demo untouched + clean (InMemoryStore, no golden touch). Artifacts committed.
 
 2026-07-06 · Loop iter 5 DONE (commit `58f1341`). Backlog #1 (packing causality) SHIPPED in
 its reliable computed-counterfactual form: PACK trace now proves salience is causal (real
