@@ -8,6 +8,36 @@ Judging: Technical Depth 30% · Innovation 30% · Problem Value 25% · Presentat
 
 ---
 
+## STRATEGIC PIVOT (2026-07-10 · CEO review, founder-approved: Approach A)
+
+**North star changed.** The old loop optimized a presentation proxy ("judge gets it in 3s")
+and shipped a landing-page demo. The rubric's real bar is a **production-ready agent**. Pivot:
+reframe Mneme from a poster into a **production MCP memory agent** — keep the (strong, tested)
+engine, change the surface.
+
+WHY (CEO-review findings): (1) #1 risk is DISQUALIFICATION — the rules REQUIRE proof the backend
+runs on Alibaba Cloud; ours is blocked on account verification. Bigger than presentation. (2)
+Landing page reads as toy, not agent. (3) Technical Depth (30%) explicitly names "MCP integrations"
+— we have zero. (4) Memory space is crowded (Mem0/Zep/Letta/OpenMemory-MCP) BUT all are GENERAL
+chat memory; developer-mistake memory from git + forgetting/reinforcement/knapsack is UNCLAIMED —
+that niche is the moat. Don't pitch "a memory server"; pitch "the reviewer that learns your mistakes."
+
+SEQUENCED PLAN (deploy-first):
+1. **UNBLOCK ALIBABA DEPLOY** — gates everything, blocked on FOUNDER (account KYC/verification).
+   Function Compute + OSS + pgvector are already wired (`s.yaml`, `Dockerfile`, `pg-store.ts`);
+   flips on when the account clears. This is the DQ risk — do it this week.
+2. **MCP server over the engine** — expose Mneme as tools any coding agent (Claude/Cursor) calls
+   (review diff / recall / remember / inspect). Thin wrapper on existing engine. Grabs the named
+   MCP points + makes it a real product, not a demo. UNBLOCKED — build now in parallel with #1.
+3. **Package** — architecture diagram + 3-min video + fold real-repo evidence (partly done).
+4. **STRETCH** (only if 1-3 land): autonomous PR-review bot (GH App/Action).
+
+Win-odds: as-is = low (DQ risk + toy read). Deploy-cleared + MCP + packaging = competitive.
+Old landing-demo assets (hero/trace/causal panel) are NOT thrown away — Inspector stays as the
+"watch it think" visual; the MCP server is the production surface around the same engine.
+
+---
+
 ## THE GOAL (stop condition — independent grader must pass ALL)
 
 Submission is READY when every criterion below is CONFIRMED by an *independent verifier pass*
