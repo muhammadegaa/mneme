@@ -103,6 +103,46 @@ live-review comment still needs checking against the diff. Full writeup:
 - **Grounded review** — every review comment cites the specific memory it came
   from. Live retrieve → pack → ground is visible as the engine works.
 
+## 🔌 Use it as an MCP server (the production surface)
+
+Mneme isn't a webpage you paste diffs into — the demo Inspector is just a window
+into the engine. The way you actually *use* it is as an **MCP server**: a
+long-term developer memory any MCP client (Claude Desktop, Cursor, Windsurf) can
+call. It learns your recurring mistakes and grounds a review of your next diff in
+a specific memory — memory that **forgets** one-off noise and gets **louder** on
+repeated mistakes, unlike the general chat-memory MCP servers.
+
+```bash
+npm run mcp        # stdio MCP server (backend=mock; set MNEME_BACKEND=qwen for live)
+```
+
+Register it (Claude Desktop `claude_desktop_config.json` / Cursor MCP settings):
+
+```json
+{
+  "mcpServers": {
+    "mneme": {
+      "command": "npx",
+      "args": ["tsx", "/ABSOLUTE/PATH/qwenhack/apps/mcp/server.ts"],
+      "env": { "MNEME_BACKEND": "qwen" }
+    }
+  }
+}
+```
+
+Tools it exposes:
+
+| Tool | What it does |
+|---|---|
+| `mneme_review` | Review a diff grounded in your memories; a warn cited to a *mistake* memory is a repeat bug caught before it ships (and reinforces that memory). |
+| `mneme_recall` | Recall the memories most relevant to a query/context, ranked by relevance · recency · salience. |
+| `mneme_learn` | Learn from a commit (message + diff) — extract, reinforce repeats, supersede contradictions. |
+| `mneme_inspect` | List active memories with salience + reinforcement counts. |
+
+Memory persists via the store factory — JSON locally, ApsaraDB pgvector on
+Alibaba Cloud — so it accumulates across sessions. Same engine as the benchmark
+and the Inspector; this is just the surface an agent talks to.
+
 ## 🤖 How Qwen powers it (all reasoning)
 
 | Job | Model (DashScope) |
@@ -122,7 +162,9 @@ endpoint. `npm run proof` makes a live call and prints
 ```mermaid
 flowchart LR
     U[Developer] -->|commit / diff| API[Hono API + Memory Inspector]
+    AGENT[Coding agent · Claude Desktop / Cursor] -->|MCP tools| MCP[Mneme MCP server]
     API --> ENG[Memory Engine]
+    MCP --> ENG
 
     subgraph Qwen Cloud · DashScope
       LLM[qwen-plus · qwen-turbo · qwen-max]
@@ -197,6 +239,7 @@ packages/memory-engine/     standalone, unit-tested engine (the moat)
   src/store/                MemoryStore interface · in-memory / JSON / pgvector
 apps/api/server.ts          Hono API + static Memory Inspector (the demo hero)
 apps/web/index.html         the Memory Inspector UI (self-contained)
+apps/mcp/server.ts          MCP server — the production surface (agents call the engine)
 cli/mneme.ts                headless CLI (learn / review / forget / inspect)
 bench/                      synthetic A/B/C harness + real-repo runner (from-repo.ts, real-run.ts)
 alibaba/                    proof.ts + deploy config (s.yaml, Dockerfile)

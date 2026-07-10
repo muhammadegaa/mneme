@@ -1,0 +1,19 @@
+{
+  "name": "@mneme/mcp",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "mneme-mcp": "server.ts"
+  },
+  "scripts": {
+    "start": "tsx server.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@mneme/memory-engine": "*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2"
+  }
+}

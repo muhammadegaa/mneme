@@ -15,6 +15,7 @@
     "bench": "tsx bench/run.ts",
     "hello": "tsx scripts/hello-qwen.ts",
     "mneme": "tsx cli/mneme.ts",
+    "mcp": "tsx apps/mcp/server.ts",
     "dev": "npm run dev --workspace apps/api",
     "start": "npm run start --workspace apps/api",
     "dev:api": "npm run dev --workspace apps/api",

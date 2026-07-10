@@ -26,9 +26,14 @@ SEQUENCED PLAN (deploy-first):
 1. **UNBLOCK ALIBABA DEPLOY** — gates everything, blocked on FOUNDER (account KYC/verification).
    Function Compute + OSS + pgvector are already wired (`s.yaml`, `Dockerfile`, `pg-store.ts`);
    flips on when the account clears. This is the DQ risk — do it this week.
-2. **MCP server over the engine** — expose Mneme as tools any coding agent (Claude/Cursor) calls
-   (review diff / recall / remember / inspect). Thin wrapper on existing engine. Grabs the named
-   MCP points + makes it a real product, not a demo. UNBLOCKED — build now in parallel with #1.
+2. **MCP server over the engine** — DONE (2026-07-10). `apps/mcp/server.ts` (stdio, @modelcontextprotocol/sdk),
+   4 tools: `mneme_review` (grounded diff review + reinforce-on-catch), `mneme_recall`, `mneme_learn`,
+   `mneme_inspect`. Persists via store factory (json local / pgvector Alibaba); restores golden seed
+   free on fresh json store BEFORE store construction (JsonFileStore reads its file once at ctor — key gotcha).
+   Forces MEMORY_STORE=json over the .env demo default (=memory) so MCP memory isn't ephemeral. Smoke-verified
+   (mock): 5 memories loaded, review catches the null/ok repeat mistake grounded in m_3 (seen 18×) + reinforces.
+   29/29 tests still pass. `npm run mcp`. README has Claude Desktop/Cursor config + tool table. Live Qwen
+   path = same as API (proven); not re-run to save credits. NEXT: verify live-qwen MCP once (small), then package.
 3. **Package** — architecture diagram + 3-min video + fold real-repo evidence (partly done).
 4. **STRETCH** (only if 1-3 land): autonomous PR-review bot (GH App/Action).
 
