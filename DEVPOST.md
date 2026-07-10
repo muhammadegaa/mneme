@@ -75,6 +75,15 @@ the differentiator. The engine wins on the two columns a naive store can't touch
 Mneme resolves *every* contradiction and drives stale-fact leakage to zero — at
 ~1/6 the tokens. Forgetting + supersession is exactly what a vector lookup can't do.
 
+That bench is synthetic, so we also ran it on **a real 1,456-commit repo it had
+never seen** (`tsx bench/real-run.ts ../codehere 30 --qwen`). With nothing planted,
+it extracted 37 memories and flagged one **genuinely recurring mistake — "swallows
+errors in empty catch blocks"** (seen 2×) — the exact anti-pattern from our Inspiration,
+found in the wild for ~$0.02. We keep it honest: the same run's held-out live review
+also hallucinated a *"uses `var`"* comment that wasn't in the diff, so we **discard**
+it. Extraction over real history is grounded; a single live-review comment isn't —
+full writeup in `bench/results/real-codehere.md`.
+
 ## Challenges we ran into
 
 - **Getting the model to detect an *omission*.** A missing `res.ok` guard is the

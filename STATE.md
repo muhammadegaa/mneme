@@ -50,8 +50,10 @@ DEVPOST benchmark table aligned to README order. Round-2 confirmed round-1 fixes
    HONESTY: the held-out review catch ("uses var") was a Qwen HALLUCINATION (no var in the fed diff) →
    DISCARDED, documented in `bench/results/real-codehere.md`. Extraction signal real; review can still
    hallucinate. Artifacts: `bench/results/real-codehere.{json,md}`.
-3. **Problem-value evidence** (25%) — one concrete stat/line that developers really repeat the
-   same mistake (not just asserted).
+3. **Problem-value evidence** (25%) — LARGELY DONE via #2: README + DEVPOST now show a REAL
+   recurring mistake found on an unseen repo (codehere empty-catch), not an asserted stat.
+   All doc numbers cross-checked against `real-codehere.json` (37/1/46953). Could still add an
+   external citation that devs repeat mistakes, but the demonstrated evidence is stronger.
 4. **Budget realism** — 64-tok budget reads as a toy (verifier). Either raise it (still visibly
    dropping) or annotate why it's small for demo legibility. (Overlaps #1.)
 

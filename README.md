@@ -59,6 +59,27 @@ separates a memory *engine* from a vector lookup.
 > `backend=qwen` on live `text-embedding-v3` (the numbers above); with no key it
 > falls back to a deterministic embedder so the harness still runs in CI.
 
+### A repo it had never seen
+
+The bench above is synthetic — so the fair objection is "you planted those
+mistakes." So we pointed Mneme at **`codehere` — a real 1,456-commit repo it had
+never seen** — and learned its last 29 commits live on Qwen (`tsx bench/real-run.ts
+../codehere 30 --qwen`). It extracted **37 memories** and, with no planted data,
+identified a **genuinely recurring mistake**:
+
+> `mistake` · seen 2× (reinforced once) — **"swallows errors in empty catch blocks"**
+
+That's real and independently checkable — `codehere`'s history is full of
+`}catch(e){}` blocks that discard the error. Mneme learned the pattern from
+commits it had never seen and marked it recurring. Cost: ~47k tokens (~$0.02).
+
+**Honest boundary:** the same run also held out the newest commit for a live
+review, which produced one comment — *"uses `var`"* — that **isn't in the diff**.
+It's a model hallucination, so we **discard it**; it is not counted as evidence.
+Extraction + reinforcement over real history is grounded and reliable; a single
+live-review comment still needs checking against the diff. Full writeup:
+[`bench/results/real-codehere.md`](bench/results/real-codehere.md).
+
 ---
 
 ## ✨ What it does
@@ -177,7 +198,7 @@ packages/memory-engine/     standalone, unit-tested engine (the moat)
 apps/api/server.ts          Hono API + static Memory Inspector (the demo hero)
 apps/web/index.html         the Memory Inspector UI (self-contained)
 cli/mneme.ts                headless CLI (learn / review / forget / inspect)
-bench/                      benchmark harness + synthetic dataset
+bench/                      synthetic A/B/C harness + real-repo runner (from-repo.ts, real-run.ts)
 alibaba/                    proof.ts + deploy config (s.yaml, Dockerfile)
 ```
 
