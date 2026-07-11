@@ -1,4 +1,4 @@
-# Deploying Mneme to Alibaba Cloud
+# Deploying Engram to Alibaba Cloud
 
 The backend is one Node process (Hono API + Memory Inspector UI). It goes live
 on Alibaba Cloud with **config only** — no code change — because every external
@@ -35,8 +35,8 @@ Create a bucket; set `OSS_REGION/OSS_BUCKET/OSS_ACCESS_KEY_ID/OSS_ACCESS_KEY_SEC
 ### Option A — ECS (simplest)
 ```bash
 # on the ECS instance
-git clone <repo> && cd mneme
-cp .env.example .env   # fill in all the values above; MNEME_BACKEND=qwen
+git clone <repo> && cd engram
+cp .env.example .env   # fill in all the values above; ENGRAM_BACKEND=qwen
 npm install
 npm run start          # → :5273, reachable via the instance public IP / SLB
 ```
@@ -60,8 +60,8 @@ honors it automatically. For cross-session persistence in the cloud, set
 
 ### Option C — local container (smoke test before FC)
 ```bash
-docker build -t mneme .
-docker run -p 5273:5273 --env-file .env mneme   # → http://localhost:5273
+docker build -t engram .
+docker run -p 5273:5273 --env-file .env engram   # → http://localhost:5273
 ```
 
 ## 5. Verify it's live on Alibaba Cloud

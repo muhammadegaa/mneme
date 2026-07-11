@@ -16,7 +16,7 @@ cp .env.example .env
 npm install
 ```
 If running on Alibaba Cloud ECS, SSH in first so the recorded prompt reads e.g.
-`root@iZ...alibaba...:~/mneme$` — that framing *is* the proof.
+`root@iZ...alibaba...:~/engram$` — that framing *is* the proof.
 
 ## The 30s take (recorded)
 1. **(0–4s)** Show the host: `hostname` / `curl -s http://100.100.100.200/latest/meta-data/region-id`
@@ -24,12 +24,12 @@ If running on Alibaba Cloud ECS, SSH in first so the recorded prompt reads e.g.
 2. **(4–8s)** `cat .env | grep -E 'BASE_URL|OSS_BUCKET'` (show the endpoints, key redacted).
 3. **(8–26s)** `npm run proof` — hold on the output:
    ```
-   === Mneme · Proof of Alibaba Cloud deployment ===
+   === Engram · Proof of Alibaba Cloud deployment ===
    [1/2] Qwen/DashScope OK → "Qwen on Alibaba Cloud is reachable." · embed dims=1024
-   [2/2] OSS round-trip OK → put+get "mneme/proof.txt" (NN bytes)
+   [2/2] OSS round-trip OK → put+get "engram/proof.txt" (NN bytes)
    ✅ Alibaba Cloud services reachable from this backend.
    ```
-4. **(26–30s)** Optional: in the OSS console, show the `mneme/proof.txt` object that was just written.
+4. **(26–30s)** Optional: in the OSS console, show the `engram/proof.txt` object that was just written.
 
 ## What to put in the "Proof of Alibaba Cloud Deployment" link field
 The public GitHub URL to [`alibaba/proof.ts`](../alibaba/proof.ts) — the single
@@ -39,5 +39,5 @@ file that makes the calls — plus this recording.
 - `proof.ts` is guarded: with no `OSS_*` set it runs the Qwen half and clearly
   prints that OSS is pending — so it never silently "passes". Set the OSS vars
   for the full two-service proof.
-- The same `MNEME_BACKEND=qwen npm run dev` then serves the *whole product* from
+- The same `ENGRAM_BACKEND=qwen npm run dev` then serves the *whole product* from
   that Alibaba Cloud host, if you want a longer "it's all live" shot.

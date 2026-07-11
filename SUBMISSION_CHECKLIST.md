@@ -1,4 +1,4 @@
-# Mneme — Submission Checklist (Track 1: MemoryAgent)
+# Engram — Submission Checklist (Track 1: MemoryAgent)
 
 Single source of truth mapping every hackathon requirement → status → artifact.
 Updated every phase. 🟢 done · 🟡 in progress · 🔴 not started.
@@ -7,7 +7,7 @@ Updated every phase. 🟢 done · 🟡 in progress · 🔴 not started.
 
 | # | Requirement | Status | Artifact |
 |---|---|---|---|
-| 1 | Public GitHub repo, MIT license detectable in About | 🟢 | **https://github.com/muhammadegaa/mneme** (public, MIT [`LICENSE`](./LICENSE)). |
+| 1 | Public GitHub repo, MIT license detectable in About | 🟢 | **https://github.com/muhammadegaa/engram** (public, MIT [`LICENSE`](./LICENSE)). |
 | 2 | Backend runs on Alibaba Cloud; file proving Alibaba Cloud API calls | 🟢 (Qwen) / 🟡 (infra) | **Qwen on Alibaba Cloud is LIVE and proven**: `npm run proof` → `[1/2] Qwen/DashScope OK · embed dims=1024`. Infra service (OSS/FC) is fully wired ([`proof.ts`](./alibaba/proof.ts), [`s.yaml`](./s.yaml), [`Dockerfile`](./Dockerfile), [`pg-store.ts`](./packages/memory-engine/src/store/pg-store.ts)) but **not activated — blocked by the account's "complete your information" verification gate**, which disables OSS + Function Compute. Flips on the moment the account clears. |
 | 3 | Architecture diagram (Mermaid + exported PNG) | 🟢 | Mermaid in [README](./README.md#architecture) + [`docs/architecture.mmd`](./docs/architecture.mmd) (renders natively on GitHub). |
 | 4 | ~3-min demo video script + shot list | 🟢 | [`docs/VIDEO_SCRIPT.md`](./docs/VIDEO_SCRIPT.md) — demo runs live on Qwen; ready to record. |
@@ -39,7 +39,7 @@ Updated every phase. 🟢 done · 🟡 in progress · 🔴 not started.
 
 | Item | Status |
 |---|---|
-| Memory engine standalone package w/ clean interface | 🟢 `@mneme/memory-engine` |
+| Memory engine standalone package w/ clean interface | 🟢 `@engram/memory-engine` |
 | Deterministic unit tests for ranking + packing | 🟢 27 tests passing |
 | npm scripts: dev / test / bench / deploy | 🟡 test ✓, hello ✓, bench Phase 3, deploy Phase 5 |
 | No placeholders/TODOs in shipped paths | 🟢 |
@@ -51,7 +51,7 @@ Updated every phase. 🟢 done · 🟡 in progress · 🔴 not started.
 - **Phase 2 (Plan) — DONE.** 4 design directions in `design/`; **Hybrid (Clean SaaS + memory-field)** locked.
 - **Phase 3 (Build) — IN PROGRESS.**
   - 3a: engine re-pointed to coding-mentor taxonomy + reinforcement mechanic (29 tests).
-  - 3b: `MentorModel` interface + `MockMentorModel` (deterministic, zero-credit) + `QwenMentorModel`; `JsonFileStore`; `mneme` CLI (learn/review/forget/inspect) running end-to-end offline.
+  - 3b: `MentorModel` interface + `MockMentorModel` (deterministic, zero-credit) + `QwenMentorModel`; `JsonFileStore`; `engram` CLI (learn/review/forget/inspect) running end-to-end offline.
   - 3c: **benchmark** — A/B/C harness, C wins (100% contradiction acc, 0% stale leakage, 69 tok vs A's 446). Table leads the README.
   - 3d: live Memory Inspector UI + Hono API (the demo hero surface).
 - **Live-Qwen verification (Alibaba Cloud) — DONE.**

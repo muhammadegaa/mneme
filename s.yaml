@@ -1,4 +1,4 @@
-# Serverless Devs config — deploy Mneme to Alibaba Cloud Function Compute (FC 3.0).
+# Serverless Devs config — deploy Engram to Alibaba Cloud Function Compute (FC 3.0).
 # Custom-container HTTP function built from the repo Dockerfile.
 #
 #   npm i -g @serverless-devs/s
@@ -8,19 +8,19 @@
 #
 # Secrets are read from your shell env (${env.X}) — never committed.
 edition: 3.0.0
-name: mneme
+name: engram
 access: default
 
 vars:
   region: ap-southeast-1   # Singapore — match your Qwen workspace + OSS bucket
 
 resources:
-  mneme:
+  engram:
     component: fc3
     props:
       region: ${vars.region}
-      functionName: mneme
-      description: Mneme — MemoryAgent backend (Hono API + Memory Inspector UI)
+      functionName: engram
+      description: Engram — MemoryAgent backend (Hono API + Memory Inspector UI)
       runtime: custom-container
       cpu: 0.5
       memorySize: 1024
@@ -28,11 +28,11 @@ resources:
       timeout: 120
       customContainerConfig:
         # `s deploy` builds this image from ./Dockerfile and pushes to ACR.
-        image: registry.${vars.region}.cr.aliyuncs.com/${vars.region}/mneme:latest
+        image: registry.${vars.region}.cr.aliyuncs.com/${vars.region}/engram:latest
         port: 9000           # FC sends requests here; server reads FC_SERVER_PORT
       environmentVariables:
         FC_SERVER_PORT: "9000"
-        MNEME_BACKEND: qwen
+        ENGRAM_BACKEND: qwen
         MEMORY_STORE: memory          # use postgres + DATABASE_URL for persistence
         DASHSCOPE_API_KEY: ${env.DASHSCOPE_API_KEY}
         DASHSCOPE_BASE_URL: ${env.DASHSCOPE_BASE_URL}

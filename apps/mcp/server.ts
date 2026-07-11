@@ -1,12 +1,12 @@
 /**
- * Mneme MCP server — the production surface. Exposes the memory engine as tools
- * any MCP client (Claude Desktop, Cursor, Windsurf) can call, so Mneme becomes a
+ * Engram MCP server — the production surface. Exposes the memory engine as tools
+ * any MCP client (Claude Desktop, Cursor, Windsurf) can call, so Engram becomes a
  * coding agent's long-term memory of the developer: it learns your recurring
  * mistakes from commits and grounds a review of your next diff in a specific
  * memory. Unlike general chat-memory servers, this memory forgets one-off noise,
  * reinforces repeated mistakes, and packs the critical set under a token budget.
  *
- * Transport: stdio. Backend: deterministic mock by default; set MNEME_BACKEND=qwen
+ * Transport: stdio. Backend: deterministic mock by default; set ENGRAM_BACKEND=qwen
  * (+ DASHSCOPE_API_KEY) for live Qwen on Alibaba Cloud. Memory persists via the
  * store factory (MEMORY_STORE=json locally, =postgres/pgvector on Alibaba Cloud).
  */
@@ -31,31 +31,31 @@ import {
   type Memory,
   type MentorModel,
   type CommitSource,
-} from "@mneme/memory-engine";
+} from "@engram/memory-engine";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "../..");
 loadEnv(resolve(ROOT, ".env"));
 
 const DAY = 86_400_000;
-const BUDGET = Number(process.env.MNEME_BUDGET ?? 2000);
+const BUDGET = Number(process.env.ENGRAM_BUDGET ?? 2000);
 // Persist by default so memory survives across sessions (the whole point). The
 // shared .env sets MEMORY_STORE=memory for the ephemeral demo; the MCP product
 // must NOT be ephemeral, so force json locally (postgres/pgvector on Alibaba).
 if (process.env.MEMORY_STORE !== "postgres") process.env.MEMORY_STORE = "json";
-process.env.MNEME_STORE ??= resolve(ROOT, ".mneme/mcp-memories.json");
+process.env.ENGRAM_STORE ??= resolve(ROOT, ".engram/mcp-memories.json");
 
 function makeModel(): MentorModel {
-  if (process.env.MNEME_BACKEND === "qwen") return new QwenMentorModel(new QwenClient(configFromEnv()));
+  if (process.env.ENGRAM_BACKEND === "qwen") return new QwenMentorModel(new QwenClient(configFromEnv()));
   return new MockMentorModel();
 }
 
 // Free, deterministic seed: restore the frozen golden memory on a fresh json
 // store BEFORE constructing it (JsonFileStore reads its file once, at construction).
 // Never burns credits on startup; a fresh clone gets a working memory to review against.
-const golden = resolve(ROOT, ".mneme/golden.json");
-if (process.env.MEMORY_STORE === "json" && !existsSync(process.env.MNEME_STORE!) && existsSync(golden)) {
-  copyFileSync(golden, process.env.MNEME_STORE!);
+const golden = resolve(ROOT, ".engram/golden.json");
+if (process.env.MEMORY_STORE === "json" && !existsSync(process.env.ENGRAM_STORE!) && existsSync(golden)) {
+  copyFileSync(golden, process.env.ENGRAM_STORE!);
 }
 
 const model = makeModel();
@@ -76,11 +76,11 @@ function view(m: Memory) {
   };
 }
 
-const server = new McpServer({ name: "mneme", version: "0.1.0" });
+const server = new McpServer({ name: "engram", version: "0.1.0" });
 
-// The hero tool: review a diff grounded in what Mneme remembers about this dev.
+// The hero tool: review a diff grounded in what Engram remembers about this dev.
 server.tool(
-  "mneme_review",
+  "engram_review",
   "Review a code diff grounded in the developer's own memories (their recurring mistakes, style, tech choices). Retrieves relevant memories, packs them under a token budget with a knapsack solver, and returns review comments each cited to a specific memory. A 'warn' cited to a mistake memory is a repeat mistake caught before it ships.",
   { diff: z.string().describe("the unified diff or code to review"), file: z.string().optional().describe("optional file path for context") },
   async ({ diff, file }) => {
@@ -113,10 +113,10 @@ server.tool(
   },
 );
 
-// Recall: what does Mneme remember that's relevant to this context?
+// Recall: what does Engram remember that's relevant to this context?
 server.tool(
-  "mneme_recall",
-  "Recall the developer's memories most relevant to a query or code context, ranked by relevance, recency, and salience. Use before writing code to surface what Mneme knows about how this developer works.",
+  "engram_recall",
+  "Recall the developer's memories most relevant to a query or code context, ranked by relevance, recency, and salience. Use before writing code to surface what Engram knows about how this developer works.",
   { query: z.string().describe("a question or code context to recall memories for"), limit: z.number().optional().describe("max memories to return (default 8)") },
   async ({ query, limit }) => {
     const { scored } = await engine.retrieve(query, { now: Date.now(), limit: 50 });
@@ -127,8 +127,8 @@ server.tool(
 
 // Learn: grow the memory from a commit (extract -> reinforce/supersede/store).
 server.tool(
-  "mneme_learn",
-  "Learn from a commit: extract atomic memories (style, tech, mistake, project) from the message + diff and persist them. Repeated mistakes reinforce the same memory; contradictions supersede the old one. This is how Mneme accumulates experience across sessions.",
+  "engram_learn",
+  "Learn from a commit: extract atomic memories (style, tech, mistake, project) from the message + diff and persist them. Repeated mistakes reinforce the same memory; contradictions supersede the old one. This is how Engram accumulates experience across sessions.",
   { message: z.string().describe("commit message"), diff: z.string().describe("commit diff"), sha: z.string().optional().describe("optional commit sha") },
   async ({ message, diff, sha }) => {
     const commit: CommitSource = { sha: sha ?? "adhoc", message, diff };
@@ -144,8 +144,8 @@ server.tool(
 
 // Inspect: the current memory, salience-ranked (the "what do you know about me").
 server.tool(
-  "mneme_inspect",
-  "List the developer's active memories, ranked by salience, with reinforcement counts. Shows what Mneme currently remembers and how strongly.",
+  "engram_inspect",
+  "List the developer's active memories, ranked by salience, with reinforcement counts. Shows what Engram currently remembers and how strongly.",
   {},
   async () => {
     const all = (await store.all()).filter((m) => m.status === "active").sort((a, b) => b.salience - a.salience);

@@ -1,5 +1,5 @@
 {
-  "name": "@mneme/api",
+  "name": "@engram/api",
   "version": "0.1.0",
   "type": "module",
   "scripts": {
@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",
-    "@mneme/memory-engine": "*",
+    "@engram/memory-engine": "*",
     "hono": "^4.6.14"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
 /**
- * Mneme benchmark — "real but small" (see spec.md). Reproducible, deterministic
+ * Engram benchmark — "real but small" (see spec.md). Reproducible, deterministic
  * (mock backend), zero credits. Compares three context strategies over the same
  * planted multi-session history + probe queries:
  *
@@ -7,7 +7,7 @@
  *       maximal tokens and it re-injects superseded/stale facts (leakage).
  *   B — naive vector top-k     : cosine only, status-blind. Cheaper, but ranks
  *       superseded memories and leaks stale facts; weak on contradictions.
- *   C — Mneme                  : hybrid rerank + forgetting (active-only) +
+ *   C — Engram                  : hybrid rerank + forgetting (active-only) +
  *       knapsack packing. Matches A's recall at a fraction of the tokens with
  *       near-zero stale leakage and correct contradiction resolution.
  *
@@ -117,7 +117,7 @@ async function main() {
     return { memories: ranked, tokens: ranked.reduce((t, m) => t + estimateTokens(m.text), 0) };
   };
 
-  // Strategy C: Mneme — hybrid rerank (active-only) + knapsack pack under budget.
+  // Strategy C: Engram — hybrid rerank (active-only) + knapsack pack under budget.
   const cPack = async (q: string): Promise<Packed> => {
     const { scored } = await engine.retrieve(q, { now: NOW, limit: 50 });
     const pack = packMemories(scored, BUDGET);
@@ -127,7 +127,7 @@ async function main() {
   const configs: Array<{ name: string; pack: (q: string) => Promise<Packed> }> = [
     { name: "A · full-context", pack: aPack },
     { name: "B · naive top-k", pack: bPack },
-    { name: "C · Mneme", pack: cPack },
+    { name: "C · Engram", pack: cPack },
   ];
 
   const rows: Array<Record<string, string>> = [];
@@ -174,7 +174,7 @@ async function main() {
     ...rows.map((r) => line(cols.map((c) => r[c]!))),
   ].join("\n");
 
-  console.log(`\nMneme benchmark · backend=${backend} · embeddings=${backend === "qwen" ? "text-embedding-v3 (live)" : "deterministic mock"} · ${PROBES.length} probes · budget=${BUDGET}t · k=${K}\n`);
+  console.log(`\nEngram benchmark · backend=${backend} · embeddings=${backend === "qwen" ? "text-embedding-v3 (live)" : "deterministic mock"} · ${PROBES.length} probes · budget=${BUDGET}t · k=${K}\n`);
   console.log(md + "\n");
   console.log("Read: C matches A's recall and contradiction handling at a fraction of the tokens,");
   console.log("with stale leakage driven to zero by forgetting + supersession.\n");

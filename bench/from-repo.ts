@@ -1,7 +1,7 @@
 /**
  * from-repo — turn a REAL repo's git history into the history.json that
- * `mneme learn` ingests. Zero credits: this only shells out to `git`. It exists
- * so the benchmark can run against a repo Mneme has never seen (not the planted
+ * `engram learn` ingests. Zero credits: this only shells out to `git`. It exists
+ * so the benchmark can run against a repo Engram has never seen (not the planted
  * demo history), which is the honest test of "does it catch real repeat mistakes".
  *
  *   tsx bench/from-repo.ts <repoPath> <maxCommits> > bench/data/real.json

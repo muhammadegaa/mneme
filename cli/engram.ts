@@ -1,5 +1,5 @@
 /**
- * mneme — headless coding-mentor CLI. Exercises the full memory pipeline:
+ * engram — headless coding-mentor CLI. Exercises the full memory pipeline:
  *   learn  <history.json>   walk commits -> extract -> reinforce/supersede -> store
  *   review <diff.txt>       retrieve -> knapsack-pack -> grounded review comments
  *   forget                  run the decay job; age memories out
@@ -7,7 +7,7 @@
  *
  * Backend defaults to the deterministic mock (zero credits). Pass --qwen to use
  * live Qwen on Alibaba Cloud (requires DASHSCOPE_API_KEY). Memories persist to
- * .mneme/memories.json and survive restarts (cross-session).
+ * .engram/memories.json and survive restarts (cross-session).
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -29,8 +29,8 @@ loadEnv();
 
 const DAY = 86_400_000;
 const NOW = Date.now();
-const STORE = process.env.MNEME_STORE ?? ".mneme/memories.json";
-const BUDGET = Number(process.env.MNEME_BUDGET ?? 2000);
+const STORE = process.env.ENGRAM_STORE ?? ".engram/memories.json";
+const BUDGET = Number(process.env.ENGRAM_BUDGET ?? 2000);
 
 const c = {
   dim: (s: string) => `\x1b[2m${s}\x1b[0m`,
@@ -70,7 +70,7 @@ async function learn(file: string) {
   // oldest first, so reinforcement/supersession happen in chronological order.
   commits.sort((a, b) => b.daysAgo - a.daysAgo);
 
-  console.log(c.b(`\n◐ mneme learn`) + c.dim(`  backend=${model.backend}  commits=${commits.length}\n`));
+  console.log(c.b(`\n◐ engram learn`) + c.dim(`  backend=${model.backend}  commits=${commits.length}\n`));
   const tally: Record<string, number> = { inserted: 0, reinforced: 0, superseding: 0, deduped: 0 };
   for (const commit of commits) {
     const now = NOW - commit.daysAgo * DAY;
@@ -100,7 +100,7 @@ async function review(file: string) {
   const pack = packMemories(scored, BUDGET);
   const { comments } = await model.review({ diff, memories: pack.packed.map((p) => p.memory) });
 
-  console.log(c.b(`\n◐ mneme review`) + c.dim(`  backend=${model.backend}  budget=${BUDGET}t\n`));
+  console.log(c.b(`\n◐ engram review`) + c.dim(`  backend=${model.backend}  budget=${BUDGET}t\n`));
   console.log(c.b("  Comments"));
   if (comments.length === 0) console.log(c.dim("    (clean — nothing flagged)"));
   for (const cm of comments) {
@@ -124,7 +124,7 @@ async function forget() {
   const model = makeModel();
   const engine = engineFor(model);
   const { forgotten } = await engine.runDecay(NOW);
-  console.log(c.b(`\n◐ mneme forget`) + c.dim(`  floor decay job\n`));
+  console.log(c.b(`\n◐ engram forget`) + c.dim(`  floor decay job\n`));
   console.log(forgotten.length ? c.ylw(`  forgot ${forgotten.length}: ${forgotten.join(", ")}`) : c.dim("  nothing below the floor"));
   console.log("");
 }
@@ -132,7 +132,7 @@ async function forget() {
 async function inspect() {
   const store = new JsonFileStore(STORE);
   const all = (await store.all()).filter((m) => m.status === "active").sort((a, b) => b.salience - a.salience);
-  console.log(c.b(`\n◐ mneme inspect`) + c.dim(`  ${all.length} active memories\n`));
+  console.log(c.b(`\n◐ engram inspect`) + c.dim(`  ${all.length} active memories\n`));
   for (const m of all) {
     const col = KIND_COLOR[m.kind] ?? c.dim;
     const rein = m.reinforcements > 0 ? c.red(` ▲×${m.reinforcements}`) : "";
@@ -155,7 +155,7 @@ async function main() {
     case "forget": return forget();
     case "inspect": return inspect();
     default:
-      console.log("usage: mneme <learn|review|forget|inspect> [file] [--qwen]");
+      console.log("usage: engram <learn|review|forget|inspect> [file] [--qwen]");
   }
 }
 

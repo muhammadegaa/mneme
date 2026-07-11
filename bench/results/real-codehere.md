@@ -1,6 +1,6 @@
 # Real-repo benchmark — codehere (unseen)
 
-Mneme pointed at **codehere** (a 1,456-commit repo it had never seen), backend **Qwen** (live
+Engram pointed at **codehere** (a 1,456-commit repo it had never seen), backend **Qwen** (live
 `qwen-plus` extraction + review, `text-embedding-v3`). Last 30 commits: learn 29 oldest-first,
 hold out the newest for review. Command:
 
@@ -26,7 +26,7 @@ pervaded by empty `}catch(e){}` blocks that discard the error, e.g.
 +  try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
 ```
 
-Mneme learned this pattern from commits it had never seen and marked it recurring — the core
+Engram learned this pattern from commits it had never seen and marked it recurring — the core
 claim ("learns your real recurring mistakes") holds on a real codebase, not a planted one.
 
 ## Honesty caveat — held-out review catch discarded

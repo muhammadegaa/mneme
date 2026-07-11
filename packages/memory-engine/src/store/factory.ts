@@ -18,7 +18,7 @@ export function createStore(env: NodeJS.ProcessEnv = process.env): MemoryStore {
       return new PgVectorStore(env.DATABASE_URL);
     }
     case "json":
-      return new JsonFileStore(env.MNEME_STORE ?? ".mneme/memories.json");
+      return new JsonFileStore(env.ENGRAM_STORE ?? ".engram/memories.json");
     case "memory":
     default:
       return new InMemoryStore();

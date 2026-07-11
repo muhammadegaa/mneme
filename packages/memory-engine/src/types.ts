@@ -1,5 +1,5 @@
 /**
- * Core domain types for the Mneme memory engine.
+ * Core domain types for the Engram memory engine.
  *
  * A "memory" is an atomic, self-contained statement extracted from a
  * conversation turn — not the raw turn itself. Atomicity is what makes

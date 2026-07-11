@@ -1,4 +1,4 @@
-# Mneme — Devpost submission
+# Engram — Devpost submission
 
 > Paste-ready. Sections map to Devpost's standard fields. Every claim maps to a
 > command you can run in the repo.
@@ -6,7 +6,7 @@
 **Tagline:** The code reviewer that remembers you. It learns how *you* code from
 your git history and catches the mistake you keep making — before it ships.
 
-**Track:** Track 1 — MemoryAgent · **Repo:** https://github.com/muhammadegaa/mneme (MIT)
+**Track:** Track 1 — MemoryAgent · **Repo:** https://github.com/muhammadegaa/engram (MIT)
 
 ---
 
@@ -26,7 +26,7 @@ build the memory *engine* those demos skip.
 
 ## What it does
 
-Mneme reads your commit history and extracts atomic memories about how you
+Engram reads your commit history and extracts atomic memories about how you
 code, classified as **style · tech · mistake · project**. Then, on any new diff,
 it runs a real memory pipeline you can watch happen:
 
@@ -37,7 +37,7 @@ it runs a real memory pipeline you can watch happen:
 
 The hero mechanic is **reinforcement**: each time you repeat a mistake, it
 reinforces the *same* memory, so its salience climbs. The louder that memory
-gets, the harder it is to miss. When Mneme catches the bug on your next diff it
+gets, the harder it is to miss. When Engram catches the bug on your next diff it
 says: *"I've seen this one. N times."* — where N is literally the number of times
 you'd have shipped the same bug. It also **forgets on purpose** (a tool you tried
 once decays away so it stops polluting advice) and **resolves contradictions**
@@ -54,7 +54,7 @@ Every piece of reasoning runs on **Qwen via Alibaba Cloud DashScope**:
 | Heavy reasoning tier | `qwen-max` |
 | Embeddings for retrieval (1024-dim) | `text-embedding-v3` |
 
-The engine is a standalone, unit-tested TypeScript package (`@mneme/memory-engine`)
+The engine is a standalone, unit-tested TypeScript package (`@engram/memory-engine`)
 with pure, tested scoring / packing / decay math (29 deterministic tests). A single
 Qwen client handles tiered routing, retries, timeouts, JSON repair, and token
 accounting against the OpenAI-compatible DashScope endpoint. The demo is a Hono
@@ -70,9 +70,9 @@ the differentiator. The engine wins on the two columns a naive store can't touch
 |---|---|---|---|---|
 | A — full-context stuffing | 50% | 100% | 446 | 100% |
 | B — naive vector top-k | 50% | 100% | 67 | 100% |
-| **C — Mneme (hybrid + forget + pack)** | **100%** | **0%** | **69** | **100%** |
+| **C — Engram (hybrid + forget + pack)** | **100%** | **0%** | **69** | **100%** |
 
-Mneme resolves *every* contradiction and drives stale-fact leakage to zero — at
+Engram resolves *every* contradiction and drives stale-fact leakage to zero — at
 ~1/6 the tokens. Forgetting + supersession is exactly what a vector lookup can't do.
 
 That bench is synthetic, so we also ran it on **a real 1,456-commit repo it had
@@ -117,7 +117,7 @@ model, not in the model call itself.
 The managed-infra deploy (Function Compute + OSS + ApsaraDB pgvector) is fully
 wired (`s.yaml`, `Dockerfile`, pgvector adapter) and flips on once our Alibaba
 Cloud account clears its verification gate. Beyond that: a Git hook / CI check so
-Mneme reviews every PR, and per-team memory so a whole codebase's habits compound.
+Engram reviews every PR, and per-team memory so a whole codebase's habits compound.
 
 ## Built with
 

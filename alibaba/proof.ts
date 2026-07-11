@@ -42,15 +42,15 @@ async function proveOss(): Promise<void> {
     accessKeyId: process.env.OSS_ACCESS_KEY_ID!,
     accessKeySecret: process.env.OSS_ACCESS_KEY_SECRET!,
   });
-  const key = "mneme/proof.txt";
-  const payload = Buffer.from(`mneme proof @ ${process.env.PROOF_STAMP ?? "now"}`);
+  const key = "engram/proof.txt";
+  const payload = Buffer.from(`engram proof @ ${process.env.PROOF_STAMP ?? "now"}`);
   await client.put(key, payload);
   const got = await client.get(key);
   console.log(`[2/2] OSS round-trip OK → put+get "${key}" (${got.content.length} bytes)`);
 }
 
 async function main() {
-  console.log("=== Mneme · Proof of Alibaba Cloud deployment ===");
+  console.log("=== Engram · Proof of Alibaba Cloud deployment ===");
   await proveQwen();
   await proveOss();
   console.log("✅ Alibaba Cloud services reachable from this backend.");

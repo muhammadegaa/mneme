@@ -1,8 +1,8 @@
 {
-  "name": "mneme",
+  "name": "engram",
   "version": "0.1.0",
   "private": true,
-  "description": "Mneme — a persistent MemoryAgent with a benchmarkable memory engine. Built on Qwen + Alibaba Cloud.",
+  "description": "Engram — a persistent MemoryAgent with a benchmarkable memory engine. Built on Qwen + Alibaba Cloud.",
   "license": "MIT",
   "type": "module",
   "workspaces": [
@@ -14,7 +14,7 @@
     "test": "npm run test --workspace packages/memory-engine",
     "bench": "tsx bench/run.ts",
     "hello": "tsx scripts/hello-qwen.ts",
-    "mneme": "tsx cli/mneme.ts",
+    "engram": "tsx cli/engram.ts",
     "mcp": "tsx apps/mcp/server.ts",
     "dev": "npm run dev --workspace apps/api",
     "start": "npm run start --workspace apps/api",

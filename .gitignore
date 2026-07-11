@@ -17,5 +17,5 @@ _*.mjs
 _*.mts
 
 # demo golden seed IS committed (reproducible hero); runtime state is not
-.mneme/*
-!.mneme/golden.json
+.engram/*
+!.engram/golden.json

@@ -1,15 +1,15 @@
-# 🧠 Mneme — the code reviewer that remembers you
+# 🧠 Engram — the code reviewer that remembers you
 
 > A persistent **MemoryAgent** with a real, benchmarkable memory engine.
 > Powered end-to-end by **Qwen** (DashScope / Model Studio) on **Alibaba Cloud**.
 > Qwen Cloud Global AI Hackathon — **Track 1: MemoryAgent**.
 
 Linters know the language. Copilot forgets you the moment the session ends.
-**Mneme reads your git history and learns how _you_ code** — your style, your
+**Engram reads your git history and learns how _you_ code** — your style, your
 tools, and the mistake you keep making — then catches it on your next diff,
 *before it ships*.
 
-Most "AI memory" is `topK(cosine)` over a vector store. Mneme is a memory
+Most "AI memory" is `topK(cosine)` over a vector store. Engram is a memory
 **engine**: it extracts atomic memories from commits, ranks them with a hybrid
 scoring function, **reinforces** recurring mistakes so they get louder,
 **forgets** one-off noise via time-decay, **resolves contradictions** with an
@@ -17,7 +17,7 @@ audit trail, and **packs** the optimal memory set into a fixed token budget with
 a 0/1 knapsack solver. Every decision is observable in a live Memory Inspector.
 
 **The hero:** a bug you've made before makes its memory *louder* every time it
-recurs. On a new diff, Mneme catches it and tells you exactly how many times
+recurs. On a new diff, Engram catches it and tells you exactly how many times
 you'd have shipped it — grounded in a specific memory of yours, not a generic
 lint rule.
 
@@ -40,19 +40,19 @@ on the two columns a naive store can't touch: **contradiction accuracy** and
 |---|---|---|---|---|---|
 | A — full-context stuffing | 50% | 100% | 446 | 100% | ~0ms† |
 | B — naive vector top-k | 50% | 100% | 67 | 100% | 292ms |
-| **C — Mneme (hybrid + forgetting + packing)** | **100%** | **0%** | **69** | **100%** | 318ms |
+| **C — Engram (hybrid + forgetting + packing)** | **100%** | **0%** | **69** | **100%** | 318ms |
 
 **Read:** full-context never misses but re-injects superseded facts (100% stale
 leakage) at ~6.5× the tokens. Naive top-k is cheap but status-blind — it still
 leaks the stale "Redux" fact and resolves the contradiction only half the time.
-**Mneme resolves every contradiction and drives stale leakage to zero — at a
+**Engram resolves every contradiction and drives stale leakage to zero — at a
 fraction of the tokens and matching recall.** Forgetting + supersession is what
 separates a memory *engine* from a vector lookup.
 
 > †Latency for B/C is one live Qwen embedding round-trip. Config A does **no**
 > embedding call (it stuffs raw text), so its retrieval step is ~free — but it
 > pays that back many times over in LLM input tokens on *every* turn (446 vs 69).
-> The point of the latency column is that Mneme's forgetting/packing adds
+> The point of the latency column is that Engram's forgetting/packing adds
 > negligible overhead (318ms vs B's 292ms) while fixing what B gets wrong.
 
 > Run it yourself: `npm run bench`. With `DASHSCOPE_API_KEY` set it reports
@@ -62,7 +62,7 @@ separates a memory *engine* from a vector lookup.
 ### A repo it had never seen
 
 The bench above is synthetic — so the fair objection is "you planted those
-mistakes." So we pointed Mneme at **`codehere` — a real 1,456-commit repo it had
+mistakes." So we pointed Engram at **`codehere` — a real 1,456-commit repo it had
 never seen** — and learned its last 29 commits live on Qwen (`tsx bench/real-run.ts
 ../codehere 30 --qwen`). It extracted **37 memories** and, with no planted data,
 identified a **genuinely recurring mistake**:
@@ -70,7 +70,7 @@ identified a **genuinely recurring mistake**:
 > `mistake` · seen 2× (reinforced once) — **"swallows errors in empty catch blocks"**
 
 That's real and independently checkable — `codehere`'s history is full of
-`}catch(e){}` blocks that discard the error. Mneme learned the pattern from
+`}catch(e){}` blocks that discard the error. Engram learned the pattern from
 commits it had never seen and marked it recurring. Cost: ~47k tokens (~$0.02).
 
 **Honest boundary:** the same run also held out the newest commit for a live
@@ -105,7 +105,7 @@ live-review comment still needs checking against the diff. Full writeup:
 
 ## 🔌 Use it as an MCP server (the production surface)
 
-Mneme isn't a webpage you paste diffs into — the demo Inspector is just a window
+Engram isn't a webpage you paste diffs into — the demo Inspector is just a window
 into the engine. The way you actually *use* it is as an **MCP server**: a
 long-term developer memory any MCP client (Claude Desktop, Cursor, Windsurf) can
 call. It learns your recurring mistakes and grounds a review of your next diff in
@@ -113,7 +113,7 @@ a specific memory — memory that **forgets** one-off noise and gets **louder** 
 repeated mistakes, unlike the general chat-memory MCP servers.
 
 ```bash
-npm run mcp        # stdio MCP server (backend=mock; set MNEME_BACKEND=qwen for live)
+npm run mcp        # stdio MCP server (backend=mock; set ENGRAM_BACKEND=qwen for live)
 ```
 
 Register it (Claude Desktop `claude_desktop_config.json` / Cursor MCP settings):
@@ -121,10 +121,10 @@ Register it (Claude Desktop `claude_desktop_config.json` / Cursor MCP settings):
 ```json
 {
   "mcpServers": {
-    "mneme": {
+    "engram": {
       "command": "npx",
       "args": ["tsx", "/ABSOLUTE/PATH/qwenhack/apps/mcp/server.ts"],
-      "env": { "MNEME_BACKEND": "qwen" }
+      "env": { "ENGRAM_BACKEND": "qwen" }
     }
   }
 }
@@ -134,10 +134,10 @@ Tools it exposes:
 
 | Tool | What it does |
 |---|---|
-| `mneme_review` | Review a diff grounded in your memories; a warn cited to a *mistake* memory is a repeat bug caught before it ships (and reinforces that memory). |
-| `mneme_recall` | Recall the memories most relevant to a query/context, ranked by relevance · recency · salience. |
-| `mneme_learn` | Learn from a commit (message + diff) — extract, reinforce repeats, supersede contradictions. |
-| `mneme_inspect` | List active memories with salience + reinforcement counts. |
+| `engram_review` | Review a diff grounded in your memories; a warn cited to a *mistake* memory is a repeat bug caught before it ships (and reinforces that memory). |
+| `engram_recall` | Recall the memories most relevant to a query/context, ranked by relevance · recency · salience. |
+| `engram_learn` | Learn from a commit (message + diff) — extract, reinforce repeats, supersede contradictions. |
+| `engram_inspect` | List active memories with salience + reinforcement counts. |
 
 Memory persists via the store factory — JSON locally, ApsaraDB pgvector on
 Alibaba Cloud — so it accumulates across sessions. Same engine as the benchmark
@@ -162,7 +162,7 @@ endpoint. `npm run proof` makes a live call and prints
 ```mermaid
 flowchart LR
     U[Developer] -->|commit / diff| API[Hono API + Memory Inspector]
-    AGENT[Coding agent · Claude Desktop / Cursor] -->|MCP tools| MCP[Mneme MCP server]
+    AGENT[Coding agent · Claude Desktop / Cursor] -->|MCP tools| MCP[Engram MCP server]
     API --> ENG[Memory Engine]
     MCP --> ENG
 
@@ -196,15 +196,15 @@ npm run bench               # A/B/C benchmark — prints the table above
 npm run dev                 # → http://127.0.0.1:5273
 
 # Headless CLI — the whole engine from the terminal:
-npm run mneme learn         # learn a developer from planted git history
-npm run mneme inspect       # salience bars, reinforcement counts, audit trail
-npm run mneme review        # memory-grounded review of a fresh diff
-npm run mneme forget        # run the decay job; watch a one-off memory age out
+npm run engram learn         # learn a developer from planted git history
+npm run engram inspect       # salience bars, reinforcement counts, audit trail
+npm run engram review        # memory-grounded review of a fresh diff
+npm run engram forget        # run the decay job; watch a one-off memory age out
 
 # Go live on Qwen / Alibaba Cloud:
 cp .env.example .env        # add DASHSCOPE_API_KEY + DASHSCOPE_BASE_URL
 npm run hello               # live Qwen round-trip: chat + structured + embeddings
-npm run mneme review --qwen # same pipeline, live inference
+npm run engram review --qwen # same pipeline, live inference
 npm run proof               # proof of the live Alibaba Cloud (Qwen/DashScope) call
 ```
 
@@ -240,7 +240,7 @@ packages/memory-engine/     standalone, unit-tested engine (the moat)
 apps/api/server.ts          Hono API + static Memory Inspector (the demo hero)
 apps/web/index.html         the Memory Inspector UI (self-contained)
 apps/mcp/server.ts          MCP server — the production surface (agents call the engine)
-cli/mneme.ts                headless CLI (learn / review / forget / inspect)
+cli/engram.ts                headless CLI (learn / review / forget / inspect)
 bench/                      synthetic A/B/C harness + real-repo runner (from-repo.ts, real-run.ts)
 alibaba/                    proof.ts + deploy config (s.yaml, Dockerfile)
 ```

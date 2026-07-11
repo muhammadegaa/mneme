@@ -1,7 +1,7 @@
 /**
- * Mneme API — the backend that runs on Alibaba Cloud. One Hono process serves
+ * Engram API — the backend that runs on Alibaba Cloud. One Hono process serves
  * the engine over HTTP and the static Memory Inspector UI. Backend model is the
- * deterministic mock by default; set DASHSCOPE_API_KEY + MNEME_BACKEND=qwen to
+ * deterministic mock by default; set DASHSCOPE_API_KEY + ENGRAM_BACKEND=qwen to
  * run live Qwen. Deployable as-is to ECS / Function Compute.
  */
 import { readFileSync, copyFileSync, existsSync } from "node:fs";
@@ -26,21 +26,21 @@ import {
   type MemoryStore,
   type MentorModel,
   type CommitSource,
-} from "@mneme/memory-engine";
+} from "@engram/memory-engine";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "../..");
-loadEnv(resolve(ROOT, ".env")); // read DASHSCOPE_* for MNEME_BACKEND=qwen
+loadEnv(resolve(ROOT, ".env")); // read DASHSCOPE_* for ENGRAM_BACKEND=qwen
 const DAY = 86_400_000;
 const NOW = Date.now();
-const BUDGET = Number(process.env.MNEME_BUDGET ?? 64); // tight enough that packing visibly drops
+const BUDGET = Number(process.env.ENGRAM_BUDGET ?? 64); // tight enough that packing visibly drops
 // A mistake "seen once" — the salience a first, un-repeated write assigns (Qwen
 // extract default ~0.5; mock uses 0.45). Used only to compute the honest
 // counterfactual "what would this memory score if you'd never repeated it".
 const QUIET_SALIENCE = 0.45;
 
 function makeModel(): MentorModel {
-  if (process.env.MNEME_BACKEND === "qwen") {
+  if (process.env.ENGRAM_BACKEND === "qwen") {
     return new QwenMentorModel(new QwenClient(configFromEnv()));
   }
   return new MockMentorModel();
@@ -85,8 +85,8 @@ async function seed(force = false): Promise<Session> {
 // canonical starting state. Restoring it is deterministic and instant — no live
 // re-extraction, so the hero catch fires every time. `reset demo` restores it;
 // a fresh clone restores it before the first boot.
-const GOLDEN = resolve(ROOT, ".mneme/golden.json");
-const STORE_PATH = resolve(ROOT, process.env.MNEME_STORE ?? ".mneme/memories.json");
+const GOLDEN = resolve(ROOT, ".engram/golden.json");
+const STORE_PATH = resolve(ROOT, process.env.ENGRAM_STORE ?? ".engram/memories.json");
 function restoreGolden(): boolean {
   if ((process.env.MEMORY_STORE ?? "memory") !== "json" || !existsSync(GOLDEN)) return false;
   copyFileSync(GOLDEN, STORE_PATH);
@@ -232,4 +232,4 @@ app.get("/", (c) => c.html(readFileSync(resolve(__dirname, "../web/index.html"),
 // PORT (ECS/local). Bind 0.0.0.0 so the container is reachable.
 const port = Number(process.env.FC_SERVER_PORT ?? process.env.PORT ?? 5273);
 serve({ fetch: app.fetch, port, hostname: "0.0.0.0" });
-console.log(`◐ Mneme API + UI on :${port}  (backend=${session.model.backend}, store=${process.env.MEMORY_STORE ?? "memory"})`);
+console.log(`◐ Engram API + UI on :${port}  (backend=${session.model.backend}, store=${process.env.MEMORY_STORE ?? "memory"})`);

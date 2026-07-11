@@ -1,6 +1,6 @@
-# Mneme — 3-minute demo video script + shot list
+# Engram — 3-minute demo video script + shot list
 
-Goal: win on the rubric in ~180 seconds. **Lead with the product**: Mneme is a
+Goal: win on the rubric in ~180 seconds. **Lead with the product**: Engram is a
 memory *any coding agent can call over MCP* — it learns the mistakes you repeat
 from your git history and catches them on your next diff. Show the agent surface
 first (the MCP tools), then open the Inspector as the "look inside the engine"
@@ -10,10 +10,10 @@ claims.**
 
 Pre-roll setup (NOT recorded):
 - Terminal A — the MCP surface. Register/run the server on Qwen:
-  `MNEME_BACKEND=qwen npm run mcp` (or have it registered in Claude Desktop /
+  `ENGRAM_BACKEND=qwen npm run mcp` (or have it registered in Claude Desktop /
   Cursor via the config in the README). Confirm it reports `backend=qwen`.
 - Terminal B / browser — the Inspector, on Qwen:
-  `MNEME_BACKEND=qwen MEMORY_STORE=json PORT=5273 npx tsx apps/api/server.ts`
+  `ENGRAM_BACKEND=qwen MEMORY_STORE=json PORT=5273 npx tsx apps/api/server.ts`
   → `http://127.0.0.1:5273`. Top-right badge must read **backend: qwen** (green).
 - Do NOT click "↻ relearn" before recording — it re-runs Qwen extraction and the
   numbers shift. Use the persisted seed as-is.
@@ -25,17 +25,17 @@ VO is tight; trim to fit. Total ≈ 180s.
 
 ### 0:00–0:14 · Hook  *(screen: an agent about to call the tool)*
 **VO:** "Your linter knows the language. Your AI pair-programmer forgets you the
-second the session ends. Neither one remembers the bug you keep shipping. Mneme
+second the session ends. Neither one remembers the bug you keep shipping. Engram
 does — and it plugs into the agent you already use."
-**Shot:** Claude Desktop / Cursor with Mneme registered as an MCP server (or
-Terminal A showing `mneme` connected, `backend=qwen`). The four tools visible:
-`mneme_review`, `mneme_recall`, `mneme_learn`, `mneme_inspect`.
+**Shot:** Claude Desktop / Cursor with Engram registered as an MCP server (or
+Terminal A showing `engram` connected, `backend=qwen`). The four tools visible:
+`engram_review`, `engram_recall`, `engram_learn`, `engram_inspect`.
 
-### 0:14–0:52 · THE CATCH, over MCP  *(screen: the agent calling `mneme_review`)*
+### 0:14–0:52 · THE CATCH, over MCP  *(screen: the agent calling `engram_review`)*
 **VO:** "This is a memory server, but not the generic kind. It read my git history
 and learned how *I* code. Here's a fresh diff — fetch a user, parse the JSON,
-return it. Looks fine. Watch my agent hand it to Mneme."
-**Shot:** invoke `mneme_review` on the `getUser` diff (`res.json()` with no
+return it. Looks fine. Watch my agent hand it to Engram."
+**Shot:** invoke `engram_review` on the `getUser` diff (`res.json()` with no
 `res.ok` check). The tool result returns: *reviewed against N of your memories,
 packed X/budget tokens* → a **⚠ WARN** grounded in a specific memory:
 *"↳ grounded in your memory '…handle non-ok responses / null checks…' (seen N×)"*
@@ -58,7 +58,7 @@ engine the MCP tool runs — this is just the window into it."
 ### 1:26–1:50 · EARNED, CHANGES ITS MIND, FORGETS  *(screen: memory book)*
 **VO:** "Nothing here was typed in by hand. Every memory was extracted from a real
 commit — my style, my tools, the mistakes I repeat. And it maintains itself."
-**Shot:** scroll "What Mneme knows about you." Point at the loudest **Mistakes you
+**Shot:** scroll "What Engram knows about you." Point at the loudest **Mistakes you
 repeat** bar + **seen N×**. Then the "changed its mind" receipt:
 ~~uses Redux~~ → **uses Zustand**. Then click **run the forgetting job →** — the
 faint one-off (a Bun experiment) ages out.
@@ -71,7 +71,7 @@ polluting advice."
 Qwen embeddings — and on a real 1,456-commit repo it had never seen."
 **Shot:** run `npm run bench`. Hold on the A/B/C table.
 **VO:** "Full-context stuffing and naive top-k both leak stale facts 100% of the
-time and resolve contradictions only half the time. Mneme: 100% contradiction
+time and resolve contradictions only half the time. Engram: 100% contradiction
 accuracy, zero stale leakage — at six times fewer tokens. On an unseen repo it
 found a genuinely recurring mistake with no planted data. Forgetting and
 supersession are the difference between a memory *engine* and a vector lookup."
@@ -86,15 +86,15 @@ ApsaraDB pgvector, OSS — is fully wired and flips on the moment our account cl
 verification. The intelligence is already live."
 
 ### 2:46–3:00 · Close  *(screen: hero title card)*
-**VO:** "Mneme. A memory your coding agent can call — the reviewer that remembers
+**VO:** "Engram. A memory your coding agent can call — the reviewer that remembers
 how you code. Open source, MIT."
 
 ---
 
 ## Shot list (capture order — record clips, edit to the script)
-1. Agent surface — Claude Desktop / Cursor with Mneme registered, or Terminal A
+1. Agent surface — Claude Desktop / Cursor with Engram registered, or Terminal A
    showing the 4 tools + `backend=qwen`.
-2. `mneme_review` on the `getUser` diff — capture the WARN grounded in a memory +
+2. `engram_review` on the `getUser` diff — capture the WARN grounded in a memory +
    "1 repeat mistake caught before shipping — reinforced." Record 2 takes.
 3. Browser Inspector — the same review: full trace reveal (RETRIEVE→PACK→GROUND) +
    catch card. Record 2 takes. `backend: qwen` badge visible.
@@ -116,7 +116,7 @@ how you code. Open source, MIT."
 
 ## Honesty guardrails (do not violate on camera)
 - Record on **backend: qwen** only. Never show `backend: mock` and imply it's live.
-  This applies to the MCP surface too — run `MNEME_BACKEND=qwen npm run mcp` for
+  This applies to the MCP surface too — run `ENGRAM_BACKEND=qwen npm run mcp` for
   the on-camera tool call, and verify it returns a real grounded catch before
   recording (the live-Qwen MCP path shares the API's proven client, but confirm it
   once on the day — do not record an unverified call).

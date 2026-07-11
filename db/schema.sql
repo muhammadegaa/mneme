@@ -1,4 +1,4 @@
--- Mneme — ApsaraDB for PostgreSQL (pgvector) schema.
+-- Engram — ApsaraDB for PostgreSQL (pgvector) schema.
 -- Apply once to your ApsaraDB instance:  psql "$DATABASE_URL" -f db/schema.sql
 -- Embedding dim = 1024 (Qwen text-embedding-v3). Change if you switch models.
 

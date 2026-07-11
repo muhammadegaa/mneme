@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Mneme — the reviewer that remembers you</title>
+<title>Engram — the reviewer that remembers you</title>
 <style>
   :root{
     --bg:#0E0E0D; --bg2:#161513; --card:#17161300; --line:#272521;
@@ -138,7 +138,7 @@
 </head>
 <body>
   <div class="top"><div class="wrap"><div class="row">
-    <div class="mark"><span class="dot"></span>Mneme</div>
+    <div class="mark"><span class="dot"></span>Engram</div>
     <div class="spacer"></div>
     <span id="badge" class="badge">backend …</span>
     <button class="ghostbtn" onclick="reset()">↻ reset demo</button>
@@ -149,8 +149,8 @@
     <header class="hero">
       <div class="eyebrow">a code reviewer with a memory of you</div>
       <div class="num" id="heroNum">—</div>
-      <h1>times you'd have shipped the <span class="hl">same bug</span>. Mneme caught every one.</h1>
-      <p class="lede">A linter flags this once; you mute it and ship the bug anyway. Mneme reads your git history and learns how <em>you</em> code. Every time you repeat a mistake, its memory gets <span class="hl">louder</span> — so on your next diff, the one you keep making is the one it won't let past.</p>
+      <h1>times you'd have shipped the <span class="hl">same bug</span>. Engram caught every one.</h1>
+      <p class="lede">A linter flags this once; you mute it and ship the bug anyway. Engram reads your git history and learns how <em>you</em> code. Every time you repeat a mistake, its memory gets <span class="hl">louder</span> — so on your next diff, the one you keep making is the one it won't let past.</p>
       <div class="cueline">↓ <b>try it</b> — edit the diff, hit review, watch the number climb</div>
     </header>
 
@@ -158,7 +158,7 @@
     <section id="try">
       <div class="kicker">the live catch</div>
       <h2 class="sec">Write the bug. Watch it get stopped.</h2>
-      <p class="sub">This is a real diff fed to a real review. Mneme retrieves what it knows about you, packs it under a token budget, and grounds every comment in a specific memory.</p>
+      <p class="sub">This is a real diff fed to a real review. Engram retrieves what it knows about you, packs it under a token budget, and grounds every comment in a specific memory.</p>
       <div class="try">
         <div class="editor">
           <div class="eh"><span class="fdot"></span><span class="fdot"></span><span class="fdot"></span>&nbsp; src/api/users.ts</div>
@@ -176,7 +176,7 @@
 
     <!-- WHAT IT KNOWS -->
     <section id="book">
-      <div class="kicker">what mneme knows about you</div>
+      <div class="kicker">what engram knows about you</div>
       <h2 class="sec">A model of how you code — earned, not configured.</h2>
       <p class="sub">Every memory was extracted from a real commit. Strength rises when you repeat something and decays when you stop. Nothing here was typed in by hand.</p>
       <div id="groups"></div>
@@ -203,9 +203,9 @@
 
     <footer>
       <div class="line">
-        <span class="mono" style="color:var(--mut)">Mneme</span>
+        <span class="mono" style="color:var(--mut)">Engram</span>
         <span id="engineLine">hybrid retrieval · reinforcement · knapsack packing</span>
-        <a href="https://github.com/muhammadegaa/mneme" target="_blank">GitHub ↗</a>
+        <a href="https://github.com/muhammadegaa/engram" target="_blank">GitHub ↗</a>
         <span>MIT</span>
         <span>Qwen · Alibaba Cloud</span>
         <span id="usage" class="mono"></span>

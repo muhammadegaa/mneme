@@ -1,6 +1,6 @@
-# STATE.md — Mneme self-improvement loop
+# STATE.md — Engram self-improvement loop
 
-The compounding memory for an autonomous loop driving Mneme to a **winning, submittable** state
+The compounding memory for an autonomous loop driving Engram to a **winning, submittable** state
 for the Qwen Cloud Global AI Hackathon (Track 1: MemoryAgent).
 Read this FIRST every iteration. Write it LAST every iteration. Never restart from zero.
 
@@ -12,7 +12,7 @@ Judging: Technical Depth 30% · Innovation 30% · Problem Value 25% · Presentat
 
 **North star changed.** The old loop optimized a presentation proxy ("judge gets it in 3s")
 and shipped a landing-page demo. The rubric's real bar is a **production-ready agent**. Pivot:
-reframe Mneme from a poster into a **production MCP memory agent** — keep the (strong, tested)
+reframe Engram from a poster into a **production MCP memory agent** — keep the (strong, tested)
 engine, change the surface.
 
 WHY (CEO-review findings): (1) #1 risk is DISQUALIFICATION — the rules REQUIRE proof the backend
@@ -27,8 +27,8 @@ SEQUENCED PLAN (deploy-first):
    Function Compute + OSS + pgvector are already wired (`s.yaml`, `Dockerfile`, `pg-store.ts`);
    flips on when the account clears. This is the DQ risk — do it this week.
 2. **MCP server over the engine** — DONE (2026-07-10). `apps/mcp/server.ts` (stdio, @modelcontextprotocol/sdk),
-   4 tools: `mneme_review` (grounded diff review + reinforce-on-catch), `mneme_recall`, `mneme_learn`,
-   `mneme_inspect`. Persists via store factory (json local / pgvector Alibaba); restores golden seed
+   4 tools: `engram_review` (grounded diff review + reinforce-on-catch), `engram_recall`, `engram_learn`,
+   `engram_inspect`. Persists via store factory (json local / pgvector Alibaba); restores golden seed
    free on fresh json store BEFORE store construction (JsonFileStore reads its file once at ctor — key gotcha).
    Forces MEMORY_STORE=json over the .env demo default (=memory) so MCP memory isn't ephemeral. Smoke-verified
    (mock): 5 memories loaded, review catches the null/ok repeat mistake grounded in m_3 (seen 18×) + reinforces.
@@ -37,7 +37,7 @@ SEQUENCED PLAN (deploy-first):
 3. **Package** — architecture diagram DONE (`docs/architecture.html` + rendered `docs/architecture.png`;
    two-surface story: MCP agent + Inspector → engine → Qwen + Alibaba; vision-verified clean). 3-min
    video script DONE — `docs/VIDEO_SCRIPT.md` rewritten to LEAD with the MCP agent surface (the catch
-   over `mneme_review`), Inspector demoted to "look inside the engine" visual; unseen-repo evidence +
+   over `engram_review`), Inspector demoted to "look inside the engine" visual; unseen-repo evidence +
    MCP honesty guardrail added (verify live-qwen MCP call before recording). Real-repo evidence already
    folded into README + DEVPOST. REMAINING in packaging: none blocking; optional = record the video.
 4. **STRETCH** (only if 1-3 land): autonomous PR-review bot (GH App/Action).
@@ -53,7 +53,7 @@ Old landing-demo assets (hero/trace/causal panel) are NOT thrown away — Inspec
 Submission is READY when every criterion below is CONFIRMED by an *independent verifier pass*
 (a fresh sub-agent or a vision check — never self-critique):
 
-- [ ] **G1 · Hero clarity** — a judge understands what Mneme is + why it's novel in ≤3 seconds, no scroll. (Innovation/Presentation)
+- [ ] **G1 · Hero clarity** — a judge understands what Engram is + why it's novel in ≤3 seconds, no scroll. (Innovation/Presentation)
 - [ ] **G2 · Visceral catch** — the live "I've seen this one. N times." moment lands emotionally; the climbing number reads as "bugs you'd have shipped." (Problem Value/Presentation)
 - [x] **G3 · Agent-state transparency** — DONE. Review now stages a live trace: RETRIEVE (ranked N by relevance·recency·salience) → PACK (kept X / dropped Y to fit used/budget tokens) → GROUND (matched memory id), then the catch card. All real telemetry from /api/review (packed/dropped/usedTokens/budget). Vision-verified. Commit pending.
 - [x] **G4 · Depth legible** — DONE. Rewrote stale README (was old "account manager" vertical) into a coherent coding-mentor story: benchmark lead, Qwen model-routing table, honest live-vs-mock + deploy caveat, accurate stack. Benchmark reordered to lead with the differentiator + 0.02ms footnoted.
@@ -82,7 +82,7 @@ DEVPOST benchmark table aligned to README order. Round-2 confirmed round-1 fixes
    OPTIONAL FUTURE (needs user decision — see resume pointer): the FULLER live miss→teach→catch
    arc (hero starts low + climbs). Higher visceral ceiling but reshapes the recorded hero +
    needs fat-margin seed surgery. Asked user; they were away; shipped the safe variant.
-2. **Real-repo benchmark** — DONE (user-approved live run). Pointed Mneme at **codehere** (1,456-commit
+2. **Real-repo benchmark** — DONE (user-approved live run). Pointed Engram at **codehere** (1,456-commit
    repo it had never seen) via new `bench/from-repo.ts` (git→history.json, free) + `bench/real-run.ts`
    (learn 29 oldest-first, hold out newest for review). Live Qwen: 37 memories, 1 REAL recurring
    mistake ("swallows errors in empty catch blocks" — independently verified: codehere history is
@@ -107,7 +107,7 @@ Demo clean + recording-ready on live Qwen. 29/29 tests. proof → live Qwen OK.
 ## VERIFIED FACTS (stage 3 — stop guessing about these)
 
 - Engine is done + verified on LIVE Qwen: write/reinforce/contradiction/forgetting/retrieval/packing/cross-session all fire. Commit `afa1d9b`. 29/29 tests pass.
-- Demo server: `MNEME_BACKEND=qwen MEMORY_STORE=json PORT=5273 npx tsx apps/api/server.ts` → http://127.0.0.1:5273. Restores good seed from `.mneme/memories.json` instantly.
+- Demo server: `ENGRAM_BACKEND=qwen MEMORY_STORE=json PORT=5273 npx tsx apps/api/server.ts` → http://127.0.0.1:5273. Restores good seed from `.engram/memories.json` instantly.
 - Clean demo start state: `backend=qwen · catches=0 · active=5`; hero null_check seen 3×; Redux→Zustand superseded; Bun fading (ready to forget).
 - Qwen live via Singapore workspace key in `.env` (gitignored). DashScope OpenAI-compatible endpoint. `npm run proof` → `[1/2] Qwen/DashScope OK · embed dims=1024`.
 - BLOCKED (not code): OSS + Function Compute deploy — account "complete your information" verification gate. Wired (`s.yaml`, `Dockerfile`, `pg-store.ts`); flips on when account clears. This is HONEST caveat #2 in the checklist, not a fake.
@@ -131,7 +131,7 @@ Demo clean + recording-ready on live Qwen. 29/29 tests. proof → live Qwen OK.
 ## INDEPENDENT VERIFIER (iter 2) — findings + resolution
 
 A fresh adversarial judge-agent graded the demo (screenshots) + README + DEVPOST. Confirmed issues → all fixed:
-- **Hero silently failed** (GROUND "—", no catch card). Root cause: `/api/reset` force-reseeded via non-deterministic Qwen; and the browser review call (~3.8s) + slow staging pushed the catch past the screenshot. FIX: (a) froze a golden seed (`.mneme/golden.json`, committed, extracted once by live Qwen), reset now restores it deterministically — catch fires 5/5; (b) tightened the trace stagger; (c) harness waits on `.catch`. Fresh clone restores golden on first boot → reproducible for judges.
+- **Hero silently failed** (GROUND "—", no catch card). Root cause: `/api/reset` force-reseeded via non-deterministic Qwen; and the browser review call (~3.8s) + slow staging pushed the catch past the screenshot. FIX: (a) froze a golden seed (`.engram/golden.json`, committed, extracted once by live Qwen), reset now restores it deterministically — catch fires 5/5; (b) tightened the trace stagger; (c) harness waits on `.catch`. Fresh clone restores golden on first boot → reproducible for judges.
 - **Number mismatch** (UI 18 vs writeup 15). FIX: genericized DEVPOST to "N times"; the one concrete number lives only in the frozen UI.
 - **Audit wall** (Redux→Zustand repeated ~11×). FIX: renderAudit dedupes to one receipt per superseded slot → now exactly 2 clean receipts.
 - **"↻ relearn" button** was a footgun (live non-deterministic reseed). FIX: renamed "↻ reset demo", restores golden.
@@ -143,7 +143,7 @@ A fresh adversarial judge-agent graded the demo (screenshots) + README + DEVPOST
 - **Vision-verify harness**: playwright-core download is sandbox-blocked; cached browsers max at build 1223 while playwright-core wants 1228 → launch with explicit `executablePath` to `~/Library/Caches/ms-playwright/chromium_headless_shell-1223/.../chrome-headless-shell`. Reset the demo via `page.request.post(.../api/reset)` INSIDE the browser (node `fetch`/`curl` are hook-redirected). Harness: `_shot.mjs`. Rerun: `node _shot.mjs <outdir>`.
 - **Network from Bash is hook-redirected** (curl/wget/node-fetch → context-mode). To hit the live server, drive it from playwright's browser context, or read the server source for shapes.
 - **Depth is a perception**: the engine already retrieved/packed/grounded — surfacing those real numbers as a staged trace turned invisible work into a visible Technical-Depth signal. Cheap change, high score leverage. Look for more "make the real work visible" moves.
-- **Seed non-determinism → SOLVED with a golden seed**: force-reseed re-runs Qwen extraction (non-deterministic → hero sometimes fails). Fix pattern: extract once with live Qwen, freeze the good state as a committed fixture (`.mneme/golden.json`), restore it deterministically on reset/first-boot. The live inference (review) still runs on Qwen — only the SEED is frozen. Honest + reproducible. Reliability probe: `_rel.mjs` (fires /api/review 5× via browser context, counts grounded catches). Always 5/5 now.
+- **Seed non-determinism → SOLVED with a golden seed**: force-reseed re-runs Qwen extraction (non-deterministic → hero sometimes fails). Fix pattern: extract once with live Qwen, freeze the good state as a committed fixture (`.engram/golden.json`), restore it deterministically on reset/first-boot. The live inference (review) still runs on Qwen — only the SEED is frozen. Honest + reproducible. Reliability probe: `_rel.mjs` (fires /api/review 5× via browser context, counts grounded catches). Always 5/5 now.
 - **Browser review latency ~3.8s**: live qwen-plus review is slow; don't add long UI staging on top. Screenshot/verify by waiting on the `.catch` selector, not a fixed timeout.
 - **Real-repo run: extraction is grounded, live review can hallucinate**: on codehere (unseen), Qwen extraction over git history produced REAL, verifiable recurring-mistake memories, but the held-out review invented a "uses var" catch not present in the diff. Lesson: trust the learn/reinforce pipeline over real history; do NOT trust a single live review comment without checking it against the diff. The demo hero avoids this because it grounds against a memory the diff genuinely matches — always spot-check any real-repo review claim before quoting it. `bench/real-run.ts` + `bench/from-repo.ts` are the (gitignored-safe) harness; re-running costs coupon (~$0.02/repo) so DON'T re-run casually.
 
@@ -197,7 +197,7 @@ REMAINING BACKLOG: #2 real-repo benchmark (BURNS finite $40 Qwen coupon — conf
 with user before running); #3 problem-value evidence (safe, no blocker); #4 budget realism.
 Blocked-on-user: Alibaba infra deploy (account verification), video recording + submission.
 
-To resume the loop: restart server (`MNEME_BACKEND=qwen MEMORY_STORE=json PORT=5273 npx tsx
+To resume the loop: restart server (`ENGRAM_BACKEND=qwen MEMORY_STORE=json PORT=5273 npx tsx
 apps/api/server.ts`), read this file, pick the top UNBLOCKED backlog item (#3 if not pursuing
 #1's fuller arc; #2 only with credit approval), verify with `_shot.mjs`/`_rel.mjs` + an
 independent verifier sub-agent, write results back here. Loop tools: `_shot.mjs` (vision),

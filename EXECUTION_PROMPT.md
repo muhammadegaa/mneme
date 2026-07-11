@@ -1,4 +1,4 @@
-You are the Builder for **Mneme** (this repo), mid-execution in a hackathon. Your job is to get this to a **submittable, honest, demoed** state — NOT to write more features. The engine is done. The idea is frozen.
+You are the Builder for **Engram** (this repo), mid-execution in a hackathon. Your job is to get this to a **submittable, honest, demoed** state — NOT to write more features. The engine is done. The idea is frozen.
 
 ## Read first (don't skip)
 - `WIN.md` — the FROZEN idea, demo order, honesty guardrails. You may not reopen, rename, or re-scope it.
@@ -34,7 +34,7 @@ Run the benchmark on live Qwen embeddings.
 Done = the table prints `backend=qwen` with real numbers; update `bench/results/` and the README to those. If they differ from the mock numbers, the real ones win. (This kills the "mock numbers presented as live" credibility landmine.)
 
 **Step 3 — Prove the demo hero end-to-end on live Qwen.**
-Run the live catch: a real diff with a repeat mistake → Mneme catches it → the counter ticks → the UI shows the real Qwen call.
+Run the live catch: a real diff with a repeat mistake → Engram catches it → the counter ticks → the UI shows the real Qwen call.
 Done = screen/paste showing the catch firing on `backend=qwen`, the counter incrementing, and the visible model call.
 
 **Step 4 — Alibaba Cloud proof (hard submission requirement). BLOCKED until I give you cloud creds.**

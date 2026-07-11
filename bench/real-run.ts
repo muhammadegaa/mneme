@@ -1,5 +1,5 @@
 /**
- * real-run — the honest "unseen repo" benchmark. Point Mneme at a REAL repo it
+ * real-run — the honest "unseen repo" benchmark. Point Engram at a REAL repo it
  * has never seen, learn its last N commits (oldest-first, so recurrence and
  * supersession happen chronologically), and report what it actually found. No
  * planted probes, no cherry-picking: the numbers are whatever extraction yields.
@@ -35,7 +35,7 @@ loadEnv();
 
 const DAY = 86_400_000;
 const NOW = Date.now();
-const BUDGET = Number(process.env.MNEME_BUDGET ?? 2000);
+const BUDGET = Number(process.env.ENGRAM_BUDGET ?? 2000);
 
 const repo = process.argv[2];
 const max = Number(process.argv.find((a, i) => i > 2 && /^\d+$/.test(a)) ?? 30);
@@ -59,7 +59,7 @@ async function main() {
   const heldOut = commits.at(-1)!; // newest commit — held out of learning, used for review
   const learnSet = commits.slice(0, -1);
 
-  console.log(`\n◐ Mneme real-repo benchmark · backend=${model.backend} · repo=${label}`);
+  console.log(`\n◐ Engram real-repo benchmark · backend=${model.backend} · repo=${label}`);
   console.log(`  ${commits.length} commits (${commits.at(0)!.daysAgo}d…${heldOut.daysAgo}d ago) · learn ${learnSet.length}, hold out newest for review\n`);
 
   const store = new InMemoryStore();
@@ -106,7 +106,7 @@ async function main() {
   console.log(`  beliefs superseded   ${superseded.length}`);
   console.log(`  held-out review      commit ${heldOut.sha} → ${caught.length} grounded catch(es)`);
   if (recurring.length) {
-    console.log(`\n  recurring mistakes Mneme learned from ${label} it had never seen:`);
+    console.log(`\n  recurring mistakes Engram learned from ${label} it had never seen:`);
     for (const m of recurring) console.log(`    ▲×${m.reinforcements}  ${m.text}`);
   }
   for (const cm of caught) console.log(`\n  held-out catch: ⚠ ${cm.message}\n    ↳ grounded in ${cm.citedMemoryId}`);
