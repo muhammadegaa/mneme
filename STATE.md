@@ -34,7 +34,12 @@ SEQUENCED PLAN (deploy-first):
    (mock): 5 memories loaded, review catches the null/ok repeat mistake grounded in m_3 (seen 18×) + reinforces.
    29/29 tests still pass. `npm run mcp`. README has Claude Desktop/Cursor config + tool table. Live Qwen
    path = same as API (proven); not re-run to save credits. NEXT: verify live-qwen MCP once (small), then package.
-3. **Package** — architecture diagram + 3-min video + fold real-repo evidence (partly done).
+3. **Package** — architecture diagram DONE (`docs/architecture.html` + rendered `docs/architecture.png`;
+   two-surface story: MCP agent + Inspector → engine → Qwen + Alibaba; vision-verified clean). 3-min
+   video script DONE — `docs/VIDEO_SCRIPT.md` rewritten to LEAD with the MCP agent surface (the catch
+   over `mneme_review`), Inspector demoted to "look inside the engine" visual; unseen-repo evidence +
+   MCP honesty guardrail added (verify live-qwen MCP call before recording). Real-repo evidence already
+   folded into README + DEVPOST. REMAINING in packaging: none blocking; optional = record the video.
 4. **STRETCH** (only if 1-3 land): autonomous PR-review bot (GH App/Action).
 
 Win-odds: as-is = low (DQ risk + toy read). Deploy-cleared + MCP + packaging = competitive.

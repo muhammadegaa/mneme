@@ -1,13 +1,20 @@
 # Mneme — 3-minute demo video script + shot list
 
-Goal: win on the rubric in ~180 seconds. Lead with the hero (a mistake that gets
-*louder*), show the engine think (retrieve → pack → ground), prove the moat
-(benchmark), close on Qwen / Alibaba Cloud. **Everything here is real and running
-on live Qwen — no fakery, no mock, no false claims.**
+Goal: win on the rubric in ~180 seconds. **Lead with the product**: Mneme is a
+memory *any coding agent can call over MCP* — it learns the mistakes you repeat
+from your git history and catches them on your next diff. Show the agent surface
+first (the MCP tools), then open the Inspector as the "look inside the engine"
+visual, prove the moat (benchmark), close on Qwen / Alibaba Cloud.
+**Everything here is real and running on live Qwen — no fakery, no mock, no false
+claims.**
 
 Pre-roll setup (NOT recorded):
-- Start the demo on Qwen: `MNEME_BACKEND=qwen MEMORY_STORE=json PORT=5273 npx tsx apps/api/server.ts`
-  → open `http://127.0.0.1:5273`. The top-right badge should read **backend: qwen** (green).
+- Terminal A — the MCP surface. Register/run the server on Qwen:
+  `MNEME_BACKEND=qwen npm run mcp` (or have it registered in Claude Desktop /
+  Cursor via the config in the README). Confirm it reports `backend=qwen`.
+- Terminal B / browser — the Inspector, on Qwen:
+  `MNEME_BACKEND=qwen MEMORY_STORE=json PORT=5273 npx tsx apps/api/server.ts`
+  → `http://127.0.0.1:5273`. Top-right badge must read **backend: qwen** (green).
 - Do NOT click "↻ relearn" before recording — it re-runs Qwen extraction and the
   numbers shift. Use the persisted seed as-is.
 - A terminal in the repo, large font, for the benchmark + proof beats.
@@ -16,81 +23,108 @@ VO is tight; trim to fit. Total ≈ 180s.
 
 ---
 
-### 0:00–0:16 · Hook  *(screen: the hero, full-bleed)*
-**VO:** "This number is how many times you'd have shipped the exact same bug.
-Your linter never noticed. Copilot forgot you the second the session ended.
-Mneme caught every one."
-**Shot:** hold on the big serif hero number and the line *"times you'd have
-shipped the same bug. Mneme caught every one."* Badge **backend: qwen** visible.
+### 0:00–0:14 · Hook  *(screen: an agent about to call the tool)*
+**VO:** "Your linter knows the language. Your AI pair-programmer forgets you the
+second the session ends. Neither one remembers the bug you keep shipping. Mneme
+does — and it plugs into the agent you already use."
+**Shot:** Claude Desktop / Cursor with Mneme registered as an MCP server (or
+Terminal A showing `mneme` connected, `backend=qwen`). The four tools visible:
+`mneme_review`, `mneme_recall`, `mneme_learn`, `mneme_inspect`.
 
-### 0:16–0:52 · THE LIVE CATCH  *(screen: the "live catch" panel)*
-**VO:** "Here's a fresh diff — fetch a user, parse the JSON, return it. Looks fine.
-Watch what Mneme does with it."
-**Shot:** the editor shows `getUser` calling `res.json()` with no `res.ok` check.
-Click **Review with memory →**.
-**VO:** "It retrieves what it knows about me, packs the best memories under a token
-budget, and grounds its verdict."
-**Shot:** the trace reveals live — **RETRIEVE** ranked N memories · **PACK** kept X,
-dropped Y to fit used/budget tokens · **GROUND** matched memory `m_…`. Then the
-catch card rises: **"I've seen this one. N times."**
-**VO (kicker):** "Not a generic lint rule — it's grounded in a specific memory of
-*mine*, and it's loud because I've earned it N times. That's the inverse of forgetting."
+### 0:14–0:52 · THE CATCH, over MCP  *(screen: the agent calling `mneme_review`)*
+**VO:** "This is a memory server, but not the generic kind. It read my git history
+and learned how *I* code. Here's a fresh diff — fetch a user, parse the JSON,
+return it. Looks fine. Watch my agent hand it to Mneme."
+**Shot:** invoke `mneme_review` on the `getUser` diff (`res.json()` with no
+`res.ok` check). The tool result returns: *reviewed against N of your memories,
+packed X/budget tokens* → a **⚠ WARN** grounded in a specific memory:
+*"↳ grounded in your memory '…handle non-ok responses / null checks…' (seen N×)"*
+plus *"1 repeat mistake caught before shipping — reinforced."*
+**VO (kicker):** "That's not a generic lint rule. It's grounded in a specific
+memory of *mine*, and it's loud because I've earned it N times. Catch it again and
+the memory gets *louder* — the inverse of forgetting."
 
-### 0:52–1:18 · WHAT IT KNOWS — earned, not configured  *(screen: memory book)*
-**VO:** "Every memory here was extracted from a real commit — my style, my tools,
-the mistakes I repeat. Nothing typed in by hand."
-**Shot:** scroll "What Mneme knows about you." Point at **Mistakes you repeat** —
-the null-check memory has the longest strength bar and a **seen N×** tag.
-**VO:** "Repeat a mistake and its memory gets stronger. The louder it is, the
-harder it is to miss."
+### 0:52–1:26 · LOOK INSIDE THE ENGINE  *(screen: the Inspector, backend: qwen)*
+**VO:** "Every time an agent calls that tool, this is what happens inside — and the
+Inspector lets you watch it think."
+**Shot:** the Inspector's live trace on the same review — **RETRIEVE** ranked N by
+relevance·recency·salience → **PACK** kept X / dropped Y to fit used/budget tokens
+(a real 0/1 knapsack) → **GROUND** matched memory `m_…`. Then the catch card:
+**"I've seen this one. N times."**
+**VO:** "Retrieve what it knows about me, pack the best memories under a token
+budget with a knapsack solver, ground the verdict in one specific memory. Same
+engine the MCP tool runs — this is just the window into it."
 
-### 1:18–1:44 · CHANGES ITS MIND + FORGETS  *(screen: lower sections)*
-**VO:** "Mneme also changes its mind — with receipts — and forgets on purpose."
-**Shot:** the "changed its mind" receipt: ~~uses Redux~~ → **uses Zustand**. Then
-click **run the forgetting job →** — the faint one-off (a Bun experiment) ages out.
-**VO:** "I moved off Redux; the old fact is superseded, not deleted. A tool I tried
-once decays and stops polluting advice."
+### 1:26–1:50 · EARNED, CHANGES ITS MIND, FORGETS  *(screen: memory book)*
+**VO:** "Nothing here was typed in by hand. Every memory was extracted from a real
+commit — my style, my tools, the mistakes I repeat. And it maintains itself."
+**Shot:** scroll "What Mneme knows about you." Point at the loudest **Mistakes you
+repeat** bar + **seen N×**. Then the "changed its mind" receipt:
+~~uses Redux~~ → **uses Zustand**. Then click **run the forgetting job →** — the
+faint one-off (a Bun experiment) ages out.
+**VO:** "Repeat a mistake, its memory strengthens. Change your stack, the old fact
+is superseded — with receipts, not deleted. A tool you tried once decays and stops
+polluting advice."
 
-### 1:44–2:16 · THE MOAT — benchmark  *(screen: terminal)*
+### 1:50–2:18 · THE MOAT — benchmark  *(screen: terminal)*
 **VO:** "Does the engine actually beat the alternatives? We benchmarked it on live
-Qwen embeddings."
+Qwen embeddings — and on a real 1,456-commit repo it had never seen."
 **Shot:** run `npm run bench`. Hold on the A/B/C table.
 **VO:** "Full-context stuffing and naive top-k both leak stale facts 100% of the
 time and resolve contradictions only half the time. Mneme: 100% contradiction
-accuracy, zero stale leakage — at six times fewer tokens. Forgetting and
+accuracy, zero stale leakage — at six times fewer tokens. On an unseen repo it
+found a genuinely recurring mistake with no planted data. Forgetting and
 supersession are the difference between a memory *engine* and a vector lookup."
 
-### 2:16–2:46 · QWEN ON ALIBABA CLOUD  *(screen: terminal + badge)*
+### 2:18–2:46 · QWEN ON ALIBABA CLOUD  *(screen: terminal + badge)*
 **VO:** "Every memory operation runs on Qwen, on Alibaba Cloud — extraction on
 qwen-turbo, review on qwen-plus, retrieval on text-embedding-v3."
-**Shot:** run `npm run proof` → hold on `[1/2] Qwen/DashScope OK · embed dims=1024`.
-Cut to the UI badge: **backend: qwen**, and the live token counter in the footer.
+**Shot:** run `npm run proof` → hold on `Qwen/DashScope OK · embed dims=1024`. Cut
+to the Inspector badge: **backend: qwen** + the live token counter.
 **VO (honest close on infra):** "The managed-infra deploy — Function Compute,
-ApsaraDB, OSS — is fully wired and flips on the moment our account clears
+ApsaraDB pgvector, OSS — is fully wired and flips on the moment our account clears
 verification. The intelligence is already live."
 
 ### 2:46–3:00 · Close  *(screen: hero title card)*
-**VO:** "Mneme. The code reviewer that remembers how you code. Open source, MIT."
+**VO:** "Mneme. A memory your coding agent can call — the reviewer that remembers
+how you code. Open source, MIT."
 
 ---
 
 ## Shot list (capture order — record clips, edit to the script)
-1. Browser hero — hold on the number + headline + `backend: qwen` badge.
-2. Browser: **Review with memory →** — capture the full trace reveal + catch card. Record 2 takes.
-3. Browser: scroll the memory book; point at the loudest **Mistakes you repeat** bar + **seen N×**.
-4. Browser: the Redux→Zustand receipt; click **run the forgetting job →** (one-off ages out).
-5. Terminal: `npm run bench` — hold 5s on the table.
-6. Terminal: `npm run proof` — hold on the live `Qwen/DashScope OK · embed dims=1024` line.
-7. Browser: `backend: qwen` badge + footer token counter.
-8. Title card.
+1. Agent surface — Claude Desktop / Cursor with Mneme registered, or Terminal A
+   showing the 4 tools + `backend=qwen`.
+2. `mneme_review` on the `getUser` diff — capture the WARN grounded in a memory +
+   "1 repeat mistake caught before shipping — reinforced." Record 2 takes.
+3. Browser Inspector — the same review: full trace reveal (RETRIEVE→PACK→GROUND) +
+   catch card. Record 2 takes. `backend: qwen` badge visible.
+4. Browser: scroll the memory book; loudest **Mistakes you repeat** bar + **seen N×**.
+5. Browser: the Redux→Zustand receipt; click **run the forgetting job →**.
+6. Terminal: `npm run bench` — hold 5s on the table.
+7. Terminal: `npm run proof` — hold on the live `Qwen/DashScope OK · embed dims=1024` line.
+8. Browser: `backend: qwen` badge + footer token counter.
+9. Title card.
 
 ## Rubric mapping (why each beat earns points)
-- **Technical depth (30%)** → the retrieve→pack→ground trace (real telemetry), the knapsack drop count, the benchmark table.
-- **Innovation (30%)** → the reinforced-mistake hero, forgetting + supersession, memory learned from git history.
-- **Problem value (25%)** → the hook (the bug you keep shipping that no tool ever learned).
+- **Technical depth (30%)** → the MCP tool surface, the retrieve→pack→ground trace
+  (real telemetry), the knapsack drop count, the benchmark table.
+- **Innovation (30%)** → developer-mistake memory from git (unclaimed niche), the
+  reinforced-mistake catch, forgetting + supersession — not general chat memory.
+- **Problem value (25%)** → the hook (the bug you keep shipping that no tool learned),
+  delivered *inside the agent you already use* via MCP.
 - **Presentation (15%)** → the editorial Inspector, the staged trace, the honest cloud close.
 
 ## Honesty guardrails (do not violate on camera)
 - Record on **backend: qwen** only. Never show `backend: mock` and imply it's live.
-- `npm run proof` shows the Qwen call only (`[1/2]`). Do NOT claim an OSS round-trip — OSS is blocked pending account verification. State the infra as "wired, flips on when the account clears."
-- The catch number (N) is real reinforcement count from the seed. Don't edit it to a rounder number.
+  This applies to the MCP surface too — run `MNEME_BACKEND=qwen npm run mcp` for
+  the on-camera tool call, and verify it returns a real grounded catch before
+  recording (the live-Qwen MCP path shares the API's proven client, but confirm it
+  once on the day — do not record an unverified call).
+- `npm run proof` shows the Qwen call only. Do NOT claim an OSS round-trip — OSS is
+  blocked pending account verification. State infra as "wired, flips on when the
+  account clears."
+- The catch number (N) is the real reinforcement count from the seed. Don't edit it
+  to a rounder number.
+- The unseen-repo claim = the codehere real-repo run (`bench/results/real-codehere.md`).
+  Cite only the verified recurring mistake; the discarded hallucinated review comment
+  is NOT evidence and must not appear on camera.

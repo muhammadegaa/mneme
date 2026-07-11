@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mneme — Architecture</title>
+<style>
+  :root {
+    --ink: #17171a; --muted: #6b6b73; --line: #d9d9de; --bg: #ffffff;
+    --panel: #fafafa; --agent: #e8f0ff; --agent-b: #4a7dff;
+    --engine: #eef7f0; --engine-b: #2f9e5e; --qwen: #fff2e6; --qwen-b: #ff7a1a;
+    --ali: #f3ecff; --ali-b: #7b4dff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 40px 32px 48px; }
+  header { margin-bottom: 8px; }
+  h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -0.02em; }
+  h1 .m { color: var(--engine-b); }
+  .sub { color: var(--muted); font-size: 15px; margin: 0 0 28px; }
+  svg { width: 100%; height: auto; display: block; }
+  .lbl { font: 600 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; fill: var(--ink); }
+  .lbl-sm { font: 500 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; fill: var(--muted); }
+  .lbl-tag { font: 700 10.5px "SF Mono", ui-monospace, Menlo, monospace; letter-spacing: 0.04em; }
+  .zone { font: 700 11px "SF Mono", ui-monospace, Menlo, monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+  .foot { margin-top: 26px; color: var(--muted); font-size: 13px; display: flex; gap: 22px; flex-wrap: wrap; }
+  .foot b { color: var(--ink); font-weight: 600; }
+  .key { display: inline-flex; align-items: center; gap: 7px; }
+  .dot { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="m">Mneme</span> — a memory engine your coding agent calls</h1>
+    <p class="sub">Two surfaces, one engine, all reasoning on Qwen · Alibaba Cloud. Track 1: MemoryAgent.</p>
+  </header>
+
+  <svg viewBox="0 0 1080 560" role="img" aria-label="Mneme architecture diagram">
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-end">
+        <path d="M0,0 L10,5 L0,10 z" fill="#9a9aa2" />
+      </marker>
+      <marker id="arrow-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-end">
+        <path d="M0,0 L10,5 L0,10 z" fill="#2f9e5e" />
+      </marker>
+    </defs>
+
+    <!-- ============ SURFACES (left) ============ -->
+    <text x="40" y="34" class="zone" fill="#4a7dff">Surfaces</text>
+
+    <!-- Coding agent via MCP -->
+    <rect x="40" y="48" width="250" height="92" rx="12" fill="var(--agent)" stroke="var(--agent-b)" stroke-width="1.5"/>
+    <text x="60" y="76" class="lbl">Coding agent</text>
+    <text x="60" y="96" class="lbl-sm">Claude Desktop · Cursor · Windsurf</text>
+    <text x="60" y="122" class="lbl-tag" fill="var(--agent-b)">MCP · stdio</text>
+
+    <!-- Developer via Inspector -->
+    <rect x="40" y="164" width="250" height="92" rx="12" fill="var(--panel)" stroke="var(--line)" stroke-width="1.5"/>
+    <text x="60" y="192" class="lbl">Developer</text>
+    <text x="60" y="212" class="lbl-sm">Memory Inspector (Hono + UI)</text>
+    <text x="60" y="238" class="lbl-tag" fill="var(--muted)">watch it think</text>
+
+    <!-- MCP tools strip -->
+    <text x="40" y="292" class="lbl-sm">4 MCP tools ·</text>
+    <text x="124" y="292" class="lbl-tag" fill="var(--agent-b)">mneme_review · recall · learn · inspect</text>
+
+    <!-- arrows into engine -->
+    <path d="M290,94 C340,94 350,220 400,255" fill="none" stroke="#9a9aa2" stroke-width="1.8" marker-end="url(#arrow)"/>
+    <path d="M290,210 C340,210 350,255 400,272" fill="none" stroke="#9a9aa2" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+    <!-- ============ ENGINE (center) ============ -->
+    <text x="410" y="34" class="zone" fill="#2f9e5e">Memory engine — the moat (unit-tested)</text>
+    <rect x="410" y="48" width="300" height="470" rx="14" fill="var(--engine)" stroke="var(--engine-b)" stroke-width="1.5"/>
+
+    <g>
+      <!-- pipeline steps -->
+      <rect x="434" y="80" width="252" height="52" rx="9" fill="#fff" stroke="var(--engine-b)" stroke-width="1.2"/>
+      <text x="450" y="103" class="lbl">① Extract</text>
+      <text x="450" y="121" class="lbl-sm">commit → atomic memories (structured)</text>
+
+      <rect x="434" y="144" width="252" height="52" rx="9" fill="#fff" stroke="var(--engine-b)" stroke-width="1.2"/>
+      <text x="450" y="167" class="lbl">② Rank (hybrid)</text>
+      <text x="450" y="185" class="lbl-sm">0.6 semantic · 0.2 recency · 0.2 salience</text>
+
+      <rect x="434" y="208" width="252" height="52" rx="9" fill="#fff" stroke="var(--engine-b)" stroke-width="1.2"/>
+      <text x="450" y="231" class="lbl">③ Reinforce</text>
+      <text x="450" y="249" class="lbl-sm">repeat mistake → its memory gets louder</text>
+
+      <rect x="434" y="272" width="252" height="52" rx="9" fill="#fff" stroke="var(--engine-b)" stroke-width="1.2"/>
+      <text x="450" y="295" class="lbl">④ Forget + supersede</text>
+      <text x="450" y="313" class="lbl-sm">time-decay noise · resolve contradictions</text>
+
+      <rect x="434" y="336" width="252" height="52" rx="9" fill="#fff" stroke="var(--engine-b)" stroke-width="1.2"/>
+      <text x="450" y="359" class="lbl">⑤ Pack (0/1 knapsack)</text>
+      <text x="450" y="377" class="lbl-sm">optimal memory set under token budget</text>
+
+      <rect x="434" y="400" width="252" height="52" rx="9" fill="#fff" stroke="var(--engine-b)" stroke-width="1.2"/>
+      <text x="450" y="423" class="lbl">⑥ Ground review</text>
+      <text x="450" y="441" class="lbl-sm">every comment cites a specific memory</text>
+
+      <text x="450" y="486" class="lbl-tag" fill="var(--engine-b)">MemoryStore interface — swappable</text>
+      <text x="450" y="504" class="lbl-sm">in-memory · JSON · pgvector</text>
+    </g>
+
+    <!-- ============ QWEN (top right) ============ -->
+    <text x="748" y="34" class="zone" fill="#ff7a1a">Qwen Cloud · DashScope</text>
+    <rect x="748" y="48" width="292" height="196" rx="14" fill="var(--qwen)" stroke="var(--qwen-b)" stroke-width="1.5"/>
+    <text x="770" y="82" class="lbl">All reasoning runs on Qwen</text>
+
+    <rect x="770" y="96" width="248" height="30" rx="7" fill="#fff" stroke="var(--qwen-b)" stroke-width="1"/>
+    <text x="784" y="116" class="lbl-sm"><tspan class="lbl-tag" fill="var(--qwen-b)">qwen-turbo</tspan>  memory extraction</text>
+
+    <rect x="770" y="132" width="248" height="30" rx="7" fill="#fff" stroke="var(--qwen-b)" stroke-width="1"/>
+    <text x="784" y="152" class="lbl-sm"><tspan class="lbl-tag" fill="var(--qwen-b)">qwen-plus</tspan>  grounded code review</text>
+
+    <rect x="770" y="168" width="248" height="30" rx="7" fill="#fff" stroke="var(--qwen-b)" stroke-width="1"/>
+    <text x="784" y="188" class="lbl-sm"><tspan class="lbl-tag" fill="var(--qwen-b)">qwen-max</tspan>  heavy reasoning tier</text>
+
+    <rect x="770" y="204" width="248" height="30" rx="7" fill="#fff" stroke="var(--qwen-b)" stroke-width="1"/>
+    <text x="784" y="224" class="lbl-sm"><tspan class="lbl-tag" fill="var(--qwen-b)">text-embedding-v3</tspan>  retrieval · 1024-dim</text>
+
+    <!-- ============ ALIBABA (bottom right) ============ -->
+    <text x="748" y="300" class="zone" fill="#7b4dff">Alibaba Cloud · persistence</text>
+    <rect x="748" y="314" width="292" height="204" rx="14" fill="var(--ali)" stroke="var(--ali-b)" stroke-width="1.5"/>
+
+    <rect x="770" y="342" width="248" height="58" rx="9" fill="#fff" stroke="var(--ali-b)" stroke-width="1.2"/>
+    <text x="786" y="366" class="lbl">ApsaraDB · PostgreSQL</text>
+    <text x="786" y="386" class="lbl-sm">pgvector — cross-session memory</text>
+
+    <rect x="770" y="410" width="248" height="46" rx="9" fill="#fff" stroke="var(--ali-b)" stroke-width="1.2"/>
+    <text x="786" y="438" class="lbl-sm"><tspan class="lbl-tag" fill="var(--ali-b)">Function Compute · OSS</tspan>  deploy target</text>
+
+    <rect x="770" y="466" width="248" height="34" rx="8" fill="#faf6ff" stroke="var(--ali-b)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="786" y="487" class="lbl-sm">JSON store — local cross-session fallback</text>
+
+    <!-- ============ engine <-> qwen arrow ============ -->
+    <path d="M710,146 L744,146" fill="none" stroke="#2f9e5e" stroke-width="1.8" marker-end="url(#arrow-g)"/>
+
+    <!-- engine <-> alibaba arrow -->
+    <path d="M710,412 L744,412" fill="none" stroke="#2f9e5e" stroke-width="1.8" marker-end="url(#arrow-g)"/>
+  </svg>
+
+  <div class="foot">
+    <span class="key"><span class="dot" style="background:var(--agent-b)"></span><b>Surfaces</b> — MCP agent (production) + Inspector (transparency)</span>
+    <span class="key"><span class="dot" style="background:var(--engine-b)"></span><b>Engine</b> — the moat, standalone &amp; unit-tested</span>
+    <span class="key"><span class="dot" style="background:var(--qwen-b)"></span><b>Qwen</b> — all extraction, review &amp; embeddings</span>
+    <span class="key"><span class="dot" style="background:var(--ali-b)"></span><b>Alibaba Cloud</b> — pgvector persistence + deploy</span>
+  </div>
+</div>
+</body>
+</html>
