@@ -85,7 +85,11 @@ export class MemoryEngine {
       const match = active.find(
         (m) =>
           m.kind === input.kind &&
-          (sameSlot(m, input) || cosineSimilarity(vec, m.embedding) >= this.reinforceSimThreshold),
+          // Same slot, or semantically near BUT in the same slot — never merge
+          // across predicates: two distinct mistakes that happen to be close in
+          // embedding space must stay distinct, or one silently absorbs the other.
+          (sameSlot(m, input) ||
+            (m.predicate === input.predicate && cosineSimilarity(vec, m.embedding) >= this.reinforceSimThreshold)),
       );
       if (match) {
         const reinforced: Memory = {
@@ -141,7 +145,9 @@ export class MemoryEngine {
   /** RETRIEVAL: hybrid semantic + recency + salience rerank over candidates. */
   async retrieve(
     query: string,
-    opts: { now: number; subject?: string; limit?: number; weights?: RetrievalWeights } = { now: 0 },
+    // `now` is mandatory: a default of 0 would silently score every memory as if
+    // it were written at the epoch, disabling recency and over-decaying salience.
+    opts: { now: number; subject?: string; limit?: number; weights?: RetrievalWeights },
   ): Promise<RetrieveResult> {
     const [qvec] = await this.embedder.embed([query]);
     const { memories, degraded } = await this.store.candidates({
@@ -161,7 +167,7 @@ export class MemoryEngine {
   async pack(
     query: string,
     budget: number,
-    opts: { now: number; subject?: string; weights?: RetrievalWeights; reinforce?: boolean } = { now: 0 },
+    opts: { now: number; subject?: string; weights?: RetrievalWeights; reinforce?: boolean },
   ): Promise<{ retrieved: ScoredMemory[]; pack: PackResult; degraded: boolean }> {
     const { scored, degraded } = await this.retrieve(query, {
       now: opts.now,

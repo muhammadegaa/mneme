@@ -47,7 +47,16 @@ if (process.env.MEMORY_STORE !== "postgres") process.env.MEMORY_STORE = "json";
 process.env.ENGRAM_STORE ??= resolve(ROOT, ".engram/mcp-memories.json");
 
 function makeModel(): MentorModel {
-  if (process.env.ENGRAM_BACKEND === "qwen") return new QwenMentorModel(new QwenClient(configFromEnv()));
+  if (process.env.ENGRAM_BACKEND === "qwen") {
+    // Fall back to mock rather than crash the server if the key is missing — a
+    // client that copied the qwen config without a key still gets a working
+    // (offline) MCP server instead of a connection failure.
+    try {
+      return new QwenMentorModel(new QwenClient(configFromEnv()));
+    } catch (e) {
+      console.error(`ENGRAM_BACKEND=qwen but ${(e as Error).message} — running on mock`);
+    }
+  }
   return new MockMentorModel();
 }
 

@@ -103,6 +103,17 @@ describe("reinforcement (the demo hero)", () => {
     const r = await engine.write(mistake(2), 1000);
     expect(r.superseded).toHaveLength(0);
   });
+
+  it("does NOT merge two DISTINCT mistakes across predicates, even at identical embedding", async () => {
+    const { engine, store } = freshEngine();
+    // Same text (=> identical embedding, cosine 1.0) but different slot: these are
+    // two different mistakes and must stay separate — the cross-slot merge bug.
+    await engine.write(input({ text: "forgets a guard", kind: "mistake", predicate: "null_check", salience: 0.4, decayRate: 0.03 }), 0);
+    const second = await engine.write(input({ text: "forgets a guard", kind: "mistake", predicate: "error_handling", salience: 0.4, decayRate: 0.03 }), 1000);
+    expect(second.action).toBe("inserted"); // NOT "reinforced"
+    const active = (await store.all()).filter((m) => m.status === "active");
+    expect(active).toHaveLength(2);
+  });
 });
 
 describe("retrieval + packing", () => {

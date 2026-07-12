@@ -43,7 +43,12 @@ const QUIET_SALIENCE = 0.45;
 
 function makeModel(): MentorModel {
   if (process.env.ENGRAM_BACKEND === "qwen") {
-    return new QwenMentorModel(new QwenClient(configFromEnv()));
+    // Fall back to mock rather than crash at boot if the key is missing.
+    try {
+      return new QwenMentorModel(new QwenClient(configFromEnv()));
+    } catch (e) {
+      console.error(`ENGRAM_BACKEND=qwen but ${(e as Error).message} — running on mock`);
+    }
   }
   return new MockMentorModel();
 }

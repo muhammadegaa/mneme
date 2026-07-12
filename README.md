@@ -159,11 +159,15 @@ Register it (Claude Desktop `claude_desktop_config.json` / Cursor MCP settings):
     "engram": {
       "command": "npx",
       "args": ["tsx", "/ABSOLUTE/PATH/qwenhack/apps/mcp/server.ts"],
-      "env": { "ENGRAM_BACKEND": "qwen" }
+      "env": { "ENGRAM_BACKEND": "qwen", "DASHSCOPE_API_KEY": "sk-..." }
     }
   }
 }
 ```
+
+> Drop `env` entirely to run the server on the free deterministic mock. With
+> `ENGRAM_BACKEND=qwen` but no key it won't crash — it logs a warning and falls
+> back to mock, so the client always connects.
 
 Tools it exposes:
 
