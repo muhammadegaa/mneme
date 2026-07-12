@@ -66,24 +66,27 @@ faint one-off (a Bun experiment) ages out.
 is superseded — with receipts, not deleted. A tool you tried once decays and stops
 polluting advice."
 
-### 1:50–2:18 · THE MOAT — benchmark  *(screen: terminal)*
-**VO:** "Does the engine actually beat the alternatives? We benchmarked it on live
-Qwen embeddings — and on a real 1,456-commit repo it had never seen."
-**Shot:** run `npm run bench`. Hold on the A/B/C table.
+### 1:50–2:20 · THE MOAT — benchmark + it never invents  *(screen: terminal)*
+**VO:** "Does the engine beat the alternatives? We benchmarked it on live Qwen
+embeddings — and on two real repos it had never seen."
+**Shot:** run `npm run bench`. Hold on the A/B/C table. Then run `npm run demo:catch`.
 **VO:** "Full-context stuffing and naive top-k both leak stale facts 100% of the
 time and resolve contradictions only half the time. Engram: 100% contradiction
-accuracy, zero stale leakage — at six times fewer tokens. On an unseen repo it
-found a genuinely recurring mistake with no planted data. Forgetting and
-supersession are the difference between a memory *engine* and a vector lookup."
+accuracy, zero stale leakage. And it doesn't hallucinate mistakes — detection is
+grounded in real code. On `codehere` it caught two recurring mistakes I actually
+make; on `ravenote`, which has none of them, it correctly found *nothing* to flag.
+Here it learns a repo and catches the same mistake on a fresh diff — grounded in a
+specific memory, and you can reproduce it offline for free."
 
 ### 2:18–2:46 · QWEN ON ALIBABA CLOUD  *(screen: terminal + badge)*
 **VO:** "Every memory operation runs on Qwen, on Alibaba Cloud — extraction on
 qwen-turbo, review on qwen-plus, retrieval on text-embedding-v3."
 **Shot:** run `npm run proof` → hold on `Qwen/DashScope OK · embed dims=1024`. Cut
 to the Inspector badge: **backend: qwen** + the live token counter.
-**VO (honest close on infra):** "The managed-infra deploy — Function Compute,
-ApsaraDB pgvector, OSS — is fully wired and flips on the moment our account clears
-verification. The intelligence is already live."
+**VO (honest close on infra):** "It's deployed and running right now on an Alibaba
+Cloud ECS box in Singapore, on live Qwen. The managed serverless path — Function
+Compute, ApsaraDB pgvector — is wired as the scale option; move persistence with
+one env var."
 
 ### 2:46–3:00 · Close  *(screen: hero title card)*
 **VO:** "Engram. A memory your coding agent can call — the reviewer that remembers
@@ -101,6 +104,8 @@ how you code. Open source, MIT."
 4. Browser: scroll the memory book; loudest **Mistakes you repeat** bar + **seen N×**.
 5. Browser: the Redux→Zustand receipt; click **run the forgetting job →**.
 6. Terminal: `npm run bench` — hold 5s on the table.
+6b. Terminal: `npm run demo:catch` — the learn→catch loop on codehere; hold on the
+   grounded, signature-verified CATCH (var, seen 3×) + `grounded=true`.
 7. Terminal: `npm run proof` — hold on the live `Qwen/DashScope OK · embed dims=1024` line.
 8. Browser: `backend: qwen` badge + footer token counter.
 9. Title card.
@@ -120,11 +125,12 @@ how you code. Open source, MIT."
   the on-camera tool call, and verify it returns a real grounded catch before
   recording (the live-Qwen MCP path shares the API's proven client, but confirm it
   once on the day — do not record an unverified call).
-- `npm run proof` shows the Qwen call only. Do NOT claim an OSS round-trip — OSS is
-  blocked pending account verification. State infra as "wired, flips on when the
-  account clears."
+- `npm run proof` shows the Qwen call only. Do NOT claim an OSS round-trip. The app
+  IS live on Alibaba Cloud ECS (Singapore); state Function Compute / ApsaraDB as the
+  wired scale path, not as blocked.
 - The catch number (N) is the real reinforcement count from the seed. Don't edit it
   to a rounder number.
-- The unseen-repo claim = the codehere real-repo run (`bench/results/real-codehere.md`).
-  Cite only the verified recurring mistake; the discarded hallucinated review comment
-  is NOT evidence and must not appear on camera.
+- The unseen-repo claim = the grounded real-repo runs: `codehere` (var ×3, empty-catch
+  ×2 — both verifiable in the commits) and `ravenote` (0 — correct silence). Both are
+  reproducible offline via `npm run demo:catch` / `bench/real-run.ts`. Do NOT show or
+  cite the pre-gate hallucination as a current result — the guard now rejects it.
