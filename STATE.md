@@ -77,6 +77,30 @@ VERIFIER ROUND 2 fixes (all DONE + DOM-verified): reinforce-on-catch (count clim
 (was stuck 0 tok); faded memories dropped from main list (Bun no longer double-labeled);
 DEVPOST benchmark table aligned to README order. Round-2 confirmed round-1 fixes all landed.
 
+## ✅ PRODUCTION-HARDENING BATCH (2026-07-12, autonomous loop) — thru commit 9ff827f
+
+Ran an adversarial 3-agent code review of the whole system + fixed every real finding. 30/30
+tests, tsc clean, all surfaces verified. Highlights:
+- HONESTY BUGS (found by review, now fixed): null_check fired on CORRECTLY-guarded fetches (added
+  an `absent` guard — omission only fires when no res.ok/.status/?. present); diffAddedText leaked
+  removed/context lines (removing a mistake could count as committing one) — now returns "" for a
+  deletion-only diff; var matched in comments (tightened to real decls); catch{} (ES2019) now caught.
+  `signatureFires()` is the shared truth. Honesty smoke 8/8.
+- ENGINE: predicate-less mistakes no longer merge on cosine; dedupe checks kind + folds recency into
+  one insert (pg clobber). Regression test → 30 tests.
+- COUPON/DEMO: `/api/reset` was an UNMETERED live-Qwen drain (worse than /api/review) — now
+  rate-limited + never live-relearns on qwen; rate-map pruned (X-F-F spoofable); cap 800→300; diff
+  validated + size-capped; session captured locally (reset race); app.onError. bench no longer goes
+  live silently (was spending coupon on any run with a key) — now --qwen opt-in.
+- PG-STORE (claimed prod path): ::vector cast, parameterized LIMIT, ANN error logged not swallowed,
+  full upsert columns, PGSSL_STRICT. Matches db/schema.sql.
+- UI: Inspector only celebrates a COUNTED catch (`caught` flag); uncounted warn shown as "flagged,
+  unverified". SUBMISSION_CHECKLIST rewritten (was stale: "blocked by verification" → live on ECS;
+  wrong repo url /engram → /mneme; 27 → 30 tests). Repo remote confirmed: github.com/muhammadegaa/mneme.
+NET: everything in code is production-quality + honest + verified free. REMAINING = 3 manual steps
+only I(user) can do: (1) run docs/DEPLOY.md redeploy+lockdown runbook, (2) record video + Alibaba
+proof, (3) submit on Devpost. Agent CANNOT reach the box or record; those are hard-blocked on user.
+
 ## ✅ POLISH BATCH (2026-07-12, autonomous) — commits e46faf2..5d86175
 
 After Path B, ran the remaining code work end-to-end (30/30 tests, tsc clean):
