@@ -12,6 +12,11 @@ Linters know the language. Copilot forgets you the moment the session ends.
 tools, and the mistake you keep making — then catches it on your next diff,
 *before it ships*.
 
+> ### "I've seen this one. 4 times."
+> That number is how many times you'd have shipped the *exact same bug*. Not a
+> generic lint rule — your own mistake, remembered and thrown back at you before
+> it ships.
+
 Most "AI memory" is `topK(cosine)` over a vector store. Engram is a memory
 **engine**: it extracts atomic memories from commits, ranks them with a hybrid
 scoring function, **reinforces** recurring mistakes so they get louder,
@@ -177,31 +182,13 @@ endpoint. `npm run proof` makes a live call and prints
 
 ## 🏗️ Architecture
 
-```mermaid
-flowchart LR
-    U[Developer] -->|commit / diff| API[Hono API + Memory Inspector]
-    AGENT[Coding agent · Claude Desktop / Cursor] -->|MCP tools| MCP[Engram MCP server]
-    API --> ENG[Memory Engine]
-    MCP --> ENG
+![Engram architecture — two surfaces (MCP agent + Memory Inspector) over one unit-tested memory engine; all reasoning on Qwen/DashScope, persistence on Alibaba Cloud](docs/architecture.png)
 
-    subgraph Qwen Cloud · DashScope
-      LLM[qwen-plus · qwen-turbo · qwen-max]
-      EMB[text-embedding-v3]
-    end
-
-    ENG -->|extract · review| LLM
-    ENG -->|embed| EMB
-
-    subgraph Alibaba Cloud
-      PG[(ApsaraDB PostgreSQL · pgvector)]
-      JSON[(JSON store · cross-session)]
-    end
-
-    ENG -->|write / retrieve / reinforce / forget| PG
-    ENG --> JSON
-
-    API -->|salience · decay · packed/dropped · grounding| U
-```
+Two surfaces — the **MCP server** (the production surface any coding agent calls)
+and the **Memory Inspector** (watch the engine think) — over one unit-tested
+engine. All extraction, review, and embeddings run on **Qwen/DashScope**;
+persistence is JSON (local / on the live ECS box) with **ApsaraDB pgvector** as the
+managed option. Source for the diagram: [`docs/architecture.html`](docs/architecture.html).
 
 ## 🚀 How to run
 
