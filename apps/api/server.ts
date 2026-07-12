@@ -144,15 +144,32 @@ let catches = 0;
 // never notices; tight enough that a script can't burn the coupon.
 const RATE_MAX = Number(process.env.ENGRAM_RATE_MAX ?? 15);
 const RATE_WINDOW_MS = Number(process.env.ENGRAM_RATE_WINDOW_MS ?? 60_000);
-const REVIEW_CAP = Number(process.env.ENGRAM_REVIEW_CAP ?? 800);
+const REVIEW_CAP = Number(process.env.ENGRAM_REVIEW_CAP ?? 300);
+const MAX_DIFF_CHARS = Number(process.env.ENGRAM_MAX_DIFF_CHARS ?? 20_000);
 const hits = new Map<string, number[]>();
 let reviewsServed = 0;
+
+function clientIp(c: { req: { header: (k: string) => string | undefined } }): string {
+  return c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || c.req.header("x-real-ip") || "anon";
+}
+
 function rateLimited(ip: string): boolean {
   const t = Date.now();
+  // Bound the map: X-Forwarded-For is spoofable, so prune stale buckets rather
+  // than leak an entry per spoofed IP forever.
+  if (hits.size > 2000) for (const [k, v] of hits) if (v.every((ts) => t - ts >= RATE_WINDOW_MS)) hits.delete(k);
   const recent = (hits.get(ip) ?? []).filter((ts) => t - ts < RATE_WINDOW_MS);
   recent.push(t);
   hits.set(ip, recent);
   return recent.length > RATE_MAX;
+}
+
+/** On the paid backend, block if over the global cap or the per-IP rate. */
+function spendBlocked(c: Parameters<typeof clientIp>[0]): { status: 429; body: { error: string } } | null {
+  if (session.model.backend !== "qwen") return null;
+  if (reviewsServed >= REVIEW_CAP) return { status: 429, body: { error: "demo limit reached — try again later" } };
+  if (rateLimited(clientIp(c))) return { status: 429, body: { error: "rate limit — slow down a moment" } };
+  return null;
 }
 
 const app = new Hono();
@@ -178,10 +195,15 @@ app.get("/api/state", async (c) => {
 });
 
 app.post("/api/reset", async (c) => {
-  // Restore the golden seed deterministically (no live re-extraction) so the demo
-  // returns to a known-good state where the hero fires. Falls back to a live
-  // relearn only if no golden seed is present.
-  session = restoreGolden() ? await seed(false) : await seed(true);
+  // Rate-limited like /api/review: reset can restore/re-seed and must not be a
+  // hammering vector. Critically, NEVER trigger a live Qwen relearn on the paid
+  // backend (that would be an unmetered coupon drain) — only restore the golden
+  // seed (cheap, deterministic) or, on the free mock, relearn.
+  const blocked = spendBlocked(c);
+  if (blocked) return c.json(blocked.body, blocked.status);
+  if (restoreGolden()) session = await seed(false);
+  else if (session.model.backend !== "qwen") session = await seed(true);
+  // else (qwen, no golden): keep current memory; just reset the counter.
   catches = 0;
   return c.json({ ok: true, count: (await session.store.all()).length });
 });
@@ -192,21 +214,24 @@ app.post("/api/forget", async (c) => {
 });
 
 app.post("/api/review", async (c) => {
-  // Only meter the paid backend; the mock is free.
-  if (session.model.backend === "qwen") {
-    if (reviewsServed >= REVIEW_CAP) return c.json({ error: "demo review limit reached — try again later" }, 429);
-    const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || c.req.header("x-real-ip") || "anon";
-    if (rateLimited(ip)) return c.json({ error: "rate limit — slow down a moment" }, 429);
-  }
-  const body = await c.req.json<{ diff: string; file?: string }>().catch(() => ({ diff: "" }));
-  const diff = body.diff ?? "";
-  if (!diff.trim()) return c.json({ error: "empty diff" }, 400);
-  if (session.model.backend === "qwen") reviewsServed++;
+  const blocked = spendBlocked(c);
+  if (blocked) return c.json(blocked.body, blocked.status);
 
-  const { scored, degraded } = await session.engine.retrieve(diff, { now: NOW, limit: 50 });
+  const body = await c.req.json<{ diff?: unknown; file?: unknown }>().catch(() => ({}));
+  const diff = typeof body.diff === "string" ? body.diff : "";
+  const file = typeof body.file === "string" ? body.file : undefined;
+  if (!diff.trim()) return c.json({ error: "empty or non-string diff" }, 400);
+  if (diff.length > MAX_DIFF_CHARS) return c.json({ error: `diff too large (max ${MAX_DIFF_CHARS} chars)` }, 413);
+
+  // Capture the session once: a concurrent /api/reset must not swap the store
+  // out from under this request mid-flight.
+  const sess = session;
+  if (sess.model.backend === "qwen") reviewsServed++;
+
+  const { scored, degraded } = await sess.engine.retrieve(diff, { now: NOW, limit: 50 });
   const pack = packMemories(scored, BUDGET);
   const packedById = new Map(pack.packed.map((p) => [p.memory.id, p.memory]));
-  const { comments } = await session.model.review({ diff, file: body.file, memories: pack.packed.map((p) => p.memory) });
+  const { comments } = await sess.model.review({ diff, file, memories: pack.packed.map((p) => p.memory) });
 
   // A "catch" = a warn cited to a past-mistake memory AND grounded in the diff:
   // the flagged code must actually appear in what was submitted. This rejects a
@@ -223,7 +248,7 @@ app.post("/api/review", async (c) => {
   for (const cm of caught) {
     const m = packedById.get(cm.citedMemoryId!)!;
     const reinforced = { ...m, reinforcements: m.reinforcements + 1, salience: Math.min(1, m.salience + 0.15), lastAccessedAt: NOW };
-    await session.store.insert(reinforced);
+    await sess.store.insert(reinforced);
     packedById.set(m.id, reinforced); // so the returned card shows the new count
   }
 
