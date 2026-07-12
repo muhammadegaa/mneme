@@ -52,7 +52,11 @@ export class PgVectorStore implements MemoryStore {
   private async connect(connectionString: string): Promise<void> {
     const pg = await import("pg");
     const Pool = (pg as any).default?.Pool ?? (pg as any).Pool;
-    this.client = new Pool({ connectionString, ssl: process.env.PGSSL === "true" ? { rejectUnauthorized: false } : undefined });
+    // ApsaraDB often presents a self-signed cert, so verification is off by
+    // default for a working connection; set PGSSL_STRICT=true to require a valid
+    // chain once you've configured the CA.
+    const ssl = process.env.PGSSL === "true" ? { rejectUnauthorized: process.env.PGSSL_STRICT === "true" } : undefined;
+    this.client = new Pool({ connectionString, ssl });
   }
 
   async insert(memory: Memory): Promise<void> {
@@ -61,7 +65,8 @@ export class PgVectorStore implements MemoryStore {
       `INSERT INTO memories (id,text,kind,subject,predicate,salience,decay_rate,source,embedding,created_at,last_accessed_at,access_count,reinforcements,status,superseded_by)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
        ON CONFLICT (id) DO UPDATE SET
-         text=EXCLUDED.text, salience=EXCLUDED.salience, decay_rate=EXCLUDED.decay_rate,
+         text=EXCLUDED.text, kind=EXCLUDED.kind, subject=EXCLUDED.subject, predicate=EXCLUDED.predicate,
+         salience=EXCLUDED.salience, decay_rate=EXCLUDED.decay_rate, embedding=EXCLUDED.embedding,
          last_accessed_at=EXCLUDED.last_accessed_at, access_count=EXCLUDED.access_count,
          reinforcements=EXCLUDED.reinforcements, status=EXCLUDED.status, superseded_by=EXCLUDED.superseded_by, source=EXCLUDED.source`,
       [
@@ -87,29 +92,35 @@ export class PgVectorStore implements MemoryStore {
 
   async candidates(opts: { queryEmbedding?: number[]; subject?: string; limit?: number }): Promise<{ memories: Memory[]; degraded: boolean }> {
     await this.ready;
-    const limit = opts.limit ?? 200;
-    const subjFilter = opts.subject ? "AND subject = $2" : "";
-    const params: unknown[] = [];
+    const limit = Math.max(1, Math.floor(opts.limit ?? 200));
 
     if (opts.queryEmbedding && opts.queryEmbedding.length) {
       try {
-        params.push(vecLiteral(opts.queryEmbedding));
-        if (opts.subject) params.push(opts.subject);
+        // All values parameterized ($1 vector needs an explicit ::vector cast so
+        // pgvector's <=> operator resolves; limit is bound, never interpolated).
+        const p: unknown[] = [vecLiteral(opts.queryEmbedding)];
+        let subj = "";
+        if (opts.subject) { p.push(opts.subject); subj = `AND subject = $${p.length}`; }
+        p.push(limit);
         const { rows } = await this.client.query(
-          `SELECT * FROM memories WHERE status='active' ${subjFilter}
-           ORDER BY embedding <=> $1 LIMIT ${limit}`,
-          params,
+          `SELECT * FROM memories WHERE status='active' ${subj} ORDER BY embedding <=> $1::vector LIMIT $${p.length}`,
+          p,
         );
         return { memories: rows.map(rowToMemory), degraded: false };
-      } catch {
-        // ANN unavailable (index missing / extension down) -> graceful fallback.
+      } catch (e) {
+        // ANN unavailable (index missing / extension down) -> recency fallback,
+        // but LOG it: a silent swallow hides a broken production index.
+        console.warn(`pgvector ANN query failed, falling back to recency: ${(e as Error).message}`);
       }
     }
-    const recencyParams = opts.subject ? [opts.subject] : [];
+
+    const rp: unknown[] = [];
+    let subj = "";
+    if (opts.subject) { rp.push(opts.subject); subj = `AND subject = $${rp.length}`; }
+    rp.push(limit);
     const { rows } = await this.client.query(
-      `SELECT * FROM memories WHERE status='active' ${opts.subject ? "AND subject=$1" : ""}
-       ORDER BY last_accessed_at DESC LIMIT ${limit}`,
-      recencyParams,
+      `SELECT * FROM memories WHERE status='active' ${subj} ORDER BY last_accessed_at DESC LIMIT $${rp.length}`,
+      rp,
     );
     return { memories: rows.map(rowToMemory), degraded: true };
   }
