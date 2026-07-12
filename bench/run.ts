@@ -117,6 +117,22 @@ async function main() {
     return { memories: ranked, tokens: ranked.reduce((t, m) => t + estimateTokens(m.text), 0) };
   };
 
+  // Strategy B+: top-k cosine BUT status-aware (drops superseded/forgotten). A *fair*,
+  // strong baseline — it forgets, so it should match C on contradiction/leakage. This
+  // isolates what Engram's hybrid rerank + knapsack add BEYOND the obvious "filter stale
+  // facts" move. If C only beat status-blind baselines, the win would be the status flag,
+  // not the engine; B+ removes that confound.
+  const bPlusPack = async (q: string): Promise<Packed> => {
+    const [qv] = await embedder.embed([q]);
+    const ranked = all
+      .filter((m) => m.status === "active")
+      .map((m) => ({ m, s: cosineSimilarity(qv!, m.embedding) }))
+      .sort((x, y) => y.s - x.s)
+      .slice(0, K)
+      .map((x) => x.m);
+    return { memories: ranked, tokens: ranked.reduce((t, m) => t + estimateTokens(m.text), 0) };
+  };
+
   // Strategy C: Engram — hybrid rerank (active-only) + knapsack pack under budget.
   const cPack = async (q: string): Promise<Packed> => {
     const { scored } = await engine.retrieve(q, { now: NOW, limit: 50 });
@@ -127,6 +143,7 @@ async function main() {
   const configs: Array<{ name: string; pack: (q: string) => Promise<Packed> }> = [
     { name: "A · full-context", pack: aPack },
     { name: "B · naive top-k", pack: bPack },
+    { name: "B+ · top-k + forgetting", pack: bPlusPack },
     { name: "C · Engram", pack: cPack },
   ];
 

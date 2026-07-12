@@ -26,41 +26,47 @@ lint rule.
 
 ---
 
-## 📊 Benchmark (the headline)
+## 📊 Benchmark — what forgetting actually buys
 
 Reproducible harness (`npm run bench`) over a synthetic multi-session commit
 history with planted facts, a later contradiction (Redux → Zustand), a style
 flip (class → functional components), a decaying one-off (a Bun experiment), and
 distractors. Embeddings are **live Qwen `text-embedding-v3` on Alibaba Cloud**;
-the dataset is synthetic and controlled. Three context strategies, identical inputs:
+the dataset is synthetic and controlled. **Four** context strategies, identical inputs:
 
-All three configs achieve perfect Recall@5 here (the planted facts are all
-retrievable) — so recall is *not* the differentiator. The engine earns its keep
-on the two columns a naive store can't touch: **contradiction accuracy** and
-**stale-fact leakage**.
+| Config | Contradiction acc. | Stale-fact leakage | Avg tokens | Recall@5 |
+|---|---|---|---|---|
+| A — full-context stuffing | 50% | 100% | 446 | 100% |
+| B — naive vector top-k *(status-blind)* | 50% | 100% | 67 | 100% |
+| **B+ — top-k + forgetting** *(fair baseline)* | **100%** | **0%** | 69 | 100% |
+| **C — Engram (hybrid + forgetting + knapsack)** | **100%** | **0%** | 69 | 100% |
 
-| Config | Contradiction acc. | Stale-fact leakage | Avg tokens | Recall@5 | Avg latency† |
-|---|---|---|---|---|---|
-| A — full-context stuffing | 50% | 100% | 446 | 100% | ~0ms† |
-| B — naive vector top-k | 50% | 100% | 67 | 100% | 292ms |
-| **C — Engram (hybrid + forgetting + packing)** | **100%** | **0%** | **69** | **100%** | 318ms |
+**What this isolates.** Every config retrieves the right fact (Recall@5 100% —
+trivial on a set this small), so recall isn't the story. The signal is the two
+columns a *forgetting-blind* store can't touch: **contradiction accuracy** and
+**stale-fact leakage**. The status-blind strategies (A full-context, B naive
+top-k) re-inject superseded facts **100% of the time** and get contradictions
+right only **half** the time. The moment a strategy *forgets* — drops
+superseded/decayed memories — both snap to **100% / 0%**.
 
-**Read:** full-context never misses but re-injects superseded facts (100% stale
-leakage) at ~6.5× the tokens. Naive top-k is cheap but status-blind — it still
-leaks the stale "Redux" fact and resolves the contradiction only half the time.
-**Engram resolves every contradiction and drives stale leakage to zero — at a
-fraction of the tokens and matching recall.** Forgetting + supersession is what
-separates a memory *engine* from a vector lookup.
-
-> †Latency for B/C is one live Qwen embedding round-trip. Config A does **no**
-> embedding call (it stuffs raw text), so its retrieval step is ~free — but it
-> pays that back many times over in LLM input tokens on *every* turn (446 vs 69).
-> The point of the latency column is that Engram's forgetting/packing adds
-> negligible overhead (318ms vs B's 292ms) while fixing what B gets wrong.
+**We put a fair baseline in the ring — and it ties us.** B+ is naive top-k *plus*
+forgetting (active-only), and nothing else: no hybrid recency/salience, no
+knapsack. On this controlled set **B+ matches Engram exactly.** That's the honest
+finding, and it's the point: on a handful of memories, **forgetting/supersession
+is the differentiator — not the ranking or the packer.** A vector store that never
+forgets leaks stale advice 100% of the time; add forgetting and that's fixed. What
+Engram's hybrid rerank + 0/1-knapsack add shows up *at scale*, when memory counts
+and token budgets actually bind — which you can watch happen live in the
+**packing-causality panel** (a real knapsack, re-run per state, flips a keep/drop
+decision) and on **a real 1,456-commit repo** below. We'd rather show you the fair
+baseline than a strawman the engine was built to beat.
 
 > Run it yourself: `npm run bench`. With `DASHSCOPE_API_KEY` set it reports
 > `backend=qwen` on live `text-embedding-v3` (the numbers above); with no key it
-> falls back to a deterministic embedder so the harness still runs in CI.
+> falls back to a deterministic embedder so the harness still runs in CI. Config A
+> does no embedding call (it stuffs raw text); B/B+/C each pay one live Qwen
+> embedding round-trip (~0.3s) and Engram's forgetting/packing adds negligible
+> overhead on top.
 
 ### A repo it had never seen
 

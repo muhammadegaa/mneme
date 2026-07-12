@@ -65,17 +65,22 @@ API serving a self-contained Memory Inspector; memories persist across sessions
 
 We proved the moat with a **benchmark** (`npm run bench`, live `text-embedding-v3`):
 
-All three configs hit 100% Recall@5 (the facts are retrievable) — so recall isn't
-the differentiator. The engine wins on the two columns a naive store can't touch:
+Every config hits 100% Recall@5 (facts are retrievable) — so recall isn't the
+story. It's the two columns a *forgetting-blind* store can't touch:
 
 | Config | Contradiction acc. | Stale-fact leakage | Avg tokens | Recall@5 |
 |---|---|---|---|---|
 | A — full-context stuffing | 50% | 100% | 446 | 100% |
-| B — naive vector top-k | 50% | 100% | 67 | 100% |
-| **C — Engram (hybrid + forget + pack)** | **100%** | **0%** | **69** | **100%** |
+| B — naive vector top-k *(status-blind)* | 50% | 100% | 67 | 100% |
+| **B+ — top-k + forgetting** *(fair baseline)* | **100%** | **0%** | 69 | 100% |
+| **C — Engram (hybrid + forget + knapsack)** | **100%** | **0%** | 69 | 100% |
 
-Engram resolves *every* contradiction and drives stale-fact leakage to zero — at
-~1/6 the tokens. Forgetting + supersession is exactly what a vector lookup can't do.
+The status-blind strategies leak superseded facts 100% of the time; add forgetting
+and it's fixed. We deliberately put a *fair* baseline (B+ = top-k **with**
+forgetting, nothing else) in the ring — and it ties Engram on this small set.
+That's the honest point: **forgetting/supersession is the differentiator here, not
+the ranking or the packer.** Engram's hybrid rerank + knapsack earn their keep at
+scale — visible live in the packing-causality panel and on the real repo below.
 
 That bench is synthetic, so we also ran it on **a real 1,456-commit repo it had
 never seen** (`tsx bench/real-run.ts ../codehere 30 --qwen`). With nothing planted,
