@@ -4,6 +4,9 @@
 > Powered end-to-end by **Qwen** (DashScope / Model Studio) on **Alibaba Cloud**.
 > Qwen Cloud Global AI Hackathon — **Track 1: MemoryAgent**.
 
+> **🟢 Live on Alibaba Cloud: http://47.84.61.162** — the Memory Inspector,
+> running on real Qwen (`backend=qwen`) from an Alibaba Cloud ECS instance in Singapore.
+
 Linters know the language. Copilot forgets you the moment the session ends.
 **Engram reads your git history and learns how _you_ code** — your style, your
 tools, and the mistake you keep making — then catches it on your next diff,
@@ -216,15 +219,19 @@ npm run proof               # proof of the live Alibaba Cloud (Qwen/DashScope) c
 
 ## ✅ Status (honest)
 
+- **LIVE on Alibaba Cloud** — Engram runs in production on an Alibaba Cloud **ECS**
+  instance in Singapore at **http://47.84.61.162**, on `backend=qwen`. It's a
+  persistent `systemd` service (auto-restart, survives reboot) with cross-session
+  memory persisted to disk (JSON store). The whole engine — retrieve → pack →
+  ground, the reinforced-mistake catch — runs there on real Qwen, not just on a
+  laptop. The health check returns `{"ok":true,"backend":"qwen"}`.
 - **Qwen on Alibaba Cloud is live and proven** — extraction, review, and
-  embeddings all run on DashScope; `npm run proof` shows the round-trip. The
-  demo hero, the benchmark, and cross-session persistence are all verified on
-  `backend=qwen`.
-- **Managed infra deploy (OSS + Function Compute) is wired but not yet
-  activated** — `s.yaml`, `Dockerfile`, and the pgvector store adapter are in the
-  repo, but the Alibaba Cloud account is behind a "complete your information"
-  verification gate that disables OSS and Function Compute. It flips on the
-  moment the account clears; no code change needed.
+  embeddings all run on DashScope (`text-embedding-v3`, `qwen-turbo`, `qwen-plus`);
+  `npm run proof` shows the round-trip.
+- **Managed-infra path (Function Compute + OSS + ApsaraDB pgvector) is wired and
+  documented** — `s.yaml`, `Dockerfile`, and the pgvector store adapter are in the
+  repo as the serverless/scale alternative to the ECS deploy; set
+  `MEMORY_STORE=postgres` to move persistence to ApsaraDB. No engine change needed.
 
 ## 🧩 Project layout
 

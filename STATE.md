@@ -23,9 +23,14 @@ chat memory; developer-mistake memory from git + forgetting/reinforcement/knapsa
 that niche is the moat. Don't pitch "a memory server"; pitch "the reviewer that learns your mistakes."
 
 SEQUENCED PLAN (deploy-first):
-1. **UNBLOCK ALIBABA DEPLOY** — gates everything, blocked on FOUNDER (account KYC/verification).
-   Function Compute + OSS + pgvector are already wired (`s.yaml`, `Dockerfile`, `pg-store.ts`);
-   flips on when the account clears. This is the DQ risk — do it this week.
+1. **UNBLOCK ALIBABA DEPLOY** — ✅ DONE (2026-07-12). LIVE on Alibaba Cloud **ECS** (Singapore,
+   `47.84.61.162`, instance `i-t4n2e2kxvzk0yz0sbl8g`), `backend=qwen`, persistent `systemd` service
+   (auto-restart), MEMORY_STORE=json (disk persistence). Health returns `{"ok":true,"backend":"qwen"}`.
+   Founder cleared account activation (personal acct + $40 coupon); we deployed via ECS + browser
+   Workbench (node20 + git clone + npm + systemd) rather than Function Compute — simplest reliable path.
+   THE DQ GATE IS CLEARED. FC/OSS/pgvector remain the documented managed/scale alternative (`s.yaml`).
+   NOTE: keep the ECS instance RUNNING through judging (pay-as-you-go ~$0.53/day, covered by coupon);
+   if it's stopped/deleted the live URL dies. Consider a domain + HTTPS later (optional).
 2. **MCP server over the engine** — DONE (2026-07-10). `apps/mcp/server.ts` (stdio, @modelcontextprotocol/sdk),
    4 tools: `engram_review` (grounded diff review + reinforce-on-catch), `engram_recall`, `engram_learn`,
    `engram_inspect`. Persists via store factory (json local / pgvector Alibaba); restores golden seed

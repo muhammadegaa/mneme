@@ -6,7 +6,9 @@
 **Tagline:** The code reviewer that remembers you. It learns how *you* code from
 your git history and catches the mistake you keep making — before it ships.
 
-**Track:** Track 1 — MemoryAgent · **Repo:** https://github.com/muhammadegaa/engram (MIT)
+**Track:** Track 1 — MemoryAgent · **Repo:** https://github.com/muhammadegaa/mneme (MIT)
+
+**🟢 Live on Alibaba Cloud:** http://47.84.61.162 — the Memory Inspector on real Qwen (`backend=qwen`), ECS · Singapore.
 
 ---
 
@@ -114,10 +116,13 @@ model, not in the model call itself.
 
 ## What's next
 
-The managed-infra deploy (Function Compute + OSS + ApsaraDB pgvector) is fully
-wired (`s.yaml`, `Dockerfile`, pgvector adapter) and flips on once our Alibaba
-Cloud account clears its verification gate. Beyond that: a Git hook / CI check so
-Engram reviews every PR, and per-team memory so a whole codebase's habits compound.
+Engram is **live on Alibaba Cloud** — an ECS instance in Singapore serving the
+Memory Inspector on real Qwen (`backend=qwen`) at **http://47.84.61.162**, as a
+persistent auto-restarting service. Next: move persistence from the on-disk JSON
+store to the already-wired **ApsaraDB pgvector** adapter (`MEMORY_STORE=postgres`)
+and the serverless **Function Compute** deploy (`s.yaml`, `Dockerfile`); then a Git
+hook / CI check so Engram reviews every PR, and per-team memory so a whole
+codebase's habits compound.
 
 ## Built with
 
