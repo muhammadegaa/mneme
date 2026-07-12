@@ -77,6 +77,24 @@ VERIFIER ROUND 2 fixes (all DONE + DOM-verified): reinforce-on-catch (count clim
 (was stuck 0 tok); faded memories dropped from main list (Bun no longer double-labeled);
 DEVPOST benchmark table aligned to README order. Round-2 confirmed round-1 fixes all landed.
 
+## ✅ POLISH BATCH (2026-07-12, autonomous) — commits e46faf2..5d86175
+
+After Path B, ran the remaining code work end-to-end (30/30 tests, tsc clean):
+- makeModel (api+mcp) falls back to mock instead of throwing when ENGRAM_BACKEND=qwen
+  w/o key → judge copying MCP config always connects. README snippet fixed.
+- engine.ts: cross-slot reinforce merge fixed (gate cosine branch on predicate; regression
+  test added, now 30 tests); retrieve/pack `now` made mandatory (was silent-0).
+- `bench/demo-catch.ts` + `npm run demo:catch` — reproducible FREE held-out catch: learns
+  codehere → catches a fresh `var` diff, grounded + signature-verified + seen 3×. Honest, no plant.
+- README/DEVPOST/WIN honesty re-pass (lead with the grounding failure-then-fix; drop overclaims;
+  fix "live by default" → opt-in; WIN.md curated-seed honesty).
+- VIDEO_SCRIPT updated (grounding story + demo:catch beat; deploy is LIVE on ECS, not "blocked").
+- docs/DEPLOY.md: redeploy+lockdown runbook (lock SSH→my IP, strip OSS keys, git pull+restart,
+  verify getUser hero fires under evidence-required review). app.onError → clean JSON, no opaque 500.
+STILL ON USER (I can't reach the box): run the DEPLOY.md runbook — lock port 22, strip keys,
+redeploy, and confirm the getUser hero still counts (newCatches>=1, grounded=true). If it's 0, the
+live model paraphrased instead of quoting evidence → tell me, I'll relax grounding to a normalized quote.
+
 ## ✅ TIER 0 — LIVE-BOX HARDENING (2026-07-12, code done; box redeploy = USER)
 
 Code fixes committed (verified: 29/29, tsc clean, API boots on mock, golden cold-boot restores 27
