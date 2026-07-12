@@ -21,6 +21,8 @@ import {
   packMemories,
   effectiveSalience,
   recencyScore,
+  isRepeatMistakeCatch,
+  isGroundedInDiff,
   DEFAULT_WEIGHTS,
   type Memory,
   type MemoryStore,
@@ -58,9 +60,15 @@ async function learnHistory(engine: MemoryEngine, model: MentorModel, log: strin
   commits.sort((a, b) => b.daysAgo - a.daysAgo);
   for (const commit of commits) {
     const now = NOW - commit.daysAgo * DAY;
-    for (const input of await model.extractFromCommit(commit, { defaultSubject: "dev" })) {
-      const r = await engine.write(input, now);
-      log.push(`${commit.sha.slice(0, 7)} ${input.kind} "${input.text}" → ${r.action}`);
+    // Best-effort per commit so one malformed model response can't crash-loop a
+    // cold-boot relearn (which would take the live demo down).
+    try {
+      for (const input of await model.extractFromCommit(commit, { defaultSubject: "dev" })) {
+        const r = await engine.write(input, now);
+        log.push(`${commit.sha.slice(0, 7)} ${input.kind} "${input.text}" → ${r.action}`);
+      }
+    } catch (e) {
+      log.push(`${commit.sha.slice(0, 7)} extraction skipped: ${(e as Error).message}`);
     }
   }
 }
@@ -160,11 +168,12 @@ app.post("/api/review", async (c) => {
   const packedById = new Map(pack.packed.map((p) => [p.memory.id, p.memory]));
   const { comments } = await session.model.review({ diff, file: body.file, memories: pack.packed.map((p) => p.memory) });
 
-  // A "catch" = a warn grounded in a memory of a mistake the dev has made before.
-  const caught = comments.filter((cm) => {
-    if (cm.severity !== "warn" || !cm.citedMemoryId) return false;
-    return packedById.get(cm.citedMemoryId)?.kind === "mistake";
-  });
+  // A "catch" = a warn cited to a past-mistake memory AND grounded in the diff:
+  // the flagged code must actually appear in what was submitted. This rejects a
+  // model hallucinating a mistake it can't point at, so the tally never inflates.
+  const citedOf = (cm: (typeof comments)[number]) =>
+    cm.citedMemoryId ? packedById.get(cm.citedMemoryId) : undefined;
+  const caught = comments.filter((cm) => isRepeatMistakeCatch(cm, diff, citedOf(cm)));
   catches += caught.length;
 
   // Catching the bug again IS another occurrence of it — so REINFORCE the memory:
@@ -206,10 +215,13 @@ app.post("/api/review", async (c) => {
     };
   }
 
-  // Attach the cited memory (with its "seen N×") to each comment for the catch card.
+  // Attach the cited memory (with its "seen N×") to each comment for the catch
+  // card, plus whether the warn is grounded in the diff — an ungrounded warn is
+  // shown but NOT counted, so a hallucinated flag is visible, never hidden.
   const richComments = comments.map((cm) => ({
     ...cm,
     cited: cm.citedMemoryId ? view(packedById.get(cm.citedMemoryId)!) : undefined,
+    grounded: cm.severity === "warn" ? isGroundedInDiff(cm, diff) : undefined,
   }));
 
   return c.json({

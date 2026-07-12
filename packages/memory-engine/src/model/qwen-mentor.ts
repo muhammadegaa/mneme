@@ -24,6 +24,7 @@ function parseReview(raw: unknown): ReviewResult {
       message: c.message,
       line: typeof c.line === "number" ? c.line : undefined,
       citedMemoryId: typeof c.citedMemoryId === "string" ? c.citedMemoryId : undefined,
+      evidence: typeof c.evidence === "string" ? c.evidence : undefined,
     });
   }
   return { comments };
@@ -33,7 +34,8 @@ const REVIEW_SYSTEM = `You are a senior code reviewer who remembers exactly how 
 - Prioritize their recurring mistakes: if the diff repeats one, flag it (severity "warn") and name the pattern. Do NOT state a numeric count in your message — describe the mistake, not the tally (the UI shows the count).
 - Note consistency or drift from their tracked preferences (severity "info").
 - Every comment MUST set citedMemoryId to the id of the memory that motivated it.
-Return JSON: {"comments":[{"line":<number|null>,"severity":"warn|info|praise","message":"...","citedMemoryId":"m_..."}]}. Empty list if nothing worth saying.`;
+- Every "warn" MUST set evidence to the EXACT offending line, copied VERBATIM from the diff (a substring of the diff, character-for-character — do not paraphrase, summarize, or invent). If you cannot quote the exact offending line from the diff, DO NOT emit the comment. This is enforced: a warn whose evidence is not found in the diff is discarded.
+Return JSON: {"comments":[{"line":<number|null>,"severity":"warn|info|praise","message":"...","citedMemoryId":"m_...","evidence":"<verbatim diff line, warn only>"}]}. Empty list if nothing worth saying.`;
 
 export class QwenMentorModel implements MentorModel {
   readonly backend = "qwen" as const;

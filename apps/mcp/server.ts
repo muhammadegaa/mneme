@@ -27,6 +27,7 @@ import {
   packMemories,
   effectiveSalience,
   recencyScore,
+  isRepeatMistakeCatch,
   DEFAULT_WEIGHTS,
   type Memory,
   type MentorModel,
@@ -91,8 +92,12 @@ server.tool(
     const packedById = new Map(pack.packed.map((p) => [p.memory.id, p.memory]));
     const { comments } = await model.review({ diff, file, memories: pack.packed.map((p) => p.memory) });
 
-    // A catch = a warn grounded in a memory of a mistake the dev has made before.
-    const caught = comments.filter((cm) => cm.severity === "warn" && cm.citedMemoryId && packedById.get(cm.citedMemoryId)?.kind === "mistake");
+    // A catch = a warn cited to a past-mistake memory AND grounded in the diff
+    // (the flagged code is actually present). Hallucinated flags are dropped, not
+    // counted or reinforced.
+    const caught = comments.filter((cm) =>
+      isRepeatMistakeCatch(cm, diff, cm.citedMemoryId ? packedById.get(cm.citedMemoryId) : undefined),
+    );
     // Catching it again IS another occurrence -> reinforce, so it gets louder.
     for (const cm of caught) {
       const m = packedById.get(cm.citedMemoryId!)!;

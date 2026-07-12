@@ -23,6 +23,12 @@ export interface ReviewComment {
   message: string;
   /** id of the memory this comment is grounded in (the trust anchor). */
   citedMemoryId?: string;
+  /**
+   * The exact offending code, copied verbatim from the diff. Required for a
+   * `warn` to count as a catch: the diff-grounding guard verifies this quote is
+   * actually present so a hallucinated mistake can't be counted or reinforced.
+   */
+  evidence?: string;
 }
 
 export interface ReviewResult {

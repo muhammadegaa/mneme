@@ -1,44 +1,54 @@
-# Real-repo benchmark — codehere (unseen)
+# real-codehere — live Qwen dogfood (2026-07-12, gated) — REAL recurring mistake
 
-Engram pointed at **codehere** (a 1,456-commit repo it had never seen), backend **Qwen** (live
-`qwen-plus` extraction + review, `text-embedding-v3`). Last 30 commits: learn 29 oldest-first,
-hold out the newest for review. Command:
+Run: `tsx bench/real-run.ts /Users/muhammadegaa/code/codehere 29 --qwen --label codehere`
+Backend: live Qwen. Cost: 52,664 tok / 81 calls (~$0.02). 3/28 commits skipped on a malformed
+model response (per-commit tolerance — one bad response no longer aborts the run).
 
-```
-tsx bench/real-run.ts ../codehere 30 --qwen --label codehere
-```
+> Supersedes an earlier pre-gate run on this repo (which surfaced empty-catch blocks AND emitted a
+> hallucinated held-out "var" catch on a diff with no var). The gate now drops exactly that kind of
+> misapplied catch — see "held-out catch is 0" below.
 
-## What it found (verified)
+## Result (after the extraction-grounding gate)
 
 | metric | value |
 |---|---|
-| memories extracted | 37 |
+| memories extracted | 38 |
 | mistake memories | 2 |
-| **recurring mistake (seen ≥2×)** | **1 — "swallows errors in empty catch blocks"** |
-| beliefs superseded | 3 |
-| Qwen cost | 46,953 tokens · 78 calls (~$0.02) |
+| recurring mistakes (seen ≥2×) | 1 — **"uses var instead of const/let"** |
+| beliefs superseded | 1 |
+| held-out catch (commit 7db8850e) | 0 |
 
-The recurring mistake is **real and independently verifiable**: codehere's recent history is
-pervaded by empty `}catch(e){}` blocks that discard the error, e.g.
+## Independent verification — the mistake is REAL
+
+Reproduced with the exact code path the run used (`commitsFromRepo` + `diffAddedText` + the
+`var_usage` signature). 3 of 28 learned commits contain genuine `var` declarations:
 
 ```
-+  try{ renderSidebar(); }catch(e){} // the rail's you-are-here follows
-+  try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
+9394312a  var onSpend=_spendVisible();   (function navSectionHtml())
+c17ea8ab  var _rh=_roomHash();
+8fbce950  var _sv=document.getElementById('spend-v…')
 ```
 
-Engram learned this pattern from commits it had never seen and marked it recurring — the core
-claim ("learns your real recurring mistakes") holds on a real codebase, not a planted one.
+Real `var` declarations (should be `const`/`let`) — a real recurring mistake in a repo Engram had
+never seen. The gate kept it *because* the signature matched real added code; reinforced across
+commits (seen 2×).
 
-## Honesty caveat — held-out review catch discarded
+The held-out catch is **0** — correct, not a miss: the newest commit (7db8850e) has no
+var/empty-catch/null-check pattern in its added lines, so nothing false fired. (The pre-gate run
+fired a false var catch here; the strengthened review guard now rejects a catch whose signature
+isn't in the diff.)
 
-The held-out review (newest commit `aa61172a`) produced one grounded comment: *"uses `var`
-instead of `const`/`let`."* **Manual check: that commit's fed diff contains no `var`.** The
-comment is a Qwen **hallucination** — a real style memory (codehere does use `var` elsewhere)
-misapplied to a diff that doesn't contain it. It is **excluded** from every claim.
+## Honest caveats
 
-This is the honest boundary of the current system: extraction + reinforcement over real history
-is reliable and grounded; the live review model can still hallucinate an application. The demo's
-hero catch avoids this by grounding against a memory the diff genuinely matches; this benchmark
-is the unfiltered, warts-and-all run on unseen code.
+- **Recall is Qwen-proposal-limited.** 3 commits use `var`; only 2 were captured, because
+  extraction keeps a mistake only when Qwen *proposes* it AND the signature verifies. Every kept
+  mistake is real; some real ones are missed. (A deterministic detector pass over the registry
+  would lift recall to 3/3 — available, not yet enabled.)
+- This is the 29 most-recent codehere commits — a different window than the earlier run that
+  surfaced empty-catch. Both are real; which mistakes appear depends on the window.
 
-Raw run output: `bench/results/real-codehere.json`.
+## Contrast with ravenote (same day, same gate)
+
+ravenote — no fetch/await/var/empty-catch anywhere — extracted **0 mistake memories** after the gate
+(down from 3 fabricated before it). Same machinery: catches the real thing on codehere, stays silent
+on ravenote. That is the honesty property the gate was built for.

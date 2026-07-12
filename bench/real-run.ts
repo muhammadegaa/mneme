@@ -27,6 +27,8 @@ import {
   QwenClient,
   configFromEnv,
   packMemories,
+  isRepeatMistakeCatch,
+  isGroundedInDiff,
   type MentorModel,
 } from "../packages/memory-engine/src/index.js";
 import { commitsFromRepo } from "./from-repo.js";
@@ -65,13 +67,22 @@ async function main() {
   const store = new InMemoryStore();
   const engine = new MemoryEngine(store, model, {});
   const tally: Record<string, number> = { inserted: 0, reinforced: 0, superseding: 0, deduped: 0 };
+  let skipped = 0;
   for (const commit of learnSet) {
     const now = NOW - commit.daysAgo * DAY;
-    for (const input of await model.extractFromCommit(commit, { defaultSubject: "dev" })) {
-      const r = await engine.write(input, now);
-      tally[r.action] = (tally[r.action] ?? 0) + 1;
+    // Best-effort per commit: a single malformed model response must not abort
+    // learning the whole repo (nor crash-loop a cold-boot relearn on the server).
+    try {
+      for (const input of await model.extractFromCommit(commit, { defaultSubject: "dev" })) {
+        const r = await engine.write(input, now);
+        tally[r.action] = (tally[r.action] ?? 0) + 1;
+      }
+    } catch (e) {
+      skipped++;
+      console.error(`  skip ${commit.sha}: ${(e as Error).message}`);
     }
   }
+  if (skipped) console.log(`  (${skipped}/${learnSet.length} commits skipped on extraction error)`);
 
   const all = await store.all();
   const active = all.filter((m) => m.status === "active");
@@ -84,7 +95,12 @@ async function main() {
   const pack = packMemories(scored, BUDGET);
   const packedById = new Map(pack.packed.map((p) => [p.memory.id, p.memory]));
   const { comments } = await model.review({ diff: heldOut.diff, memories: pack.packed.map((p) => p.memory) });
-  const caught = comments.filter((cm) => cm.severity === "warn" && cm.citedMemoryId && packedById.get(cm.citedMemoryId)?.kind === "mistake");
+  // Only count a held-out catch if it's grounded in the held-out diff — this is
+  // exactly the guard that would have discarded the codehere "uses var"
+  // hallucination automatically instead of by hand.
+  const caught = comments.filter((cm) =>
+    isRepeatMistakeCatch(cm, heldOut.diff, cm.citedMemoryId ? packedById.get(cm.citedMemoryId) : undefined),
+  );
 
   const usage = model.usage();
   const rows = {
@@ -109,7 +125,13 @@ async function main() {
     console.log(`\n  recurring mistakes Engram learned from ${label} it had never seen:`);
     for (const m of recurring) console.log(`    ▲×${m.reinforcements}  ${m.text}`);
   }
-  for (const cm of caught) console.log(`\n  held-out catch: ⚠ ${cm.message}\n    ↳ grounded in ${cm.citedMemoryId}`);
+  for (const cm of caught) console.log(`\n  held-out catch: ⚠ ${cm.message}\n    ↳ grounded in ${cm.citedMemoryId}\n    ↳ evidence quoted: ${JSON.stringify(cm.evidence ?? null)}`);
+  // Also surface warns the guard DROPPED (cited a mistake but not grounded in the
+  // diff) — a hallucinated flag must be visible, never silently swallowed.
+  const dropped = comments.filter(
+    (cm) => cm.severity === "warn" && cm.citedMemoryId && packedById.get(cm.citedMemoryId)?.kind === "mistake" && !isGroundedInDiff(cm, heldOut.diff),
+  );
+  for (const cm of dropped) console.log(`\n  DROPPED (ungrounded warn): ⚠ ${cm.message}\n    ↳ evidence quoted: ${JSON.stringify(cm.evidence ?? null)}  (not found in diff)`);
   if (model.backend === "qwen") console.log(`\n  qwen usage: ${JSON.stringify(usage)}  (coupon cost)`);
 
   mkdirSync(resolve("bench/results"), { recursive: true });

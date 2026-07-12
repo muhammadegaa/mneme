@@ -1,6 +1,8 @@
 import type { Memory, MemoryInput, MemoryKind } from "../types.js";
 import type { CommitSource, MentorModel, ReviewComment, ReviewResult } from "./mentor.js";
 import type { QwenUsage } from "./qwen-client.js";
+import { diffAddedText } from "../grounding.js";
+import { MISTAKE_SIGNATURES } from "../mistakes.js";
 
 /**
  * Deterministic, zero-credit stand-in for Qwen. Same interface as the real
@@ -25,33 +27,17 @@ interface Pattern {
 }
 
 const PATTERNS: Pattern[] = [
-  {
-    re: /fetch\s*\([^)]*\)[\s\S]{0,80}?\.json\s*\(\s*\)/i,
+  // Mistake patterns come from the shared registry, so the mock, extraction
+  // grounding, and the review guard detect the exact same thing.
+  ...MISTAKE_SIGNATURES.map((s): Pattern => ({
+    re: s.re,
     kind: "mistake",
-    predicate: "null_check",
-    text: "forgets null/ok checks on API responses",
-    salience: 0.45,
-    severity: "warn",
-    flag: "No `res.ok`/null guard before reading the body — a 404 throws or yields null and the next access crashes.",
-  },
-  {
-    re: /catch\s*\([^)]*\)\s*\{\s*\}/,
-    kind: "mistake",
-    predicate: "error_handling",
-    text: "swallows errors in empty catch blocks",
-    salience: 0.45,
-    severity: "warn",
-    flag: "Empty catch swallows the error — at least log or rethrow.",
-  },
-  {
-    re: /\bvar\s+\w+/,
-    kind: "mistake",
-    predicate: "var_usage",
-    text: "uses var instead of const/let",
-    salience: 0.35,
-    severity: "warn",
-    flag: "Prefer const/let over var.",
-  },
+    predicate: s.predicate,
+    text: s.text,
+    salience: s.salience,
+    severity: s.severity,
+    flag: s.flag,
+  })),
   { re: /from\s+['"]zustand['"]/i, kind: "tech", predicate: "state_mgmt", text: "uses Zustand for state management", salience: 0.7, severity: "info" },
   { re: /from\s+['"]react-redux['"]|createStore\s*\(/i, kind: "tech", predicate: "state_mgmt", text: "uses Redux for state management", salience: 0.7, severity: "info" },
   { re: /\bclass\s+\w+\s+extends\s+(React\.)?Component/, kind: "style", predicate: "component_style", text: "writes class components (OOP style)", salience: 0.5, severity: "info" },
@@ -75,19 +61,6 @@ export function hashEmbed(text: string, dim = DIM): number[] {
     v[h % dim]! += 1;
   }
   return v;
-}
-
-/**
- * Lines to judge. For a unified diff: the added (`+`) lines only. For a raw code
- * snippet (no `+` markers — e.g. the live "review this" box), the whole text.
- */
-function addedLines(diff: string): string {
-  const added = diff
-    .split("\n")
-    .filter((l) => l.startsWith("+") && !l.startsWith("+++"))
-    .map((l) => l.slice(1));
-  if (added.length) return added.join("\n");
-  return diff.replace(/^@@.*$/gm, "").replace(/^[-+]{3}.*$/gm, "");
 }
 
 export class MockMentorModel implements MentorModel {
@@ -119,7 +92,7 @@ export class MockMentorModel implements MentorModel {
   }
 
   async extractFromCommit(commit: CommitSource, ctx: { defaultSubject: string }): Promise<MemoryInput[]> {
-    const found = this.scan(`${commit.message}\n${addedLines(commit.diff)}`);
+    const found = this.scan(`${commit.message}\n${diffAddedText(commit.diff)}`);
     return found.map((m) => ({ ...m, source: commit.sha, subject: m.subject || ctx.defaultSubject }));
   }
 
@@ -129,14 +102,16 @@ export class MockMentorModel implements MentorModel {
   }
 
   async review(req: { diff: string; file?: string; memories: Memory[] }): Promise<ReviewResult> {
-    const added = addedLines(req.diff);
+    const added = diffAddedText(req.diff);
     const comments: ReviewComment[] = [];
     // Index packed memories by slot so a detected issue can cite the memory.
     const byPredicate = new Map<string, Memory>();
     for (const m of req.memories) if (m.predicate) byPredicate.set(m.predicate, m);
 
     for (const p of PATTERNS) {
-      if (!p.re.test(added)) continue;
+      const hit = p.re.exec(added);
+      if (!hit) continue;
+      const evidence = hit[0]; // the exact matched code — grounds the warn in the diff
       const cited = byPredicate.get(p.predicate);
       // Only surface what memory tells us is worth surfacing: a flagged pattern
       // we have a memory for, or a notable mistake even if unseen before.
@@ -150,6 +125,7 @@ export class MockMentorModel implements MentorModel {
           severity: "warn",
           message: (p.flag ?? p.text) + tail,
           citedMemoryId: cited?.id,
+          evidence,
         });
       } else if (cited) {
         comments.push({

@@ -77,6 +77,88 @@ VERIFIER ROUND 2 fixes (all DONE + DOM-verified): reinforce-on-catch (count clim
 (was stuck 0 tok); faded memories dropped from main list (Bun no longer double-labeled);
 DEVPOST benchmark table aligned to README order. Round-2 confirmed round-1 fixes all landed.
 
+## ✅ PATH B — GROUNDING GATE MAKES IT REAL (2026-07-12, live-validated)
+
+User chose Path B (make real-repo catching actually work). Root-caused the ravenote hallucination:
+review had an evidence guard but EXTRACTION didn't — asked "what mistakes does this dev make?",
+Qwen confabulates to fill the schema. Fix shipped + live-validated:
+- `mistakes.ts` — shared signature registry (predicate → canonical text + regex). Single source of
+  truth for mock, extraction gate, review guard. Mock PATTERNS now derive mistakes from it.
+- EXTRACTION GATE (`extract.ts`): a commit-derived `mistake` is kept only if it names a known class
+  AND that class's signature is present in the added code; survivors normalized to canonical text.
+  Turns (self-report) skip the gate. Softened the "judge the absence/OMISSION" prompt line that
+  invited fabrication.
+- REVIEW GUARD (`grounding.ts`): `isRepeatMistakeCatch` now also requires the mistake's signature to
+  be present in the diff (not just a grounded quote) → kills mischaracterization (real line, wrong
+  label). Call sites pass the cited memory (kind+predicate).
+- RESILIENCE: per-commit try/catch in bench + API `learnHistory` — one malformed model response no
+  longer aborts a run / crash-loops a cold-boot relearn (was a MUST-FIX).
+LIVE RESULTS (user-approved, ~$0.04):
+- ravenote (the repo that hallucinated): 3 fabricated mistakes + 1 hallucinated catch → **0 mistakes,
+  0 catches**. Still 43 style/tech/project memories, 11 superseded. Correct silence.
+- codehere (unseen): **1 REAL recurring mistake — "uses var" seen 2×, grounded**. Independently
+  re-verified via the exact code path: `var onSpend=_spendVisible()` etc. in 3 learned commits.
+  Held-out catch 0 (newest commit has no mistake pattern → no false catch; the pre-gate run fired a
+  FALSE var catch here — guard now rejects it).
+VERIFIED: 29/29 tests, package tsc clean, mock gate smoke (7/7 cases), MCP hero still fires.
+LESSON: verify against the ACTUAL code path (commitsFromRepo+diffAddedText), not an approximate
+shell grep — my shell grep gave a false-0 on codehere var; the code-path probe caught it.
+HONEST CAVEATS: (1) recall is Qwen-proposal-limited (codehere: 3 var commits, 2 captured) — a
+deterministic scan over the registry would give 3/3, available not enabled. (2) held-out catch needs
+a diff that actually contains a mistake; to DEMO the full loop, review a diff that re-commits a real
+mistake (legit, not planted). Docs: `bench/results/real-{ravenote,codehere}.md`.
+
+## ⛔ (superseded by Path B above) RAVENOTE DOGFOOD (2026-07-12) — IT HALLUCINATED
+
+The honest answer to "real product or demo?": on the one real repo we dogfooded, live Qwen
+FABRICATED its core output. Run: `tsx bench/real-run.ts ravenote 29 --qwen`. Reported (looks
+great): 38 memories, 3 recurring mistakes — "uses async/await for API calls without null/ok
+checks" ×8, "empty catch blocks" ×4, "uses var" ×4 — + 1 GROUNDED held-out catch, ~$0.02 (51,749
+tok/97 calls). VERIFIED AGAINST THE BYTES QWEN SAW (the 29 learned diffs, first 4000 chars each,
++ the held-out diff): **0 var, 0 await, 0 fetch, 0 async, 0 empty-catch. All three "recurring
+mistakes" are invented.** Commit messages mention api/async/fetch 0×. The held-out catch fired on
+commit 993b6058 whose added code is a HARDCODED QUIZ OBJECT + DOM code (`const _DEMO_QUIZ={...}`,
+`showDemoQuiz()` using `$()`/`safeStorage.set`) — no network, no async. Whole repo at HEAD: 0
+fetch/0 await/0 var files. So extraction ITSELF hallucinates (worse than codehere, where extraction
+was real and only the held-out review hallucinated). Extraction is repo-dependent + untrustworthy
+without per-item human verification → NOT yet a shippable product; the "catches your repeat mistake"
+claim does not survive a real repo.
+
+THE GUARD DID NOT SAVE IT. `isRepeatMistakeCatch` PASSED the hallucinated held-out catch, because
+the guard checks the quoted evidence LINE EXISTS in the diff, not that the line exhibits the mistake.
+Qwen quoted a real (innocuous) line and mislabeled it → grounded-but-mischaracterized, the guard's
+documented blind spot. Guard is NECESSARY (kills no-evidence / invented-quote — smoke-proven) but
+INSUFFICIENT (doesn't kill mischaracterization, the dominant real failure). Open: I couldn't see the
+exact evidence string (real-run.ts discarded it — now FIXED to print `evidence` + DROPPED warns);
+mechanism (real-line-mislabel vs guard bypass) needs one more ~$0.02 run to nail, if user approves.
+Artifacts: `bench/results/real-ravenote.md` (honest writeup), `.json` (raw counts — DO NOT quote
+heldOutCatches:1 as a real catch; it's the hallucination).
+
+## DIFF-GROUNDING GUARD (2026-07-12) — DONE local, live-UNPROVEN
+
+The #1 correctness hole is closed in code: a "catch" (warn + citedMemoryId + kind==mistake)
+was counted AND reinforced with NO check the flagged issue was in the diff, so a Qwen
+hallucination (the codehere "uses var" on a diff with no var) inflated the tally + reinforced
+a memory off nothing. FIX (shipped, uncommitted):
+- New `packages/memory-engine/src/grounding.ts`: `diffAddedText`, `isGroundedInDiff`,
+  `isRepeatMistakeCatch`. A warn now must carry `evidence` (verbatim offending code); a catch
+  counts only if that quote is actually present in the diff's added lines (whitespace-normalized).
+- `ReviewComment.evidence` added (mentor.ts). Mock attaches the regex match as evidence (so mock
+  catches stay grounded). Qwen prompt now REQUIRES verbatim evidence per warn; parseReview reads it.
+- All 3 call sites (api/server.ts, mcp/server.ts, bench/real-run.ts) replaced their duplicated
+  ungrounded filter with the shared `isRepeatMistakeCatch`. API also returns `grounded` per warn
+  so an ungrounded flag is SHOWN but not counted (honest, not hidden).
+- SCOPE (honest): guard proves the flagged code EXISTS in the diff, NOT that the judgment is
+  correct. It kills pure fabrication (the documented failure), not semantic mischaracterization.
+VERIFIED (free/local): 29/29 tests pass; package tsc clean; guard smoke — hallucinated `var`
+REJECTED, no-evidence warn REJECTED, real quote counted; MCP hero catch grounded+counted; mock
+real-repo bench runs the new path. UNPROVEN (needs live Qwen + user approval): (a) does live
+Qwen return evidence verbatim so the hero still fires (risk: a false-negative if it paraphrases —
+norm() collapses whitespace but not rewrites); (b) the product question — catch a REAL recurring
+mistake on one of MY repos WITHOUT hallucinating, now with the guard auto-discarding bad catches.
+NEXT (blocked on user): scoped live dogfood (~$0.02–0.05) on ravenote/nectic/clipa via
+`tsx bench/real-run.ts <repo> 29 --qwen --label <name>`. Guard is the prerequisite; it's done.
+
 ## WIN-HARDER BACKLOG (next-tier, ranked — for continued loop iterations)
 
 1. **Reinforcement flips a packing decision** — DONE (reliable variant), commit `58f1341`.
