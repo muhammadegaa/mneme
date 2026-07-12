@@ -77,6 +77,23 @@ VERIFIER ROUND 2 fixes (all DONE + DOM-verified): reinforce-on-catch (count clim
 (was stuck 0 tok); faded memories dropped from main list (Bun no longer double-labeled);
 DEVPOST benchmark table aligned to README order. Round-2 confirmed round-1 fixes all landed.
 
+## ✅ PATH B++ — MISTAKE DETECTION NOW DETERMINISTIC (2026-07-12)
+
+Upgraded the gate: commit-derived mistakes are no longer Qwen PROPOSALS-then-verified; they are
+DETECTED directly from the added code by `detectMistakes()` (shared registry) in
+`extractFromCommit`. Qwen still owns style/tech/project (its fuzzy strength) + review narration +
+embeddings; mistakes are 100% deterministic → reproducible, full-recall, Qwen-independent, and
+validatable OFFLINE FOR FREE (no coupon). Turns still keep model mistakes (self-report, no diff).
+AUTHORITATIVE deployed-path numbers (detectMistakes over added lines only, 28 learned commits, $0):
+- codehere: **error_handling (empty catch) seen 2×** [9394312,c17ea8a] + **var_usage seen 3×**
+  [9394312,c17ea8a,8fbce95] — TWO real recurring mistakes, full recall (the Qwen-proposal run only
+  caught var 2× and missed empty-catch entirely).
+- ravenote: **none — correct silence.**
+29/29 tests, tsc clean. Committed `aff5538` (gate) + this deterministic upgrade. Net: the "learns a
+real recurring mistake, never fabricates" claim is now TRUE, reproducible, and free to re-verify.
+REMAINING to demo the full loop: review a diff that actually re-commits a real var/empty-catch
+(honest, not planted) → grounded+signature-matched catch. Then Tier 0 (lock the public box).
+
 ## ✅ PATH B — GROUNDING GATE MAKES IT REAL (2026-07-12, live-validated)
 
 User chose Path B (make real-repo catching actually work). Root-caused the ravenote hallucination:

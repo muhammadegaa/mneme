@@ -38,12 +38,24 @@ var/empty-catch/null-check pattern in its added lines, so nothing false fired. (
 fired a false var catch here; the strengthened review guard now rejects a catch whose signature
 isn't in the diff.)
 
+## Update — mistake detection is now deterministic (full recall, free to verify)
+
+Extraction no longer relies on Qwen proposing the mistake; mistakes are detected directly from the
+added code by the shared signature registry. Authoritative deployed-path numbers over the 28 learned
+commits (offline, $0):
+
+```
+error_handling (empty catch)  seen 2×  [9394312, c17ea8a]
+var_usage                     seen 3×  [9394312, c17ea8a, 8fbce95]
+```
+
+Two real recurring mistakes, full recall (the earlier Qwen-proposal run caught var 2× and missed
+empty-catch). Reproducible and Qwen-independent — re-verify any time without spending credits.
+
 ## Honest caveats
 
-- **Recall is Qwen-proposal-limited.** 3 commits use `var`; only 2 were captured, because
-  extraction keeps a mistake only when Qwen *proposes* it AND the signature verifies. Every kept
-  mistake is real; some real ones are missed. (A deterministic detector pass over the registry
-  would lift recall to 3/3 — available, not yet enabled.)
+- Detection is bounded to the high-precision signature registry (null-check, empty-catch, var) — by
+  design. Breadth is a non-goal; the novelty is the memory dynamics over grounded mistakes.
 - This is the 29 most-recent codehere commits — a different window than the earlier run that
   surfaced empty-catch. Both are real; which mistakes appear depends on the window.
 

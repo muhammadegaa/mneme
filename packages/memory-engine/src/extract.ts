@@ -1,6 +1,6 @@
 import type { QwenClient } from "./model/qwen-client.js";
 import type { MemoryInput, MemoryKind } from "./types.js";
-import { mistakeSignature } from "./mistakes.js";
+import { detectMistakes } from "./mistakes.js";
 import { diffAddedText } from "./grounding.js";
 
 /**
@@ -27,14 +27,15 @@ function clamp01(n: number, fallback: number): number {
 /**
  * Validate + coerce the model's JSON into typed MemoryInputs. Throws on bad shape.
  *
- * EXTRACTION GROUNDING: when `groundCode` is given (commit path), a `mistake` is
- * kept only if it names a known mistake class AND that class's signature is
- * actually present in the added code. The model likes to confabulate plausible
+ * EXTRACTION GROUNDING: for the commit path, mistakes do NOT come from the model
+ * at all — they're detected deterministically from the added code by
+ * `extractFromCommit` (see below). The model likes to confabulate plausible
  * developer mistakes to fill the schema (observed: it "found" async/await null
- * bugs in a repo with no async at all) — this rejects every mistake it can't
- * back with real code, and normalizes the survivors to canonical text so a
- * repeat mistake reinforces one memory instead of splitting on phrasing. Turns
- * (no code) skip the gate: there, a mistake is the dev's own self-report.
+ * bugs in a repo with no async at all), so here we simply DROP any mistake the
+ * model proposes when `groundCode` is present, and let the signature scan be the
+ * sole, reproducible source. The model still owns style/tech/project — its real
+ * strength. Turns (no code) keep model mistakes: there, a mistake is the dev's
+ * own self-report, with no diff to detect against.
  */
 export function parseExtraction(raw: unknown, source: string, defaultSubject: string, groundCode?: string): MemoryInput[] {
   const obj = raw as { memories?: unknown };
@@ -47,14 +48,8 @@ export function parseExtraction(raw: unknown, source: string, defaultSubject: st
     const predicate = typeof item.predicate === "string" && item.predicate.trim() ? item.predicate.trim() : undefined;
     const oneOff = predicate === "runtime_experiment";
 
-    // The grounding gate: a code-derived mistake must match a known signature in
-    // the actual added code, or it's dropped as unverifiable.
-    if (kind === "mistake" && groundCode !== undefined) {
-      const sig = mistakeSignature(predicate);
-      if (!sig || !sig.re.test(groundCode)) continue;
-      out.push({ text: sig.text, kind, subject: "dev", predicate: sig.predicate, salience: sig.salience, decayRate: 0.03, source });
-      continue;
-    }
+    // Commit path: mistakes are detected from code, not proposed by the model.
+    if (kind === "mistake" && groundCode !== undefined) continue;
 
     // NORMALIZE SUBJECT: the model is inconsistent (it returns commit shas /
     // filenames). A memory is about the DEVELOPER (style/tech/mistake) or the
@@ -100,7 +95,19 @@ export async function extractFromCommit(
 ): Promise<MemoryInput[]> {
   const body = `commit ${commit.sha}\nmessage: ${commit.message}\n\ndiff:\n${commit.diff}`;
   const added = diffAddedText(commit.diff);
-  return qwen.structured(
+  // Mistakes: deterministic signature scan over the real added code — reproducible
+  // and Qwen-independent, so a recurring mistake is never invented and never
+  // missed for phrasing reasons. Qwen supplies the fuzzy style/tech/project facts.
+  const mistakes: MemoryInput[] = detectMistakes(added).map(({ signature }) => ({
+    text: signature.text,
+    kind: "mistake",
+    subject: "dev",
+    predicate: signature.predicate,
+    salience: signature.salience,
+    decayRate: 0.03,
+    source: commit.sha,
+  }));
+  const fuzzy = await qwen.structured(
     [
       { role: "system", content: SYSTEM },
       { role: "user", content: body },
@@ -108,6 +115,7 @@ export async function extractFromCommit(
     (raw) => parseExtraction(raw, commit.sha, ctx.defaultSubject, added),
     { tier: "cheap" },
   );
+  return [...mistakes, ...fuzzy];
 }
 
 /** Extract from a free-form chat turn (the dev telling the mentor something). */
