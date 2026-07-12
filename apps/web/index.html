@@ -345,7 +345,10 @@ async function review(){
   $("runnote").textContent="retrieve · pack · ground";
   if(r.error){ $("verdict").innerHTML=`<div class="resting">review failed. is the server up?</div>`; return; }
   serverCatches = r.catches;
-  const warn = r.comments.find(c=>c.severity==="warn");
+  // Only a COUNTED catch (grounded + signature-verified) drives the hero card;
+  // an ungrounded/mislabeled warn is shown as a softer, honest note instead.
+  const warn = r.comments.find(c=>c.severity==="warn" && c.caught);
+  const looseWarn = !warn && r.comments.find(c=>c.severity==="warn");
   const infos = r.comments.filter(c=>c.severity==="info");
 
   // Stage the reveal with the ACTUAL numbers the engine produced this call.
@@ -359,7 +362,7 @@ async function review(){
   $("st1").classList.remove("run"); $("st1").classList.add("on"); await wait(300);
   renderCausal(r.packingCausality); await wait(260);
   $("st2").classList.add("run"); await wait(70);
-  $("v2").innerHTML = warn?.cited ? `matched your memory <b>${warn.cited.id}</b>` : `no grounded match — clean`;
+  $("v2").innerHTML = warn?.cited ? `matched your memory <b>${warn.cited.id}</b>` : looseWarn ? `flagged, but not grounded in the diff — not counted` : `no grounded match — clean`;
   $("st2").classList.remove("run"); $("st2").classList.add("on"); await wait(220);
 
   let html="";
@@ -369,11 +372,15 @@ async function review(){
       <div class="said">${seen?`I've seen this one. ${seen} times.`:"I've seen this one before."}</div>
       <div class="body">${warn.message.replace(/`([^`]+)`/g,"<code>$1</code>")}</div>
       ${warn.cited?`<div class="ev">grounded in your memory <b>${warn.cited.id}</b> — "${warn.cited.text}". Not a generic rule. Yours.</div>`:""}</div>`;
+  } else if(looseWarn){
+    // A warn the guard did NOT count (the flagged pattern isn't grounded in the
+    // diff). Show it honestly as unverified — never as a "caught" trophy.
+    html += `<div class="info">⚠ <b>flagged, unverified.</b> ${looseWarn.message.replace(/`([^`]+)`/g,"<code>$1</code>")} <span style="color:var(--mut)">— not grounded in this diff, so not counted.</span></div>`;
   }
   for(const ci of infos){
     html += `<div class="info">✓ <b>consistent with you.</b> ${ci.message.replace(/`([^`]+)`/g,"<code>$1</code>")}</div>`;
   }
-  if(!warn && !infos.length) html=`<div class="resting" style="min-height:auto;padding:18px">clean. nothing worth flagging.</div>`;
+  if(!warn && !looseWarn && !infos.length) html=`<div class="resting" style="min-height:auto;padding:18px">clean. nothing worth flagging.</div>`;
   const slot = $("cardslot"); if(slot){ slot.innerHTML = html; } else { $("verdict").innerHTML = html; }
 
   // Refresh from the reinforced state so hero, catch card and the "seen N×" bar

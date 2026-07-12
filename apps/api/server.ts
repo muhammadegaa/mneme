@@ -281,12 +281,14 @@ app.post("/api/review", async (c) => {
   }
 
   // Attach the cited memory (with its "seen N×") to each comment for the catch
-  // card, plus whether the warn is grounded in the diff — an ungrounded warn is
-  // shown but NOT counted, so a hallucinated flag is visible, never hidden.
+  // card, plus whether the warn is grounded and whether it was actually COUNTED
+  // as a catch — so the UI only celebrates a real, counted catch, never an
+  // ungrounded/mislabeled warn.
   const richComments = comments.map((cm) => ({
     ...cm,
     cited: cm.citedMemoryId ? view(packedById.get(cm.citedMemoryId)!) : undefined,
     grounded: cm.severity === "warn" ? isGroundedInDiff(cm, diff) : undefined,
+    caught: caught.includes(cm),
   }));
 
   return c.json({
