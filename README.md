@@ -75,12 +75,12 @@ and token budgets actually bind — which you can watch happen live in the
 decision) and on **a real 1,456-commit repo** below. We'd rather show you the fair
 baseline than a strawman the engine was built to beat.
 
-> Run it yourself: `npm run bench`. With `DASHSCOPE_API_KEY` set it reports
-> `backend=qwen` on live `text-embedding-v3` (the numbers above); with no key it
-> falls back to a deterministic embedder so the harness still runs in CI. Config A
-> does no embedding call (it stuffs raw text); B/B+/C each pay one live Qwen
-> embedding round-trip (~0.3s) and Engram's forgetting/packing adds negligible
-> overhead on top.
+> Run it yourself: `npm run bench` runs **free** on the deterministic embedder
+> (no coupon spend); add `--qwen` to run B/B+/C on live `text-embedding-v3`. The
+> headline columns above are **identical on both** — recall is trivial on a set
+> this small, and contradiction accuracy / stale leakage are driven by
+> forgetting + supersession, not embedding quality (only latency differs: ~0ms
+> mock vs ~0.3s live per probe). That's the point: the moat is the memory logic.
 
 ### Two real repos it had never seen — including the failure
 

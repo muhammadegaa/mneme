@@ -81,14 +81,20 @@ async function buildMemory(embedder: Embedder) {
   return { store, engine, commits };
 }
 
-/** Live Qwen embeddings when DASHSCOPE_API_KEY is set; deterministic mock otherwise. */
+/**
+ * Live Qwen embeddings only when explicitly requested (`--qwen` or
+ * ENGRAM_BACKEND=qwen), consistent with the CLI/API/MCP — so `npm run bench`
+ * never silently spends the coupon just because a key is present.
+ */
 function pickEmbedder(): { embedder: Embedder; backend: "qwen" | "mock" } {
-  try {
-    const cfg = configFromEnv();
-    return { embedder: new QwenMentorModel(new QwenClient(cfg)), backend: "qwen" };
-  } catch {
-    return { embedder: new MockMentorModel(), backend: "mock" };
+  if (process.argv.includes("--qwen") || process.env.ENGRAM_BACKEND === "qwen") {
+    try {
+      return { embedder: new QwenMentorModel(new QwenClient(configFromEnv())), backend: "qwen" };
+    } catch (e) {
+      console.error(`live embeddings requested but ${(e as Error).message} — using deterministic mock`);
+    }
   }
+  return { embedder: new MockMentorModel(), backend: "mock" };
 }
 
 type Packed = { memories: Memory[]; tokens: number };
