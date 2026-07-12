@@ -24,6 +24,13 @@ interface Pattern {
   severity: ReviewComment["severity"];
   /** message used when flagged in review. */
   flag?: string;
+  /** if present and it matches, the pattern does NOT fire (guard for omissions). */
+  absent?: RegExp;
+}
+
+/** A pattern fires when its regex matches and its guard (if any) is absent. */
+function fires(p: Pattern, text: string): boolean {
+  return p.re.test(text) && !(p.absent && p.absent.test(text));
 }
 
 const PATTERNS: Pattern[] = [
@@ -37,6 +44,7 @@ const PATTERNS: Pattern[] = [
     salience: s.salience,
     severity: s.severity,
     flag: s.flag,
+    absent: s.absent,
   })),
   { re: /from\s+['"]zustand['"]/i, kind: "tech", predicate: "state_mgmt", text: "uses Zustand for state management", salience: 0.7, severity: "info" },
   { re: /from\s+['"]react-redux['"]|createStore\s*\(/i, kind: "tech", predicate: "state_mgmt", text: "uses Redux for state management", salience: 0.7, severity: "info" },
@@ -74,7 +82,7 @@ export class MockMentorModel implements MentorModel {
     const out: MemoryInput[] = [];
     const seen = new Set<string>();
     for (const p of PATTERNS) {
-      if (p.re.test(text) && !seen.has(p.predicate)) {
+      if (fires(p, text) && !seen.has(p.predicate)) {
         seen.add(p.predicate);
         out.push({
           text: p.text,
@@ -109,9 +117,8 @@ export class MockMentorModel implements MentorModel {
     for (const m of req.memories) if (m.predicate) byPredicate.set(m.predicate, m);
 
     for (const p of PATTERNS) {
-      const hit = p.re.exec(added);
-      if (!hit) continue;
-      const evidence = hit[0]; // the exact matched code — grounds the warn in the diff
+      if (!fires(p, added)) continue;
+      const evidence = p.re.exec(added)![0]; // the exact matched code — grounds the warn in the diff
       const cited = byPredicate.get(p.predicate);
       // Only surface what memory tells us is worth surfacing: a flagged pattern
       // we have a memory for, or a notable mistake even if unseen before.

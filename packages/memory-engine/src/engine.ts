@@ -85,11 +85,13 @@ export class MemoryEngine {
       const match = active.find(
         (m) =>
           m.kind === input.kind &&
-          // Same slot, or semantically near BUT in the same slot — never merge
-          // across predicates: two distinct mistakes that happen to be close in
-          // embedding space must stay distinct, or one silently absorbs the other.
+          // Same slot, or semantically near BUT in the same DEFINED slot — never
+          // merge across predicates (nor two predicate-less mistakes on cosine
+          // alone), or one distinct mistake silently absorbs another.
           (sameSlot(m, input) ||
-            (m.predicate === input.predicate && cosineSimilarity(vec, m.embedding) >= this.reinforceSimThreshold)),
+            (m.predicate !== undefined &&
+              m.predicate === input.predicate &&
+              cosineSimilarity(vec, m.embedding) >= this.reinforceSimThreshold)),
       );
       if (match) {
         const reinforced: Memory = {
@@ -104,12 +106,13 @@ export class MemoryEngine {
       }
     }
 
-    // DEDUPE: a near-identical, same-slot memory already exists -> light reinforce.
+    // DEDUPE: a near-identical, same-kind, same-slot memory already exists -> light
+    // reinforce. Fold the recency bump into the single insert so it's store-agnostic
+    // (a separate touch() would be clobbered by insert() on the pgvector store).
     for (const m of active) {
-      if (sameSlot(m, input) && cosineSimilarity(vec, m.embedding) >= this.dedupeThreshold) {
-        await this.store.touch([m.id], now);
-        const reinforced = { ...m, salience: Math.min(1, m.salience + 0.1) };
-        await this.store.insert(reinforced); // overwrite with bumped salience
+      if (m.kind === input.kind && sameSlot(m, input) && cosineSimilarity(vec, m.embedding) >= this.dedupeThreshold) {
+        const reinforced = { ...m, salience: Math.min(1, m.salience + 0.1), lastAccessedAt: now, accessCount: m.accessCount + 1 };
+        await this.store.insert(reinforced);
         return { memory: reinforced, action: "deduped", superseded: [], mergedInto: m.id };
       }
     }

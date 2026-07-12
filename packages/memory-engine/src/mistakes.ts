@@ -28,6 +28,13 @@ export interface MistakeSignature {
   /** The deterministic signature. A match in the code under review is the proof
    * the mistake is real — used to both detect it and to reject a mislabeled quote. */
   re: RegExp;
+  /**
+   * Optional guard: if this matches the code, the mistake is NOT fired even when
+   * `re` matches. Used for omission mistakes where `re` only finds the shape and
+   * `absent` proves the guard is actually missing — e.g. a `fetch().json()` that
+   * already checks `res.ok` is not a null-check mistake.
+   */
+  absent?: RegExp;
 }
 
 export const MISTAKE_SIGNATURES: MistakeSignature[] = [
@@ -38,6 +45,8 @@ export const MISTAKE_SIGNATURES: MistakeSignature[] = [
     severity: "warn",
     flag: "No `res.ok`/null guard before reading the body — a 404 throws or yields null and the next access crashes.",
     re: /fetch\s*\([^)]*\)[\s\S]{0,80}?\.json\s*\(\s*\)/i,
+    // If the code already guards the response, it's NOT the mistake.
+    absent: /\.ok\b|\.status\b|\?\./i,
   },
   {
     predicate: "error_handling",
@@ -45,7 +54,8 @@ export const MISTAKE_SIGNATURES: MistakeSignature[] = [
     salience: 0.45,
     severity: "warn",
     flag: "Empty catch swallows the error — at least log or rethrow.",
-    re: /catch\s*\([^)]*\)\s*\{\s*\}/,
+    // Optional catch binding (`catch {}`, ES2019) has no parens.
+    re: /catch\s*(?:\([^)]*\))?\s*\{\s*\}/,
   },
   {
     predicate: "var_usage",
@@ -53,7 +63,8 @@ export const MISTAKE_SIGNATURES: MistakeSignature[] = [
     salience: 0.35,
     severity: "warn",
     flag: "Prefer const/let over var.",
-    re: /\bvar\s+\w/,
+    // A real declaration: `var name =` or `var name;` — not the word "var" in prose.
+    re: /\bvar\s+[\w$]+\s*[=;]/,
   },
 ];
 
@@ -64,12 +75,21 @@ export function mistakeSignature(predicate: string | undefined): MistakeSignatur
   return predicate ? BY_PREDICATE.get(predicate) : undefined;
 }
 
+/**
+ * Whether a signature genuinely fires in the code: its pattern matches AND its
+ * guard (if any) is absent. This is the single truth for "is this mistake really
+ * here", shared by detection and the review guard.
+ */
+export function signatureFires(sig: MistakeSignature, code: string): boolean {
+  return sig.re.test(code) && !(sig.absent && sig.absent.test(code));
+}
+
 /** Every signature that fires in the given code, with the exact matched span. */
 export function detectMistakes(code: string): Array<{ signature: MistakeSignature; evidence: string }> {
   const out: Array<{ signature: MistakeSignature; evidence: string }> = [];
   for (const s of MISTAKE_SIGNATURES) {
-    const hit = s.re.exec(code);
-    if (hit) out.push({ signature: s, evidence: hit[0] });
+    if (!signatureFires(s, code)) continue;
+    out.push({ signature: s, evidence: s.re.exec(code)![0] });
   }
   return out;
 }

@@ -14,7 +14,7 @@
  */
 import type { MemoryKind } from "./types.js";
 import type { ReviewComment } from "./model/mentor.js";
-import { mistakeSignature } from "./mistakes.js";
+import { mistakeSignature, signatureFires } from "./mistakes.js";
 
 /**
  * The added ("+") lines of a unified diff, or the whole text when it isn't a
@@ -23,12 +23,14 @@ import { mistakeSignature } from "./mistakes.js";
  * so extraction and grounding judge the exact same lines.
  */
 export function diffAddedText(diff: string): string {
-  const added = diff
-    .split("\n")
-    .filter((l) => l.startsWith("+") && !l.startsWith("+++"))
-    .map((l) => l.slice(1));
+  const lines = diff.split("\n");
+  const added = lines.filter((l) => l.startsWith("+") && !l.startsWith("+++")).map((l) => l.slice(1));
   if (added.length) return added.join("\n");
-  return diff.replace(/^@@.*$/gm, "").replace(/^[-+]{3}.*$/gm, "");
+  // No added lines. If this is a unified diff (hunk headers, file markers, or
+  // removed lines), there is genuinely nothing added — do NOT fall back to
+  // removed/context lines, or removing a mistake would count as committing one.
+  const looksLikeDiff = lines.some((l) => /^(@@|diff --git |--- |\+\+\+ |-)/.test(l));
+  return looksLikeDiff ? "" : diff;
 }
 
 /** Collapse whitespace so a quote survives indentation/reflow differences. */
@@ -64,5 +66,5 @@ export function isRepeatMistakeCatch(
   if (cited?.kind !== "mistake") return false;
   if (!isGroundedInDiff(comment, diff)) return false;
   const sig = mistakeSignature(cited.predicate);
-  return sig ? sig.re.test(diffAddedText(diff)) : true;
+  return sig ? signatureFires(sig, diffAddedText(diff)) : true;
 }
