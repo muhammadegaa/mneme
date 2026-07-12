@@ -1,43 +1,50 @@
 # 30-second "backend running on Alibaba Cloud" proof recording
 
-This is the separate proof clip the submission requires: evidence the backend
-calls Alibaba Cloud services. One file — [`alibaba/proof.ts`](../alibaba/proof.ts)
-— exercises **Qwen via DashScope** (reasoning + embeddings) and **Alibaba Cloud
-OSS** (object round-trip). Record it running, ideally on an Alibaba Cloud ECS /
-Function Compute instance so the shell prompt shows the cloud host.
+The submission needs evidence the backend runs on and calls Alibaba Cloud. You
+have two, and either is sufficient on its own:
+
+1. **The live box** — Engram is already serving on an Alibaba Cloud ECS instance
+   (Singapore) on `backend=qwen`. `curl http://47.84.61.162/api/health` →
+   `{"ok":true,"backend":"qwen"}`, from the cloud host.
+2. **The direct call** — [`alibaba/proof.ts`](../alibaba/proof.ts) makes a live
+   **Qwen / DashScope** call (reasoning + 1024-dim embeddings) and prints the result.
+
+The Qwen call IS the required proof — all reasoning runs on Qwen on Alibaba Cloud.
+OSS is an optional extra object round-trip, not required (and the redeploy runbook
+strips OSS keys for security, so the recommended take is Qwen-only).
 
 ## One-time setup (not recorded)
 ```bash
 cp .env.example .env
-# Fill in:
-#   DASHSCOPE_API_KEY=...          (Model Studio key)
-#   DASHSCOPE_BASE_URL=...         (mainland or -intl)
-#   OSS_REGION / OSS_BUCKET / OSS_ACCESS_KEY_ID / OSS_ACCESS_KEY_SECRET
+#   DASHSCOPE_API_KEY=...      (Model Studio key)
+#   DASHSCOPE_BASE_URL=...     (mainland or -intl Singapore)
 npm install
 ```
-If running on Alibaba Cloud ECS, SSH in first so the recorded prompt reads e.g.
-`root@iZ...alibaba...:~/engram$` — that framing *is* the proof.
+Run it on the ECS box (SSH in) so the recorded prompt reads e.g.
+`root@iZ...:~/engram$` — that framing *is* the proof.
 
 ## The 30s take (recorded)
-1. **(0–4s)** Show the host: `hostname` / `curl -s http://100.100.100.200/latest/meta-data/region-id`
-   (Alibaba Cloud instance metadata endpoint — prints the region, proving you're on ECS).
-2. **(4–8s)** `cat .env | grep -E 'BASE_URL|OSS_BUCKET'` (show the endpoints, key redacted).
-3. **(8–26s)** `npm run proof` — hold on the output:
+1. **(0–5s)** Show the host + the live service:
+   `curl -s http://47.84.61.162/api/health` → `{"ok":true,"backend":"qwen"}`.
+   (Or on the box: `curl -s http://100.100.100.200/latest/meta-data/region-id` —
+   the Alibaba Cloud instance-metadata endpoint prints the region, proving ECS.)
+2. **(5–10s)** `cat .env | grep BASE_URL` (show the DashScope endpoint, key redacted).
+3. **(10–28s)** `npm run proof` — hold on the output:
    ```
    === Engram · Proof of Alibaba Cloud deployment ===
    [1/2] Qwen/DashScope OK → "Qwen on Alibaba Cloud is reachable." · embed dims=1024
-   [2/2] OSS round-trip OK → put+get "engram/proof.txt" (NN bytes)
+   [2/2] OSS skipped (set OSS_* in .env to enable) — wired in Phase 5.
    ✅ Alibaba Cloud services reachable from this backend.
    ```
-4. **(26–30s)** Optional: in the OSS console, show the `engram/proof.txt` object that was just written.
+4. **(28–30s)** Optional: hit the live Inspector at `http://47.84.61.162` on camera.
 
-## What to put in the "Proof of Alibaba Cloud Deployment" link field
-The public GitHub URL to [`alibaba/proof.ts`](../alibaba/proof.ts) — the single
-file that makes the calls — plus this recording.
+## "Proof of Alibaba Cloud Deployment" link field
+The public GitHub URL to [`alibaba/proof.ts`](../alibaba/proof.ts) + the live
+`http://47.84.61.162` URL + this recording.
 
 ## Notes
-- `proof.ts` is guarded: with no `OSS_*` set it runs the Qwen half and clearly
-  prints that OSS is pending — so it never silently "passes". Set the OSS vars
-  for the full two-service proof.
-- The same `ENGRAM_BACKEND=qwen npm run dev` then serves the *whole product* from
-  that Alibaba Cloud host, if you want a longer "it's all live" shot.
+- `proof.ts` is guarded: with no `OSS_*` set it runs the Qwen half and prints that
+  OSS is pending — it never silently "passes". Set the OSS vars only if you want
+  the optional two-service round-trip (not required, not recommended on the public box).
+- `ENGRAM_BACKEND=qwen npm run start` serves the whole product from the ECS host —
+  a longer "it's all live" shot if you want one.
