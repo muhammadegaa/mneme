@@ -24,6 +24,15 @@ recurs. On a new diff, Engram catches it and tells you exactly how many times
 you'd have shipped it — grounded in a specific memory of yours, not a generic
 lint rule.
 
+**Why it's not CodeRabbit (or a linter).** Tools like CodeRabbit learn from the
+review comments you *write*; Engram learns from the mistakes you already *shipped*
+and never commented on — mined straight from git history. And the class of bug it
+targets is the hardest kind to catch: an **omission**. A missing `res.ok` check, an
+empty `catch {}` — there's no bad token to grep for, it's the *absence* of a guard.
+A linter can't flag what isn't there. Engram reinforces the missing-guard pattern
+into one memory that gets louder each time you repeat it, then recognizes it on
+your next diff — grounded in *your* history, not a rule someone else wrote.
+
 ---
 
 ## 📊 Benchmark — what forgetting actually buys

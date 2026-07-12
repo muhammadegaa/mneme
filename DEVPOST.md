@@ -26,6 +26,14 @@ That's also the honest core of "MemoryAgent." Most "AI memory" is just
 resolve a contradiction, and can't tell a one-off from a habit. We wanted to
 build the memory *engine* those demos skip.
 
+And it's not CodeRabbit: tools like that learn from the review comments you
+*write* — Engram learns from the mistakes you already *shipped* and never
+commented on, mined from git history. The bug class it targets is the hardest to
+catch — an **omission** (a missing `res.ok`, an empty `catch {}`): there's no bad
+token to grep for, only the *absence* of a guard, which a linter can't flag.
+Engram reinforces that missing-guard pattern into one memory that gets louder each
+time you repeat it.
+
 ## What it does
 
 Engram reads your commit history and extracts atomic memories about how you

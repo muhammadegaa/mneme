@@ -21,6 +21,9 @@ Landing page reads as toy, not agent. (3) Technical Depth (30%) explicitly names
 — we have zero. (4) Memory space is crowded (Mem0/Zep/Letta/OpenMemory-MCP) BUT all are GENERAL
 chat memory; developer-mistake memory from git + forgetting/reinforcement/knapsack is UNCLAIMED —
 that niche is the moat. Don't pitch "a memory server"; pitch "the reviewer that learns your mistakes."
+CLOSEST COMPETITOR = CodeRabbit (learns from review comments you WRITE); Engram learns from mistakes
+you already SHIPPED (git history) + targets OMISSIONS (missing guard = absence of a token no linter
+greps). README + DEVPOST now name/beat CodeRabbit + headline the omission insight (Innovation judge fix).
 
 SEQUENCED PLAN (deploy-first):
 1. **UNBLOCK ALIBABA DEPLOY** — ✅ DONE (2026-07-12). LIVE on Alibaba Cloud **ECS** (Singapore,
