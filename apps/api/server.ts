@@ -157,6 +157,12 @@ function rateLimited(ip: string): boolean {
 
 const app = new Hono();
 app.use("/api/*", cors());
+// Never surface an opaque 500 during judging: log and return a clean JSON error
+// (e.g. if a live Qwen review throws after retries).
+app.onError((err, c) => {
+  console.error("request error:", err.message);
+  return c.json({ error: "internal error", detail: err.message }, 500);
+});
 
 app.get("/api/health", (c) => c.json({ ok: true, backend: session.model.backend }));
 

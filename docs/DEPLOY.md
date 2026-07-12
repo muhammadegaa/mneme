@@ -71,6 +71,50 @@ npm run proof      # Qwen + OSS round-trip  → record this (see docs/PROOF_RECO
 curl http://<host>:5273/api/health   # {"ok":true,"backend":"qwen"}
 ```
 
+## Redeploy + lockdown (run before judging)
+
+The box is live but runs pre-hardening code. Do these in order to (a) pick up the
+grounding + coupon-guard commits, (b) close the security holes, (c) verify the hero
+still fires. **Steps 1–2 protect your finite coupon and the box; don't skip them.**
+
+### 1. Lock the network (Alibaba console → ECS → Security Group)
+- **Port 22 (SSH):** change the inbound rule from `0.0.0.0/0` to **your IP/32**.
+- **Port 80:** stays open `0.0.0.0/0` (that's the public demo).
+- Everything else: no inbound.
+
+### 2. On the box — strip secrets, redeploy, restart
+```bash
+ssh root@47.84.61.162
+cd /root/engram                      # the clone dir (adjust if different)
+
+# Remove keys the app does NOT use at runtime (review/extraction only need DashScope).
+# KEEP: DASHSCOPE_API_KEY, DASHSCOPE_BASE_URL, ENGRAM_BACKEND, MEMORY_STORE, PORT
+# DELETE lines: OSS_*, ALIBABA_CLOUD_ACCESS_KEY*, any RAM AccessKey
+nano .env                            # or: sed -i '/^OSS_/d;/ACCESS_KEY/d' .env
+
+git pull                             # pulls the grounding gate + coupon guard + hardening
+npm install                          # no-op unless deps changed
+systemctl restart engram
+systemctl status engram --no-pager   # active (running)
+```
+
+### 3. Verify it came back healthy + the hero still fires
+```bash
+curl -s http://localhost/api/health          # {"ok":true,"backend":"qwen"}
+
+# The getUser hero — review now REQUIRES Qwen to return `evidence`; confirm the
+# catch still counts (newCatches >= 1, a warn with grounded=true):
+curl -s http://localhost/api/review -H 'content-type: application/json' -d '{
+  "diff":"export async function getUser(id){\n  const res = await fetch(\"/api/users/\"+id)\n  const user = await res.json()\n  return user.profile\n}",
+  "file":"users.ts"
+}' | jq '{newCatches, catches, warns: [.comments[] | select(.severity=="warn") | {grounded, citedMemoryId, evidence}]}'
+```
+Expected: `newCatches: 1`, a warn with `grounded: true` and a non-null `evidence`
+that is a line from the diff. **If `newCatches` is 0** the live model paraphrased
+instead of quoting — tell me and I'll relax the grounding to accept a normalized
+quote. (The coupon guard now caps reviews; the demo is unaffected, a drain script
+gets `429`.)
+
 ## Cross-session proof
 With `MEMORY_STORE=postgres`, the server restores memories from ApsaraDB on
 boot instead of re-learning (see `seed()` in `apps/api/server.ts`). Restart the
