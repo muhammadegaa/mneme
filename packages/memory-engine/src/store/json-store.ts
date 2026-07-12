@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, renameSync } from "node:fs";
 import { dirname } from "node:path";
 import type { Memory } from "../types.js";
 import type { MemoryStore } from "./interface.js";
@@ -15,14 +15,24 @@ export class JsonFileStore implements MemoryStore {
 
   constructor(private readonly path: string) {
     if (existsSync(path)) {
-      const data = JSON.parse(readFileSync(path, "utf8")) as Memory[];
-      for (const m of data) this.mem.set(m.id, m);
+      // A truncated/corrupt file (e.g. process killed mid-write before atomic
+      // writes existed) must not brick boot — start empty and warn instead.
+      try {
+        const data = JSON.parse(readFileSync(path, "utf8")) as Memory[];
+        for (const m of data) this.mem.set(m.id, m);
+      } catch (e) {
+        console.warn(`JsonFileStore: ignoring unreadable ${path} (${(e as Error).message}) — starting empty`);
+      }
     }
   }
 
   private flush(): void {
+    // Atomic write: a kill mid-write leaves the old file intact, never a
+    // half-written one that fails JSON.parse on the next boot.
     mkdirSync(dirname(this.path), { recursive: true });
-    writeFileSync(this.path, JSON.stringify([...this.mem.values()], null, 2));
+    const tmp = `${this.path}.tmp`;
+    writeFileSync(tmp, JSON.stringify([...this.mem.values()], null, 2));
+    renameSync(tmp, this.path);
   }
 
   async insert(memory: Memory): Promise<void> {

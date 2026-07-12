@@ -95,6 +95,10 @@ async function seed(force = false): Promise<Session> {
 // a fresh clone restores it before the first boot.
 const GOLDEN = resolve(ROOT, ".engram/golden.json");
 const STORE_PATH = resolve(ROOT, process.env.ENGRAM_STORE ?? ".engram/memories.json");
+// Pin the store to this absolute path so createStore() reads exactly the file
+// golden was restored to — regardless of the process cwd. Without this, a
+// cwd≠repo-root boot reads an empty store and triggers a live relearn.
+process.env.ENGRAM_STORE = STORE_PATH;
 function restoreGolden(): boolean {
   if ((process.env.MEMORY_STORE ?? "memory") !== "json" || !existsSync(GOLDEN)) return false;
   copyFileSync(GOLDEN, STORE_PATH);
@@ -128,6 +132,24 @@ function view(m: Memory) {
 // a memory of a mistake the dev has made before. Persists across reviews.
 let catches = 0;
 
+// COUPON GUARD: /api/review spends live Qwen per call and is public, so an
+// unthrottled endpoint could drain the finite hackathon coupon and kill the
+// live demo. Bound exposure with a per-IP sliding-window limit + a hard cap on
+// total live reviews since boot. Generous enough that a judge trying the demo
+// never notices; tight enough that a script can't burn the coupon.
+const RATE_MAX = Number(process.env.ENGRAM_RATE_MAX ?? 15);
+const RATE_WINDOW_MS = Number(process.env.ENGRAM_RATE_WINDOW_MS ?? 60_000);
+const REVIEW_CAP = Number(process.env.ENGRAM_REVIEW_CAP ?? 800);
+const hits = new Map<string, number[]>();
+let reviewsServed = 0;
+function rateLimited(ip: string): boolean {
+  const t = Date.now();
+  const recent = (hits.get(ip) ?? []).filter((ts) => t - ts < RATE_WINDOW_MS);
+  recent.push(t);
+  hits.set(ip, recent);
+  return recent.length > RATE_MAX;
+}
+
 const app = new Hono();
 app.use("/api/*", cors());
 
@@ -159,9 +181,16 @@ app.post("/api/forget", async (c) => {
 });
 
 app.post("/api/review", async (c) => {
+  // Only meter the paid backend; the mock is free.
+  if (session.model.backend === "qwen") {
+    if (reviewsServed >= REVIEW_CAP) return c.json({ error: "demo review limit reached — try again later" }, 429);
+    const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || c.req.header("x-real-ip") || "anon";
+    if (rateLimited(ip)) return c.json({ error: "rate limit — slow down a moment" }, 429);
+  }
   const body = await c.req.json<{ diff: string; file?: string }>().catch(() => ({ diff: "" }));
   const diff = body.diff ?? "";
   if (!diff.trim()) return c.json({ error: "empty diff" }, 400);
+  if (session.model.backend === "qwen") reviewsServed++;
 
   const { scored, degraded } = await session.engine.retrieve(diff, { now: NOW, limit: 50 });
   const pack = packMemories(scored, BUDGET);

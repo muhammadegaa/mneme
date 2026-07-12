@@ -77,6 +77,25 @@ VERIFIER ROUND 2 fixes (all DONE + DOM-verified): reinforce-on-catch (count clim
 (was stuck 0 tok); faded memories dropped from main list (Bun no longer double-labeled);
 DEVPOST benchmark table aligned to README order. Round-2 confirmed round-1 fixes all landed.
 
+## ✅ TIER 0 — LIVE-BOX HARDENING (2026-07-12, code done; box redeploy = USER)
+
+Code fixes committed (verified: 29/29, tsc clean, API boots on mock, golden cold-boot restores 27
+deterministically — no relearn):
+- COUPON GUARD (`apps/api/server.ts`): `/api/review` now metered on the qwen backend — per-IP
+  sliding-window limit (ENGRAM_RATE_MAX=15/min) + hard cap since boot (ENGRAM_REVIEW_CAP=800).
+  Public demo stays usable; a script can't drain the coupon. Mock is unmetered (free).
+- ATOMIC STORE (`json-store.ts`): temp-file+rename on flush; ctor JSON.parse guarded (corrupt file →
+  warn + start empty, never crash). Kill-mid-write no longer bricks boot.
+- STORE-PATH SYNC (`apps/api/server.ts`): pins `process.env.ENGRAM_STORE` to the absolute STORE_PATH
+  so createStore() reads exactly the file golden was restored to, regardless of cwd (was: cwd≠root →
+  empty store → live relearn).
+- Cold-boot relearn already made per-commit tolerant (won't crash-loop if Qwen returns a bad shape).
+STILL ON USER (console, I can't reach the box): (a) lock SG port 22 → your IP; (b) strip unused
+OSS_*/RAM keys from /root/engram/.env; (c) redeploy the box to pick up ALL of today's commits
+(git pull + systemd restart); (d) after redeploy, ONE live check that the getUser hero still fires
+— the review now REQUIRES Qwen to return `evidence` + a signature match; the getUser diff has a real
+fetch/json line to quote, but verify once live (risk: if Qwen paraphrases, the hero won't count).
+
 ## ✅ PATH B++ — MISTAKE DETECTION NOW DETERMINISTIC (2026-07-12)
 
 Upgraded the gate: commit-derived mistakes are no longer Qwen PROPOSALS-then-verified; they are
