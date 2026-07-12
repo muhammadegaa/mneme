@@ -82,34 +82,46 @@ baseline than a strawman the engine was built to beat.
 > embedding round-trip (~0.3s) and Engram's forgetting/packing adds negligible
 > overhead on top.
 
-### A repo it had never seen
+### Two real repos it had never seen — including the failure
 
-The bench above is synthetic — so the fair objection is "you planted those
-mistakes." So we pointed Engram at **`codehere` — a real 1,456-commit repo it had
-never seen** — and learned its last 29 commits live on Qwen (`tsx bench/real-run.ts
-../codehere 30 --qwen`). It extracted **37 memories** and, with no planted data,
-identified a **genuinely recurring mistake**:
+The bench above is synthetic, so the fair objection is "you planted those
+mistakes." We pointed Engram at two of our own repos it had never seen and
+checked **every** claim against the actual code — and we're showing you the
+failure, because fixing it is the point.
 
-> `mistake` · seen 2× (reinforced once) — **"swallows errors in empty catch blocks"**
+**First it failed honestly.** On `ravenote`, live Qwen extraction *invented* three
+"recurring mistakes" — async/await null-checks, `var`, empty catches — none of
+which exist anywhere in the repo (it has no `fetch`, no `await`, no `var`). Asked
+"what mistakes does this dev make?", an LLM will confabulate plausible answers to
+fill the schema. A memory that hallucinates is worse than no memory.
 
-That's real and independently checkable — `codehere`'s history is full of
-`}catch(e){}` blocks that discard the error. Engram learned the pattern from
-commits it had never seen and marked it recurring. Cost: ~47k tokens (~$0.02).
+**So we moved mistake detection off the model.** Mistakes are now detected
+**deterministically** from the real added code by a high-precision signature
+registry and grounded: a mistake is learned only if its pattern is literally
+present, and a review "catch" counts only if the pattern is in the diff. Qwen
+still does the fuzzy work it's good at — style/tech/project extraction, the
+review narration, embeddings. The result, re-verified against the code:
 
-**Honest boundary:** the same run also held out the newest commit for a live
-review, which produced one comment — *"uses `var`"* — that **isn't in the diff**.
-It's a model hallucination, so we **discard it**; it is not counted as evidence.
-Extraction + reinforcement over real history is grounded and reliable; a single
-live-review comment still needs checking against the diff. Full writeup:
-[`bench/results/real-codehere.md`](bench/results/real-codehere.md).
+| Repo (unseen) | Before the fix | After — grounded | Truth |
+|---|---|---|---|
+| `ravenote` | 3 fabricated mistakes + 1 hallucinated catch | **0 mistakes** | no fetch/var/empty-catch exists — correct silence |
+| `codehere` (1,456 commits) | — | **`var` ×3, empty-catch ×2** | real: `var onSpend=…`, `}catch(e){}` in the commits |
+
+Same machinery: it catches the real recurring mistakes on `codehere` and **invents
+nothing** on `ravenote`. And because detection is deterministic, you can reproduce
+those numbers **offline for free** — no credits, no drift. Full writeups:
+[`real-codehere.md`](bench/results/real-codehere.md) ·
+[`real-ravenote.md`](bench/results/real-ravenote.md).
 
 ---
 
 ## ✨ What it does
 
 - **Learns from commits** — Qwen structured-output extraction turns each commit
-  (message + diff) into atomic memories, classified as
-  `style ｜ tech ｜ mistake ｜ project`. Nothing is typed in by hand.
+  (message + diff) into atomic `style ｜ tech ｜ project` memories. **Mistakes are
+  detected deterministically** from the real added code by a high-precision
+  signature registry (not proposed by the model), so a recurring mistake is
+  grounded in code that actually exists — never confabulated. Nothing typed by hand.
 - **Hybrid retrieval** — `score = semantic + recency + salience`; recency as
   half-life decay, salience time-decayed. The math is exposed per result.
 - **Reinforcement (the hero)** — a repeated mistake reinforces the *same* memory
@@ -213,11 +225,13 @@ npm run engram review --qwen # same pipeline, live inference
 npm run proof               # proof of the live Alibaba Cloud (Qwen/DashScope) call
 ```
 
-> **Live by default, mock for CI.** The demo and benchmark above run on **live
-> Qwen** when `DASHSCOPE_API_KEY` is set. Every command *also* runs with no key
-> via a deterministic `MockMentorModel` behind the same `MentorModel` interface
-> — so tests and CI are reproducible and free. The mock is labeled as such in the
-> UI (`backend: mock`); it is never presented as live intelligence.
+> **Live Qwen is opt-in; mock is the free default.** Set `ENGRAM_BACKEND=qwen`
+> (with `DASHSCOPE_API_KEY`) to run the demo/CLI on live Qwen; without it every
+> command runs on a deterministic `MockMentorModel` behind the same `MentorModel`
+> interface, so tests and CI are reproducible and free. The mock is labeled
+> `backend: mock` in the UI — never presented as live intelligence. Mistake
+> *detection* is deterministic in **both** backends (the signature registry), so
+> the "never fabricates" property holds even offline.
 
 ## ✅ Status (honest)
 

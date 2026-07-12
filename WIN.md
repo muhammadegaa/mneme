@@ -22,7 +22,7 @@ Hand the judge the keyboard. They write a `fetch().json()` with no null guard �
 
 ## Honesty guardrails (anti-pattern #9)
 - The demo runs on **live Qwen** (`ENGRAM_BACKEND=qwen`). The mock exists only for offline/CI and is labeled `backend: mock` in the UI — never presented as intelligence.
-- The climbing number counts real catches on real diffs, nothing simulated.
+- The demo hero runs a **curated scenario** on a frozen seed (labeled as such) so the catch is reliable on stage — the *mechanic* (reinforcement raising a real catch) is genuine, but the seed is prepared. The claim that Engram learns *real* recurring mistakes is proven separately and honestly on unseen repos (`codehere` ×2 real, `ravenote` correctly zero) — every number reproducible from the code, nothing simulated.
 
 ## What we will NOT do (anti-pattern #7, #8)
 - No second landing page, no rebrand, no four mockups. One UI, made excellent, wired live.

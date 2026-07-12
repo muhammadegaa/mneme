@@ -37,8 +37,10 @@ time you repeat it.
 ## What it does
 
 Engram reads your commit history and extracts atomic memories about how you
-code, classified as **style · tech · mistake · project**. Then, on any new diff,
-it runs a real memory pipeline you can watch happen:
+code, classified as **style · tech · mistake · project** — Qwen handles the
+fuzzy style/tech/project facts, while **mistakes are detected deterministically**
+from the real code (so they're grounded, never confabulated — see Challenges).
+Then, on any new diff, it runs a real memory pipeline you can watch happen:
 
 - **Retrieve** — hybrid ranking over your memories: `semantic + recency + salience`.
 - **Pack** — a 0/1 knapsack fits the best memory set under a fixed token budget
@@ -90,28 +92,34 @@ That's the honest point: **forgetting/supersession is the differentiator here, n
 the ranking or the packer.** Engram's hybrid rerank + knapsack earn their keep at
 scale — visible live in the packing-causality panel and on the real repo below.
 
-That bench is synthetic, so we also ran it on **a real 1,456-commit repo it had
-never seen** (`tsx bench/real-run.ts ../codehere 30 --qwen`). With nothing planted,
-it extracted 37 memories and flagged one **genuinely recurring mistake — "swallows
-errors in empty catch blocks"** (seen 2×) — the exact anti-pattern from our Inspiration,
-found in the wild for ~$0.02. We keep it honest: the same run's held-out live review
-also hallucinated a *"uses `var`"* comment that wasn't in the diff, so we **discard**
-it. Extraction over real history is grounded; a single live-review comment isn't —
-full writeup in `bench/results/real-codehere.md`.
+That bench is synthetic, so we ran it on **two real repos it had never seen** and
+checked every claim against the actual code. On **`ravenote`**, live Qwen first
+*invented* three recurring mistakes that don't exist in the repo — so we moved
+mistake detection **off the model** to a deterministic, grounded signature scan.
+After the fix: `ravenote` (no fetch/var/empty-catch anywhere) → **0 mistakes,
+correct silence**; **`codehere`** (1,456 commits, unseen) → **two real recurring
+mistakes, `var` ×3 and empty-catch ×2**, each verifiable in the commits
+(`var onSpend=…`, `}catch(e){}`). Same machinery catches the real thing and invents
+nothing — and because detection is deterministic you can reproduce it offline for
+free. Writeups: `bench/results/real-codehere.md`, `real-ravenote.md`.
 
 ## Challenges we ran into
 
-- **Getting the model to detect an *omission*.** A missing `res.ok` guard is the
-  absence of code, not a token you can grep. We had to prompt Qwen to judge the
-  anti-pattern with canonical predicates so repeat occurrences reinforce the same
-  memory instead of scattering into new ones.
+- **The model hallucinated mistakes — so we stopped trusting it for them.** Asked
+  to extract a developer's mistakes, Qwen confabulated plausible ones that weren't
+  in the code (on a repo with no `fetch`/`var` it "found" both). We root-caused it
+  (extraction had no grounding) and moved mistake detection to a deterministic
+  signature scan over the real added code, with a guard that only counts a catch
+  when the pattern is genuinely in the diff. Qwen keeps the fuzzy work; the mistake
+  memory is now grounded and reproducible. This turned a real failure into the
+  system's honesty property.
 - **Making reinforcement/supersession reliable.** Qwen returned inconsistent
   "subjects" (sometimes a commit SHA, sometimes a filename), which broke slot
   matching. Normalizing the subject by memory kind fixed contradiction resolution
   and forgetting end-to-end on live Qwen.
-- **Honesty over polish.** We kept a hard rule: the mock model is CI-only and
-  labeled `backend: mock`; the demo and benchmark run on live Qwen. Nothing mock
-  is ever presented as live intelligence.
+- **Honesty over polish.** The mock model is CI-only and labeled `backend: mock`;
+  live Qwen is opt-in (`ENGRAM_BACKEND=qwen`). We verified every real-repo claim
+  against the actual code and show the failure, not just the win.
 
 ## Accomplishments we're proud of
 
