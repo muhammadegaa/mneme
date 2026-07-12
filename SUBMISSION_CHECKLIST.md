@@ -41,7 +41,7 @@ Single source of truth mapping every hackathon requirement → status → artifa
 | Item | Status |
 |---|---|
 | Memory engine as a standalone, clean-interface package | 🟢 `@engram/memory-engine` |
-| Deterministic unit tests (scoring / packing / decay / reinforce / grounding) | 🟢 **30 tests passing** |
+| Deterministic unit tests (scoring / packing / decay / reinforce / grounding) | 🟢 **47 tests passing** |
 | Adversarial code review done + findings fixed (engine, apps, stores) | 🟢 |
 | Live box hardened (metered `/api/review` + `/api/reset`, atomic store) | 🟢 code done — **redeploy pending** (see [`docs/DEPLOY.md`](./docs/DEPLOY.md)) |
 | npm scripts: dev / test / bench / demo:catch / proof | 🟢 |
