@@ -67,7 +67,7 @@ Every piece of reasoning runs on **Qwen via Alibaba Cloud DashScope**:
 | Embeddings for retrieval (1024-dim) | `text-embedding-v3` |
 
 The engine is a standalone, unit-tested TypeScript package (`@engram/memory-engine`)
-with pure, tested scoring / packing / decay math (29 deterministic tests). A single
+with pure, tested scoring / packing / decay / grounding math (30 deterministic tests). A single
 Qwen client handles tiered routing, retries, timeouts, JSON repair, and token
 accounting against the OpenAI-compatible DashScope endpoint. The demo is a Hono
 API serving a self-contained Memory Inspector; memories persist across sessions

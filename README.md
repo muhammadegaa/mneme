@@ -210,7 +210,7 @@ managed option. Source for the diagram: [`docs/architecture.html`](docs/architec
 
 ```bash
 npm install
-npm test                    # 29 deterministic tests (scoring / packing / decay / reinforce)
+npm test                    # 30 deterministic tests (scoring / packing / decay / reinforce / grounding)
 npm run bench               # A/B/C benchmark — prints the table above
 
 # Live Memory Inspector UI + API (the demo hero):
