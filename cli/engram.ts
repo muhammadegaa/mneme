@@ -107,6 +107,7 @@ async function review(file: string) {
     const sev = cm.severity === "warn" ? c.red("⚠ warn") : cm.severity === "praise" ? c.grn("✓ praise") : c.cyn("• info");
     console.log(`    ${sev}  ${cm.message}`);
     if (cm.citedMemoryId) console.log(c.dim(`           ↳ grounded in ${cm.citedMemoryId}`));
+    if (cm.fix) console.log(c.grn(`           ↳ fix: `) + cm.fix);
   }
 
   console.log(c.b(`\n  Memory Inspector`) + c.dim(`  packed ${pack.usedTokens}/${BUDGET}t · ${pack.packed.length} packed · ${pack.dropped.length} dropped`));

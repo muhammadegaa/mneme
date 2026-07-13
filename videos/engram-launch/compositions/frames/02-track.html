@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- head is metadata for the source file only; the runtime clones ONLY <template>. -->
+  </head>
+  <body>
+    <template>
+      <style>
+        /* Fonts: "EB Garamond" (brand display serif) + "JetBrains Mono" are both
+           bundled in the renderer and auto-resolve by name — no @font-face needed.
+           (Fraunces is NOT bundled; EB Garamond is the serif here.) */
+
+        /* Root styled by #root (never a class) — the compiler scopes each file's CSS
+           to its data-composition-id, so a root class stops matching. */
+        #root {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+        }
+        .clip {
+          position: absolute;
+        }
+
+        /* Full-bleed near-black ground as its own clip layer (not #root). */
+        .bg {
+          top: 0;
+          left: 0;
+          width: 1920px;
+          height: 1080px;
+          background: #0e0e10;
+        }
+
+        /* Caption-safe stage: content confined to the top ~83% (y <= 896px). */
+        .stage {
+          top: 0;
+          left: 0;
+          width: 1920px;
+          height: 896px;
+          display: grid;
+          place-items: center;
+          padding: 0 160px;
+          box-sizing: border-box;
+        }
+
+        .col {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 44px;
+        }
+
+        /* — Mono chip: Track 1 · MemoryAgent — hairline outline pill on panel — */
+        .chip {
+          font-family: "JetBrains Mono", monospace;
+          font-weight: 500;
+          font-size: 26px;
+          letter-spacing: 0.14em;
+          color: #f5f1e8;
+          background: #1a1a1d;
+          border: 1px solid rgba(245, 241, 232, 0.16);
+          border-radius: 9999px;
+          padding: 12px 26px;
+          white-space: nowrap;
+          will-change: transform, opacity;
+        }
+        .chip .muted {
+          color: #8a8a8a;
+        }
+
+        /* — Wordmark lockup: EB Garamond display + trailing coral ✱ spike — */
+        .lockup {
+          display: flex;
+          align-items: flex-start;
+          justify-content: center;
+        }
+        .wordmark {
+          font-family: "EB Garamond", Georgia, serif;
+          font-weight: 400;
+          font-size: 176px;
+          line-height: 1;
+          letter-spacing: -0.02em;
+          color: #f5f1e8;
+          white-space: nowrap;
+          will-change: transform, opacity;
+        }
+        .star {
+          font-family: "EB Garamond", Georgia, serif;
+          font-size: 60px;
+          line-height: 1;
+          color: #ff5c57; /* coral — the brand spike mark */
+          margin-left: 10px;
+          margin-top: 20px;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        /* — Property pills: JetBrains Mono, hairline rounded outline — */
+        .pills {
+          display: flex;
+          gap: 22px;
+        }
+        .pill {
+          font-family: "JetBrains Mono", monospace;
+          font-weight: 500;
+          font-size: 34px;
+          letter-spacing: 0.01em;
+          color: #f5f1e8;
+          border: 1px solid rgba(245, 241, 232, 0.22);
+          border-radius: 9999px;
+          padding: 14px 34px;
+          white-space: nowrap;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        /* — Subhead: EB Garamond, coral on "mistakes you keep making" — */
+        .subhead {
+          font-family: "EB Garamond", Georgia, serif;
+          font-weight: 400;
+          font-size: 62px;
+          line-height: 1.22;
+          letter-spacing: -0.012em;
+          text-align: center;
+          max-width: 1500px;
+        }
+        .tw {
+          display: inline-block;
+          will-change: transform, opacity;
+        }
+        .cream {
+          color: #f5f1e8;
+        }
+        .coral {
+          color: #ff5c57;
+        }
+
+        /* — MCP badge: small mono hairline pill — */
+        .mcp {
+          font-family: "JetBrains Mono", monospace;
+          font-weight: 500;
+          font-size: 24px;
+          letter-spacing: 0.18em;
+          color: #f5f1e8;
+          border: 1px solid rgba(245, 241, 232, 0.2);
+          border-radius: 9999px;
+          padding: 9px 22px;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+      </style>
+
+      <div
+        id="root"
+        data-composition-id="02-track"
+        data-width="1920"
+        data-height="1080"
+        data-duration="19.145"
+      >
+        <!-- Persistent near-black ground layer. -->
+        <div id="bg" class="bg clip" data-start="0" data-duration="19.145" data-track-index="0"></div>
+
+        <!-- Single caption-safe stage; every element persists + accumulates.
+             fromTo (immediateRender) hides later reveals until their VO cue. -->
+        <div id="stage" class="stage clip" data-start="0" data-duration="19.145" data-track-index="1">
+          <div class="col">
+            <div class="chip" id="chip">Track 1 <span class="muted">·</span> MemoryAgent</div>
+
+            <div class="lockup">
+              <span class="wordmark" id="wordmark">Engram</span>
+              <span class="star" id="star">✱</span>
+            </div>
+
+            <div class="pills">
+              <span class="pill" id="pill-1">persistent</span>
+              <span class="pill" id="pill-2">queryable</span>
+              <span class="pill" id="pill-3">cross-session</span>
+            </div>
+
+            <div class="subhead" id="subhead">
+              <span class="tw cream">a</span> <span class="tw cream">memory</span>
+              <span class="tw cream">of</span> <span class="tw cream">the</span>
+              <span class="tw coral">mistakes</span> <span class="tw coral">you</span>
+              <span class="tw coral">keep</span> <span class="tw coral">making</span>
+            </div>
+
+            <div class="mcp" id="mcp">MCP</div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+
+        /* — Scene 1 (0–3s): chip, then the wordmark settles, then the coral spike — */
+        tl.fromTo(
+          "#chip",
+          { opacity: 0, y: -20 },
+          { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+          0.15,
+        );
+        // Wordmark: smooth long-tail settle (power3, no bounce) — the hero landing.
+        tl.fromTo(
+          "#wordmark",
+          { opacity: 0, y: 42, scale: 1.05 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.75, ease: "power3.out" },
+          0.45,
+        );
+        // Coral ✱ spike — fades + scales 0.92→1 on a single beat; never spins.
+        tl.fromTo(
+          "#star",
+          { opacity: 0, scale: 0.92 },
+          { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+          1.05,
+        );
+
+        /* — Scene 2 (3–9s): three property pills, one per VO cue — */
+        tl.fromTo(
+          "#pill-1",
+          { opacity: 0, y: 24, scale: 0.9 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power3.out" },
+          3.3,
+        );
+        tl.fromTo(
+          "#pill-2",
+          { opacity: 0, y: 24, scale: 0.9 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power3.out" },
+          4.6,
+        );
+        // "across sessions" — cross-session lands on its cue.
+        tl.fromTo(
+          "#pill-3",
+          { opacity: 0, y: 24, scale: 0.9 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power3.out" },
+          6.4,
+        );
+
+        /* — Scene 3 (9–16s): subhead + MCP badge on "over MCP" — */
+        tl.fromTo(
+          "#subhead .cream",
+          { opacity: 0, y: 30 },
+          { opacity: 1, y: 0, duration: 0.55, ease: "power3.out", stagger: 0.09 },
+          9.4,
+        );
+        tl.fromTo(
+          "#subhead .coral",
+          { opacity: 0, y: 30, scale: 1.1 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "power3.out", stagger: 0.11 },
+          10.5,
+        );
+        tl.fromTo(
+          "#mcp",
+          { opacity: 0, y: 16, scale: 0.9 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power3.out" },
+          11.8,
+        );
+
+        // Hold on the last read to 18.5s — no further motion (frames settle, no breathing).
+
+        window.__timelines["02-track"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

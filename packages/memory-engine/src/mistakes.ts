@@ -25,6 +25,8 @@ export interface MistakeSignature {
   severity: "warn";
   /** the message surfaced when flagged in review. */
   flag: string;
+  /** a concrete default fix (the mock uses this; live Qwen writes a context-specific one). */
+  fix: string;
   /** The deterministic signature. A match in the code under review is the proof
    * the mistake is real — used to both detect it and to reject a mislabeled quote. */
   re: RegExp;
@@ -44,6 +46,7 @@ export const MISTAKE_SIGNATURES: MistakeSignature[] = [
     salience: 0.45,
     severity: "warn",
     flag: "No `res.ok`/null guard before reading the body — a 404 throws or yields null and the next access crashes.",
+    fix: "Guard the response: `if (!res.ok) throw new Error(res.status); const data = await res.json();`",
     re: /fetch\s*\([^)]*\)[\s\S]{0,80}?\.json\s*\(\s*\)/i,
     // If the code already guards the response, it's NOT the mistake.
     absent: /\.ok\b|\.status\b|\?\./i,
@@ -54,6 +57,7 @@ export const MISTAKE_SIGNATURES: MistakeSignature[] = [
     salience: 0.45,
     severity: "warn",
     flag: "Empty catch swallows the error — at least log or rethrow.",
+    fix: "Log or rethrow: `catch (e) { logger.error(e); throw e; }` — don't swallow it silently.",
     // Optional catch binding (`catch {}`, ES2019) has no parens.
     re: /catch\s*(?:\([^)]*\))?\s*\{\s*\}/,
   },
@@ -63,6 +67,7 @@ export const MISTAKE_SIGNATURES: MistakeSignature[] = [
     salience: 0.35,
     severity: "warn",
     flag: "Prefer const/let over var.",
+    fix: "Use `const` (or `let` if reassigned) instead of `var` to scope it to the block.",
     // A real declaration: `var name =` or `var name;` — not the word "var" in prose.
     re: /\bvar\s+[\w$]+\s*[=;]/,
   },

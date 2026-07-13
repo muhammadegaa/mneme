@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- head is ignored when this file is mounted as a sub-composition -->
+  </head>
+  <body>
+    <template>
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <style>
+        /* Fonts: EB Garamond (display title) + JetBrains Mono (all tech labels).
+           Both are bundled in the renderer and resolve by name — no @font-face,
+           no Fraunces. Coral (#FF5C57) appears ONLY on the ECS live-dot. */
+        #root {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          font-family: "JetBrains Mono", monospace;
+          color: #f5f1e8;
+        }
+        .clip {
+          position: absolute;
+          inset: 0;
+        }
+        /* full-bleed near-black ground — a clip layer, not #root */
+        #bg {
+          background: #0e0e10;
+        }
+
+        .serif {
+          font-family: "EB Garamond", Georgia, serif;
+        }
+
+        /* — top-left title block — */
+        .kicker {
+          position: absolute;
+          top: 96px;
+          left: 200px;
+          font-size: 26px;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          font-weight: 500;
+          color: #8a8a8a;
+          white-space: nowrap;
+        }
+        .title {
+          position: absolute;
+          top: 132px;
+          left: 200px;
+          font-size: 56px;
+          font-weight: 500;
+          letter-spacing: -0.01em;
+          color: #f5f1e8;
+          white-space: nowrap;
+        }
+
+        /* — Qwen · DashScope panel (left) — */
+        .panel {
+          position: absolute;
+          top: 252px;
+          left: 200px;
+          width: 840px;
+          background: #1a1a1d;
+          border: 1px solid rgba(245, 241, 232, 0.12);
+          border-radius: 12px;
+          overflow: hidden;
+        }
+        .panel-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          height: 76px;
+          padding: 0 34px;
+          border-bottom: 1px solid rgba(245, 241, 232, 0.14);
+        }
+        .panel-title {
+          font-size: 30px;
+          font-weight: 500;
+          letter-spacing: 0.01em;
+        }
+        .panel-title .dim {
+          color: #8a8a8a;
+        }
+        .panel-tag {
+          font-size: 21px;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: #8a8a8a;
+        }
+        .prow {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          height: 100px;
+          padding: 0 34px;
+          border-bottom: 1px solid rgba(245, 241, 232, 0.08);
+        }
+        .prow:last-child {
+          border-bottom: none;
+        }
+        .model {
+          font-size: 36px;
+          font-weight: 500;
+          letter-spacing: -0.005em;
+          color: #f5f1e8;
+        }
+        .rgroup {
+          display: flex;
+          align-items: center;
+          gap: 22px;
+        }
+        .arrow {
+          font-size: 30px;
+          color: #8a8a8a;
+        }
+        .role {
+          font-size: 24px;
+          letter-spacing: 0.02em;
+          color: #c7c2b7;
+          padding: 9px 20px;
+          border: 1px solid rgba(245, 241, 232, 0.2);
+          border-radius: 8px;
+        }
+
+        /* — chip cluster (right) — */
+        .chip {
+          position: absolute;
+          left: 1100px;
+          width: 620px;
+          height: 100px;
+          display: flex;
+          align-items: center;
+          padding: 0 36px;
+          background: #1a1a1d;
+          border: 1px solid rgba(245, 241, 232, 0.12);
+          border-radius: 12px;
+        }
+        .chip-dot {
+          width: 12px;
+          height: 12px;
+          border-radius: 3px;
+          background: rgba(245, 241, 232, 0.32);
+          margin-right: 24px;
+          flex: none;
+        }
+        .chip-label {
+          font-size: 30px;
+          font-weight: 500;
+          letter-spacing: -0.005em;
+          color: #f5f1e8;
+        }
+        .chip-label .dim {
+          color: #8a8a8a;
+        }
+        #chip1 {
+          top: 252px;
+        }
+        #chip2 {
+          top: 390px;
+        }
+        #chip3 {
+          top: 528px;
+        }
+
+        /* — Alibaba Cloud · ECS · Singapore bar (full width, bottom) — */
+        .ecsbar {
+          position: absolute;
+          top: 700px;
+          left: 200px;
+          width: 1520px;
+          height: 104px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 44px;
+          background: #1a1a1d;
+          border: 1px solid rgba(245, 241, 232, 0.14);
+          border-radius: 12px;
+        }
+        .ecs-left {
+          display: flex;
+          align-items: center;
+        }
+        .dotwrap {
+          position: relative;
+          width: 20px;
+          height: 20px;
+          margin-right: 30px;
+          flex: none;
+        }
+        .dot {
+          position: absolute;
+          inset: 0;
+          border-radius: 50%;
+          background: #ff5c57;
+        }
+        .ping {
+          position: absolute;
+          inset: 0;
+          border-radius: 50%;
+          border: 2px solid #ff5c57;
+          transform: scale(0.8);
+          opacity: 0;
+        }
+        .ecs-label {
+          font-size: 36px;
+          font-weight: 500;
+          letter-spacing: -0.005em;
+          color: #f5f1e8;
+        }
+        .ecs-label .dim {
+          color: #8a8a8a;
+        }
+        .live {
+          font-size: 23px;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: #8a8a8a;
+        }
+      </style>
+
+      <div
+        id="root"
+        data-composition-id="04-stack"
+        data-width="1920"
+        data-height="1080"
+        data-duration="24.351"
+      >
+        <div id="bg" class="clip" data-start="0" data-duration="25.311" data-track-index="0"></div>
+
+        <div id="stage" class="clip" data-start="0" data-duration="25.311" data-track-index="1">
+          <div class="kicker" id="kicker">The stack</div>
+          <div class="title serif" id="title">Built on Qwen + Alibaba Cloud</div>
+
+          <!-- Qwen · DashScope model-routing panel -->
+          <div class="panel" id="panel">
+            <div class="panel-head">
+              <div class="panel-title">Qwen<span class="dim"> &middot; DashScope</span></div>
+              <div class="panel-tag">model routing</div>
+            </div>
+            <div class="prow" id="pr1">
+              <span class="model">qwen-turbo</span>
+              <span class="rgroup"
+                ><span class="arrow">&rarr;</span><span class="role">extract</span></span
+              >
+            </div>
+            <div class="prow" id="pr2">
+              <span class="model">qwen-plus</span>
+              <span class="rgroup"
+                ><span class="arrow">&rarr;</span><span class="role">review</span></span
+              >
+            </div>
+            <div class="prow" id="pr3">
+              <span class="model">text-embedding-v3</span>
+              <span class="rgroup"
+                ><span class="arrow">&rarr;</span><span class="role">retrieval</span></span
+              >
+            </div>
+          </div>
+
+          <!-- engine chips -->
+          <div class="chip" id="chip1">
+            <span class="chip-dot"></span
+            ><span class="chip-label">TypeScript engine<span class="dim"> &middot; 47 tests</span></span>
+          </div>
+          <div class="chip" id="chip2">
+            <span class="chip-dot"></span><span class="chip-label">MCP server</span>
+          </div>
+          <div class="chip" id="chip3">
+            <span class="chip-dot"></span
+            ><span class="chip-label">ApsaraDB<span class="dim"> pgvector</span></span>
+          </div>
+
+          <!-- deployment bar with coral live-dot -->
+          <div class="ecsbar" id="ecs">
+            <div class="ecs-left">
+              <span class="dotwrap"
+                ><span class="ping" id="ping"></span><span class="dot" id="dot"></span
+              ></span>
+              <span class="ecs-label">Alibaba Cloud<span class="dim"> &middot; ECS &middot; Singapore</span></span>
+            </div>
+            <span class="live" id="live">live</span>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+
+        const RISE = (sel, at, y = 24, dur = 0.6) =>
+          tl.fromTo(
+            sel,
+            { y: y, opacity: 0 },
+            { y: 0, opacity: 1, duration: dur, ease: "power3.out" },
+            at,
+          );
+
+        // — chrome + panel frame (front third) —
+        RISE("#kicker", 0.2, 22, 0.55);
+        RISE("#title", 0.36, 28, 0.65);
+        RISE("#panel", 0.6, 26, 0.7);
+
+        // — model rows reveal one per spoken cue —
+        RISE("#pr1", 2.8, 20);
+        RISE("#pr2", 4.3, 20);
+        RISE("#pr3", 5.8, 20);
+
+        // — engine chips, weighted to the back half —
+        RISE("#chip1", 9.0, 24);
+        RISE("#chip2", 11.0, 24);
+        RISE("#chip3", 13.0, 24);
+
+        // — deployment bar lands last; coral live-dot pings once (finite) —
+        RISE("#ecs", 15.3, 28, 0.7);
+        tl.fromTo(
+          "#dot",
+          { scale: 0, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+          15.95,
+        );
+        tl.fromTo(
+          "#ping",
+          { scale: 0.8, opacity: 0.9 },
+          { scale: 2.6, opacity: 0, duration: 1.0, ease: "power3.out" },
+          16.05,
+        );
+        tl.fromTo("#live", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power3.out" }, 16.3);
+
+        // hold on the assembled stack through 24.8s (clip data-duration holds the last frame)
+
+        window.__timelines["04-stack"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

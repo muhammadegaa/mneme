@@ -25,17 +25,19 @@ function parseReview(raw: unknown): ReviewResult {
       line: typeof c.line === "number" ? c.line : undefined,
       citedMemoryId: typeof c.citedMemoryId === "string" ? c.citedMemoryId : undefined,
       evidence: typeof c.evidence === "string" ? c.evidence : undefined,
+      fix: typeof c.fix === "string" ? c.fix : undefined,
     });
   }
   return { comments };
 }
 
-const REVIEW_SYSTEM = `You are a senior code reviewer who remembers exactly how THIS developer codes. You are given memories about them (their style, tech choices, recurring mistakes, project decisions) and a diff. Review ONLY the diff.
-- Prioritize their recurring mistakes: if the diff repeats one, flag it (severity "warn") and name the pattern. Do NOT state a numeric count in your message — describe the mistake, not the tally (the UI shows the count).
+const REVIEW_SYSTEM = `You are a senior code reviewer who remembers exactly how THIS developer codes. You are given memories about them (style, tech choices, recurring mistakes, project decisions) and a diff. The developer's known mistake PATTERNS have already been detected in the diff deterministically — your job is the JUDGMENT a linter can't do: decide whether each flagged pattern is genuinely a bug IN THIS CONTEXT, and if so, write the specific fix. Review ONLY the diff.
+- If a flagged recurring mistake is a REAL bug here: severity "warn"; write a message explaining WHY it's dangerous in THIS specific code (not a generic rule); set "fix" to a concrete, minimal fix for this exact code. Do NOT state a numeric count (the UI shows the tally).
+- If a flagged pattern is actually FINE in this context (the value isn't used, a deliberate throwaway, the guard exists elsewhere): DO NOT warn — use severity "info" and briefly say why it's acceptable here. This false-positive judgment is exactly your value over a linter.
 - Note consistency or drift from their tracked preferences (severity "info").
 - Every comment MUST set citedMemoryId to the id of the memory that motivated it.
-- Every "warn" MUST set evidence to the EXACT offending line, copied VERBATIM from the diff (a substring of the diff, character-for-character — do not paraphrase, summarize, or invent). If you cannot quote the exact offending line from the diff, DO NOT emit the comment. This is enforced: a warn whose evidence is not found in the diff is discarded.
-Return JSON: {"comments":[{"line":<number|null>,"severity":"warn|info|praise","message":"...","citedMemoryId":"m_...","evidence":"<verbatim diff line, warn only>"}]}. Empty list if nothing worth saying.`;
+- Every "warn" MUST set evidence to the EXACT offending line, copied VERBATIM from the diff (character-for-character — never paraphrase or invent), AND set "fix". A warn whose evidence is not found in the diff is discarded.
+Return JSON: {"comments":[{"line":<number|null>,"severity":"warn|info|praise","message":"...","citedMemoryId":"m_...","evidence":"<verbatim diff line, warn only>","fix":"<concrete fix, warn only>"}]}. Empty list if nothing worth saying.`;
 
 export class QwenMentorModel implements MentorModel {
   readonly backend = "qwen" as const;

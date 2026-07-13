@@ -29,6 +29,12 @@ export interface ReviewComment {
    * actually present so a hallucinated mistake can't be counted or reinforced.
    */
   evidence?: string;
+  /**
+   * A concrete, context-specific fix. The deterministic signature GROUNDS the
+   * catch (the pattern is really in the diff); live Qwen JUDGES it in context and
+   * writes this fix — the reasoning a regex/linter can't do.
+   */
+  fix?: string;
 }
 
 export interface ReviewResult {

@@ -24,6 +24,8 @@ interface Pattern {
   severity: ReviewComment["severity"];
   /** message used when flagged in review. */
   flag?: string;
+  /** concrete fix suggestion surfaced with the catch. */
+  fix?: string;
   /** if present and it matches, the pattern does NOT fire (guard for omissions). */
   absent?: RegExp;
 }
@@ -44,6 +46,7 @@ const PATTERNS: Pattern[] = [
     salience: s.salience,
     severity: s.severity,
     flag: s.flag,
+    fix: s.fix,
     absent: s.absent,
   })),
   { re: /from\s+['"]zustand['"]/i, kind: "tech", predicate: "state_mgmt", text: "uses Zustand for state management", salience: 0.7, severity: "info" },
@@ -133,6 +136,7 @@ export class MockMentorModel implements MentorModel {
           message: (p.flag ?? p.text) + tail,
           citedMemoryId: cited?.id,
           evidence,
+          fix: p.fix,
         });
       } else if (cited) {
         comments.push({

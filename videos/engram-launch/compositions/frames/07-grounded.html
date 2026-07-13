@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- head is metadata for the source file only; the runtime clones only <template> -->
+  </head>
+  <body>
+    <template>
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <style>
+        /* Fraunces (frame.md display serif). Declared so the renderer never
+           silently drops it; falls to Georgia → EB Garamond when unavailable. */
+        @font-face {
+          font-family: "Fraunces";
+          src: local("Fraunces");
+        }
+
+        /* ---- root (styled by #root, never a class — sub-comp scoping) ---- */
+        #root {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          perspective: 1600px;
+          font-family: "JetBrains Mono", monospace;
+          color: #f5f1e8;
+        }
+
+        /* near-black full-bleed background as its own clip layer */
+        .bg {
+          position: absolute;
+          inset: 0;
+          background: #0e0e10;
+        }
+
+        /* ---- panels (opposite-wing book-open) ---- */
+        .panel {
+          position: absolute;
+          top: 30px;
+          width: 900px;
+          height: 720px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transform-style: preserve-3d;
+        }
+        #panel-left {
+          left: 60px;
+        }
+        #panel-right {
+          right: 60px;
+        }
+
+        .card {
+          position: relative;
+          width: 786px;
+          min-height: 560px;
+          border-radius: 12px;
+          background: #1a1a1d;
+          border: 1px solid rgba(245, 241, 232, 0.14);
+          transform-style: preserve-3d;
+          will-change: transform;
+          opacity: 0;
+          overflow: visible;
+        }
+        /* tilt-matched outward shadow: left faces right → shadow falls right */
+        #card-left {
+          box-shadow: 26px 24px 70px rgba(0, 0, 0, 0.55);
+        }
+        #card-right {
+          box-shadow: -26px 24px 70px rgba(0, 0, 0, 0.55);
+        }
+
+        /* minimal title bar — no window chrome beyond this strip */
+        .titlebar {
+          padding: 16px 30px;
+          font-size: 21px;
+          letter-spacing: 0.03em;
+          color: rgba(245, 241, 232, 0.82);
+          background: #252120;
+          border-bottom: 1px solid rgba(245, 241, 232, 0.12);
+          border-radius: 12px 12px 0 0;
+        }
+
+        .content {
+          padding: 36px 36px 44px;
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* ---- LEFT: the catch ---- */
+        #card-left .content {
+          gap: 20px;
+        }
+        .row {
+          display: flex;
+          justify-content: space-between;
+          align-items: baseline;
+          font-size: 31px;
+          line-height: 1.1;
+          color: #f5f1e8;
+        }
+        .row .seen {
+          color: #8a8a8a;
+          font-size: 27px;
+        }
+        .diff-label {
+          margin-top: 12px;
+          font-size: 22px;
+          letter-spacing: 0.02em;
+          color: #8a8a8a;
+        }
+        .diff-line {
+          font-size: 30px;
+          color: #f5f1e8;
+          background: #0e0e10;
+          border: 1px solid rgba(245, 241, 232, 0.1);
+          border-radius: 8px;
+          padding: 16px 20px;
+        }
+
+        /* the single coral voltage — spring-pops at the inner edge */
+        .catch-badge {
+          position: absolute;
+          right: -34px;
+          bottom: 54px;
+          max-width: 680px;
+          padding: 16px 26px;
+          border-radius: 10px;
+          background: #ff5c57;
+          color: #f5f1e8;
+          font-size: 22px;
+          font-weight: 600;
+          letter-spacing: 0.01em;
+          white-space: nowrap;
+          box-shadow: 0 10px 34px rgba(255, 92, 87, 0.35);
+          transform-origin: 100% 50%;
+          opacity: 0;
+        }
+
+        /* ---- RIGHT: correct silence ---- */
+        #card-right .content {
+          min-height: 460px;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+        }
+        .zero-glow {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 620px;
+          height: 620px;
+          transform: translate(-50%, -50%);
+          background: radial-gradient(
+            circle,
+            rgba(93, 184, 114, 0.28) 0%,
+            rgba(93, 184, 114, 0.08) 42%,
+            rgba(93, 184, 114, 0) 70%
+          );
+          opacity: 0;
+          pointer-events: none;
+        }
+        .zero-lockup {
+          position: relative;
+          display: flex;
+          align-items: baseline;
+          justify-content: center;
+          gap: 20px;
+        }
+        .zero {
+          font-family: "Fraunces", Georgia, serif;
+          font-size: 232px;
+          line-height: 0.9;
+          font-weight: 400;
+          letter-spacing: -0.02em;
+          color: #5db872;
+          transform-origin: 50% 60%;
+          opacity: 0;
+        }
+        .zero-unit {
+          font-size: 36px;
+          color: #f5f1e8;
+          opacity: 0;
+        }
+        .silence-label {
+          position: relative;
+          margin-top: 18px;
+          font-size: 24px;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: #8a8a8a;
+          opacity: 0;
+        }
+
+        /* ---- caption beneath the split ---- */
+        .caption {
+          position: absolute;
+          left: 0;
+          right: 0;
+          top: 780px;
+          text-align: center;
+          font-family: "Fraunces", Georgia, serif;
+          font-size: 38px;
+          font-weight: 400;
+          letter-spacing: -0.01em;
+          color: #f5f1e8;
+          opacity: 0;
+        }
+      </style>
+
+      <div
+        id="root"
+        data-composition-id="07-grounded"
+        data-width="1920"
+        data-height="1080"
+        data-duration="14.267"
+      >
+        <!-- background layer (its own clip, holds the whole composition) -->
+        <div id="bg" class="bg clip" data-start="0" data-duration="15.4" data-track-index="0"></div>
+
+        <!-- LEFT panel — codehere, the catch -->
+        <div
+          id="panel-left"
+          class="panel clip"
+          data-start="0"
+          data-duration="15.4"
+          data-track-index="1"
+        >
+          <div id="card-left" class="card">
+            <div class="titlebar">codehere · learned 29 commits</div>
+            <div class="content">
+              <div class="row reveal-l" id="l-row1">
+                <span>uses var</span><span class="seen">seen 3×</span>
+              </div>
+              <div class="row reveal-l" id="l-row2">
+                <span>empty catch</span><span class="seen">seen 2×</span>
+              </div>
+              <div class="diff-label reveal-l" id="l-difflabel">your next diff:</div>
+              <div class="diff-line reveal-l" id="l-diff">var width = node.offsetWidth</div>
+            </div>
+            <div class="catch-badge" id="l-catch">
+              ⚠ CATCH — grounded=true · evidence "var width ="
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT panel — ravenote, correct silence -->
+        <div
+          id="panel-right"
+          class="panel clip"
+          data-start="0"
+          data-duration="15.4"
+          data-track-index="2"
+        >
+          <div id="card-right" class="card">
+            <div class="titlebar">ravenote · no var / fetch / empty-catch</div>
+            <div class="content">
+              <div class="zero-glow" id="r-glow"></div>
+              <div class="zero-lockup">
+                <span class="zero" id="r-zero">0</span
+                ><span class="zero-unit" id="r-unit">mistakes</span>
+              </div>
+              <div class="silence-label" id="r-label">correct silence</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- caption beneath the split -->
+        <div class="caption clip" id="caption" data-start="0" data-duration="15.4" data-track-index="3">
+          grounded in real code — never confabulated.
+        </div>
+      </div>
+
+      <script>
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+
+        /* ---- Scene 1 (0.0–~1.4s): mirrored book-open from opposite wings ---- */
+        const TILT = 14;
+        const OVERSHOOT = 5;
+        tl.fromTo(
+          "#card-left",
+          { x: -540, rotateY: TILT + OVERSHOOT, opacity: 0 },
+          { x: 0, rotateY: TILT, opacity: 1, duration: 1.0, ease: "power3.out" },
+          0.2,
+        );
+        tl.fromTo(
+          "#card-right",
+          { x: 540, rotateY: -TILT - OVERSHOOT, opacity: 0 },
+          { x: 0, rotateY: -TILT, opacity: 1, duration: 1.0, ease: "power3.out" },
+          0.4,
+        );
+
+        /* ---- Scene 2 (3.0–~6.0s): LEFT rows + fresh diff, then the coral CATCH ---- */
+        const revealUp = (sel, at) =>
+          tl.fromTo(
+            sel,
+            { opacity: 0, y: 18 },
+            { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+            at,
+          );
+        revealUp("#l-row1", 3.2);
+        revealUp("#l-row2", 3.5);
+        revealUp("#l-difflabel", 4.2);
+        revealUp("#l-diff", 4.5);
+
+        // coral CATCH badge — the lone overshoot-free spring-pop at the inner edge
+        tl.fromTo(
+          "#l-catch",
+          { opacity: 0, scale: 0 },
+          { opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" },
+          5.3,
+        );
+
+        /* ---- Scene 3 (8.0–~9.8s): RIGHT 0 lands with escalating weight + calm green glow ---- */
+        tl.fromTo(
+          "#r-zero",
+          { opacity: 0, scale: 0.42 },
+          { opacity: 1, scale: 1, duration: 0.9, ease: "power3.out" },
+          8.2,
+        );
+        tl.fromTo(
+          "#r-glow",
+          { opacity: 0 },
+          { opacity: 1, duration: 1.0, ease: "power2.out" },
+          8.5,
+        );
+        revealUp("#r-unit", 8.9);
+        revealUp("#r-label", 9.3);
+
+        /* ---- Scene 4 (12.0–15.0s): caption reveals, then both panels hold ---- */
+        tl.fromTo(
+          "#caption",
+          { opacity: 0, y: 14 },
+          { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" },
+          12.0,
+        );
+
+        window.__timelines["07-grounded"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

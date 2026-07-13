@@ -1,0 +1,52 @@
+{
+  "provider": "auto",
+  "speed": 1,
+  "lines": [
+    {
+      "id": "01",
+      "text": "Every developer makes the same few mistakes, over and over. Forgetting to check that a network request actually worked. Leaving an error unhandled. An old habit you meant to drop. Your tools flag it once, you ignore it, and you ship it again — because nothing remembers that you keep doing this."
+    },
+    {
+      "id": "02",
+      "text": "Engram is our project for Track One — MemoryAgent. It's a memory of the mistakes you personally repeat, learned from your git history. It remembers them between sessions, and any A-I coding assistant can ask it to check your next change, through the open standard called MCP."
+    },
+    {
+      "id": "03",
+      "text": "Here's how it works, in two halves. When you commit code, Qwen reads it and Engram records how you code. Mistakes are found directly in the real code, so they are never made up. Then, when you're about to ship a change, Engram ranks what it knows — by what's relevant, recent, and important. Repeat a mistake and its memory grows stronger. Do something once and it fades. Change your mind, and the old note is replaced. It keeps only the most useful memories that fit a small budget — and every warning points back to a specific memory, and to the real code that triggered it."
+    },
+    {
+      "id": "04",
+      "text": "Everything runs on Qwen, on Alibaba Cloud. A fast model reads your commits, a stronger one reviews your code, and a third turns text into searchable vectors. The engine is TypeScript, with forty-seven tests. It's an MCP server, it stores memories in a Postgres database, and it's deployed on an Alibaba Cloud server in Singapore."
+    },
+    {
+      "id": "05",
+      "text": "This is what Engram remembers about me — live from Qwen. My most common mistake: forgetting to check a network response before using it. It has seen me do this eighteen times. The more I repeat it, the louder that memory gets, while a one-time experiment quietly fades."
+    },
+    {
+      "id": "06",
+      "text": "Now the payoff. My assistant sends Engram a new piece of code — fetch a user, read the response, return it. It looks fine. But Engram remembers I skip that safety check. So it catches it — live on Qwen, based on my own history — before it ever ships."
+    },
+    {
+      "id": "07",
+      "text": "And it never makes things up. On a project it had never seen, it found two mistakes that were really there. On another, with none, it correctly stayed silent. Every catch is grounded in real code — not a guess."
+    },
+    {
+      "id": "08",
+      "text": "Does remembering actually help? A plain memory keeps handing you outdated advice every time. The moment Engram forgets what's no longer true, it gets every contradiction right, never repeats stale advice, and uses a fraction of the space."
+    },
+    {
+      "id": "09",
+      "text": "And it's real. Here's Engram calling Qwen on Alibaba Cloud, and here's our live server in Singapore, reporting that it's running on Qwen. A memory agent, in production."
+    },
+    {
+      "id": "10",
+      "text": "Engram — a memory agent that learns your coding mistakes, remembers them across sessions, and catches them before you ship. Live on Alibaba Cloud. Open source."
+    }
+  ],
+  "bgm": {
+    "mode": "retrieve",
+    "query": "Engram — a MemoryAgent that learns your recurring mistakes from git and catches them on your next diff, over MCP, on Qwen + Alibaba Cloud.",
+    "blob": "Engram — a MemoryAgent that learns your recurring mistakes from git and catches them on your next diff, over MCP, on Qwen + Alibaba Cloud.",
+    "arc": "Problem → What+Track1 → Architecture → Stack → Memory → Catch → Grounded → Benchmark → Proof → Close"
+  }
+}

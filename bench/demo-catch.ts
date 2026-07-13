@@ -89,11 +89,12 @@ async function main() {
   }
   for (const cm of caught) {
     const m = packedById.get(cm.citedMemoryId!)!;
-    console.log(`\n  ⚠ CATCH — grounded + signature-verified:`);
+    console.log(`\n  ⚠ CATCH — pattern GROUNDED by the engine · JUDGED + fixed by ${model.backend === "qwen" ? "Qwen" : "the model"}:`);
     console.log(`     ${cm.message}`);
     console.log(`     ↳ grounded in your memory "${m.text}" (seen ${m.reinforcements + 1}× in this repo's history)`);
     console.log(`     ↳ evidence quoted from the diff: ${JSON.stringify(cm.evidence ?? null)}`);
     console.log(`     ↳ grounded=${isGroundedInDiff(cm, NEW_DIFF)} — the flagged code is really in the diff, not asserted`);
+    if (cm.fix) console.log(`     ↳ fix: ${cm.fix}`);
   }
   if (model.backend === "qwen") console.log(`\n  qwen usage: ${JSON.stringify(model.usage())}`);
   console.log();

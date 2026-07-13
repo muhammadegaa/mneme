@@ -117,7 +117,8 @@ server.tool(
       const cited = cm.citedMemoryId ? packedById.get(cm.citedMemoryId) : undefined;
       const tag = cm.severity === "warn" ? "⚠ WARN" : cm.severity === "praise" ? "✓ praise" : "· info";
       const ground = cited ? `\n    ↳ grounded in your memory "${cited.text}" (seen ${cited.reinforcements + 1}×)` : "";
-      return `${tag}  ${cm.message}${ground}`;
+      const fix = cm.fix ? `\n    ↳ fix: ${cm.fix}` : "";
+      return `${tag}  ${cm.message}${ground}${fix}`;
     });
     const header =
       `Reviewed against ${pack.packed.length} of your memories (packed ${pack.usedTokens}/${BUDGET} tok, dropped ${pack.dropped.length}). ` +

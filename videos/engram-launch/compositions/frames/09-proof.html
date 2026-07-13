@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- head is metadata for the source file only; the runtime clones ONLY <template> -->
+    <title>09 — Proof of deployment (proof + health)</title>
+  </head>
+  <body>
+    <template>
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <style>
+        /* Root — styled by #root (never a class on the root; the scoper drops that). */
+        #root {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          font-family: "JetBrains Mono", monospace;
+          color: #f5f1e8;
+        }
+
+        /* Full-bleed near-black ground — a class="clip" layer, NOT #root. */
+        .bg {
+          position: absolute;
+          inset: 0;
+          background: #0e0e10;
+        }
+
+        .stage {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+        }
+
+        /* — kicker — mono uppercase, muted (coral is rationed to the qwen value) — */
+        .kicker {
+          position: absolute;
+          top: 104px;
+          left: 190px;
+          font-size: 28px;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          font-weight: 500;
+          color: #f5f1e8;
+          white-space: nowrap;
+        }
+        .kicker .ctx {
+          color: #8a8a8a;
+        }
+
+        /* — terminal panel — warm-navy surface, hairline elevation — */
+        .panel {
+          position: absolute;
+          top: 244px;
+          left: 190px;
+          width: 1540px;
+          background: #1a1a1d;
+          border: 1px solid rgba(245, 241, 232, 0.14);
+          border-radius: 10px;
+          overflow: hidden;
+          transform-origin: 50% 40%;
+          will-change: transform, opacity;
+          box-shadow:
+            0 1px 3px rgba(14, 14, 16, 0.5),
+            0 22px 64px rgba(0, 0, 0, 0.45);
+        }
+        .titlebar {
+          height: 58px;
+          display: flex;
+          align-items: center;
+          padding: 0 30px;
+          background: #252120;
+          border-bottom: 1px solid rgba(245, 241, 232, 0.1);
+          font-size: 22px;
+          font-weight: 500;
+          letter-spacing: 0.02em;
+          color: #8a8a8a;
+        }
+
+        .term {
+          padding: 30px 40px 30px;
+          display: flex;
+          flex-direction: column;
+          font-size: 26px;
+          line-height: 1.55;
+        }
+        .line {
+          display: flex;
+          align-items: baseline;
+          white-space: nowrap;
+        }
+        .spacer {
+          height: 22px;
+        }
+        .prompt {
+          color: #8a8a8a;
+          margin-right: 16px;
+        }
+        .ttext {
+          color: #f5f1e8;
+        }
+        .cur {
+          display: inline-block;
+          width: 14px;
+          height: 28px;
+          margin-left: 3px;
+          transform: translateY(4px);
+          background: #f5f1e8;
+        }
+
+        /* output lines — block flow (NOT flex) so literal spaces between spans render */
+        .out {
+          display: block;
+          color: #f5f1e8;
+        }
+        .out .dim {
+          color: #8a8a8a;
+          margin-right: 14px;
+        }
+        .out .arrow {
+          color: #8a8a8a;
+          margin: 0 6px;
+        }
+        .out .mid {
+          color: #8a8a8a;
+        }
+        .ok,
+        .check {
+          color: #5db872;
+        }
+        .check {
+          display: inline-block;
+          margin-left: 8px;
+          transform-origin: 50% 55%;
+        }
+
+        /* the health-check JSON */
+        .json {
+          color: #f5f1e8;
+        }
+        /* the ONE coral moment — the backend:qwen value (tints on cue) */
+        #qwen {
+          display: inline-block;
+          color: #f5f1e8;
+        }
+
+        /* — status strip (Alibaba Cloud · ECS · Singapore · live) — */
+        .statusbar {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 22px 40px;
+          border-top: 1px solid rgba(245, 241, 232, 0.1);
+          background: rgba(37, 33, 32, 0.55);
+          font-size: 24px;
+          letter-spacing: 0.04em;
+          color: #b8b4ac;
+        }
+        .dot {
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: #ff5c57;
+          transform-origin: 50% 50%;
+          box-shadow: 0 0 14px rgba(255, 92, 87, 0.55);
+        }
+      </style>
+
+      <div
+        id="root"
+        data-composition-id="09-proof"
+        data-width="1920"
+        data-height="1080"
+        data-duration="12.66"
+      >
+        <div class="bg clip" id="bg" data-start="0" data-duration="13.108" data-track-index="0"></div>
+
+        <div class="stage clip" id="stage" data-start="0" data-duration="13.108" data-track-index="1">
+          <div class="kicker" id="kicker">PROOF<span class="ctx"> &middot; running in production</span></div>
+
+          <div class="panel" id="panel">
+            <div class="titlebar">proof &middot; qwen on alibaba cloud</div>
+
+            <div class="term">
+              <!-- Scene 1 -->
+              <div class="line">
+                <span class="prompt">$</span><span class="ttext" id="cmd1text"></span
+                ><span class="cur" id="cur1"></span>
+              </div>
+              <!-- prettier-ignore -->
+              <div class="line out" id="out1"><span class="dim">[1/2]</span>Qwen/DashScope <span class="ok">OK</span><span class="check" id="check">&#10003;</span> <span class="arrow">&rarr;</span> "Qwen on Alibaba Cloud is reachable." <span class="mid">&middot; embed dims=1024</span></div>
+
+              <div class="spacer"></div>
+
+              <!-- Scene 2 -->
+              <div class="line">
+                <span class="prompt">$</span><span class="ttext" id="cmd2text"></span
+                ><span class="cur" id="cur2"></span>
+              </div>
+              <!-- prettier-ignore -->
+              <div class="line out json" id="out2">{"ok":true,"backend":<span id="qwen">"qwen"</span>}</div>
+            </div>
+
+            <!-- Scene 3 -->
+            <div class="statusbar" id="statusbar">
+              <span class="dot" id="dot"></span>
+              <span>Alibaba Cloud &middot; ECS &middot; Singapore &middot; live</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+
+        const cmd1 = document.getElementById("cmd1text");
+        const cmd2 = document.getElementById("cmd2text");
+        const cur1 = document.getElementById("cur1");
+        const cur2 = document.getElementById("cur2");
+
+        const FULL1 = "npm run proof";
+        const FULL2 = "curl http://47.84.61.162/api/health";
+        const T1S = 0.7,
+          T1D = 1.1,
+          T2S = 6.2,
+          T2D = 1.5;
+
+        function typedChars(t, start, dur, len) {
+          if (t <= start) return 0;
+          if (t >= start + dur) return len;
+          return Math.floor(((t - start) / dur) * len);
+        }
+
+        // ---- Single deterministic driver: typewriter + sin-blink cursors ----
+        const driver = { t: 0 };
+        tl.to(
+          driver,
+          {
+            t: 12.6,
+            duration: 12.6,
+            ease: "none",
+            onUpdate: () => {
+              const t = driver.t;
+              cmd1.textContent = FULL1.substring(0, typedChars(t, T1S, T1D, FULL1.length));
+              cmd2.textContent = FULL2.substring(0, typedChars(t, T2S, T2D, FULL2.length));
+
+              const blink = Math.sin(t * 9) > 0 ? 1 : 0;
+              // cursor 1 owns scene 1; cursor 2 owns scene 2 onward
+              if (t < 6.0) {
+                const typing1 = t > T1S && t < T1S + T1D + 0.15;
+                cur1.style.opacity = typing1 ? 1 : blink;
+                cur2.style.opacity = 0;
+              } else {
+                const typing2 = t > T2S && t < T2S + T2D + 0.15;
+                cur2.style.opacity = typing2 ? 1 : blink;
+                cur1.style.opacity = 0;
+              }
+            },
+          },
+          0,
+        );
+
+        // ---- Chrome + panel establish ----
+        tl.fromTo("#kicker", { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.1);
+        tl.fromTo("#panel", { scale: 0.96, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.9, ease: "power3.out" }, 0.2);
+
+        // ---- Scene 1: proof line reveals, green check lands on OK ----
+        tl.fromTo("#out1", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 2.4);
+        tl.fromTo("#check", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" }, 3.05);
+
+        // ---- Scene 2: health JSON reveals; backend:qwen tints coral ----
+        tl.fromTo("#out2", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 8.2);
+        tl.fromTo("#qwen", { scale: 1.16 }, { scale: 1, duration: 0.5, ease: "power3.out" }, 8.55);
+        tl.to("#qwen", { color: "#ff5c57", duration: 0.35, ease: "power3.out" }, 8.6);
+
+        // ---- Scene 3: live status strip lands; coral live-dot; HOLD ----
+        tl.fromTo("#statusbar", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 11.0);
+        tl.fromTo("#dot", { scale: 0 }, { scale: 1, duration: 0.5, ease: "power3.out" }, 11.2);
+        // dead-still hold to 12.6 (no exit tween, no jitter).
+
+        window.__timelines["09-proof"] = tl;
+      </script>
+    </template>
+  </body>
+</html>
