@@ -19,3 +19,6 @@ _*.mts
 # demo golden seed IS committed (reproducible hero); runtime state is not
 .engram/*
 !.engram/golden.json
+
+# HyperFrames video build project (source + node_modules + renders; MP4 uploads to Devpost directly)
+videos/
