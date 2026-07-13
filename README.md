@@ -7,6 +7,32 @@
 > **🟢 Live on Alibaba Cloud: http://47.84.61.162** — the Memory Inspector,
 > running on real Qwen (`backend=qwen`) from an Alibaba Cloud ECS instance in Singapore.
 
+### Track 1: MemoryAgent — mapped to the spec
+
+The track asks for **efficient memory storage and retrieval · timely forgetting of outdated
+information · recalling critical memories within a limited context window**, that *accumulates
+experience and makes increasingly accurate decisions across cross-session interactions.* Engram
+does exactly this, for a developer:
+
+| Track requirement | In Engram |
+|---|---|
+| efficient storage & retrieval | hybrid rank (`semantic + recency + salience`) over a persistent store ([`scoring.ts`](packages/memory-engine/src/scoring.ts)) |
+| timely forgetting of outdated info | salience **decay** + **contradiction resolution** (superseded, with an audit trail) ([`decay.ts`](packages/memory-engine/src/decay.ts)) |
+| recall critical memories in a limited context window | a **0/1-knapsack** packer selects the optimal set under a token budget ([`packing.ts`](packages/memory-engine/src/packing.ts)) |
+| increasingly accurate across sessions | **reinforcement** — a repeated mistake grows *louder*; recall survives restart (`npm run demo:persist`) |
+
+**How Qwen does the hard part.** A deterministic signature *grounds* the catch (the pattern is
+really in the diff — it can never fabricate). Then **Qwen** provides the judgment a linter can't:
+it reads the specific code, decides whether it's a real bug *here*, **writes the fix**, and can
+*suppress a false positive* by declining to warn. Live example: on `getUser`, Qwen reasoned
+*"`res.json()` may throw… `user.profile` will crash with Cannot read property 'profile' of
+undefined"* → fix `if (!res.ok) throw…`. Qwen also powers extraction (`qwen-turbo`), the review
+agent (`qwen-plus`), and embeddings (`text-embedding-v3`), exposed over **MCP** so any coding agent
+can call it. ([`qwen-client.ts`](packages/memory-engine/src/model/qwen-client.ts) is the single
+Alibaba Cloud choke point — the proof-of-deployment file.)
+
+---
+
 Linters know the language. Copilot forgets you the moment the session ends.
 **Engram reads your git history and learns how _you_ code** — your style, your
 tools, and the mistake you keep making — then catches it on your next diff,

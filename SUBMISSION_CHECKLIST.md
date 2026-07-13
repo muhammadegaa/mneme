@@ -1,54 +1,39 @@
 # Engram — Submission Checklist (Track 1: MemoryAgent)
 
-Single source of truth mapping every hackathon requirement → status → artifact.
-🟢 done · 🟡 in progress · 🔴 not started.
+Mapped to the **actual** Devpost requirements (Global AI Hackathon with Qwen Cloud).
+Deadline: **Jul 20, 2026, 2:00pm PDT**. 🟢 done · 🟡 needs you · 🔴 missing.
 
-## Hard submission requirements
+## Submission requirements (verbatim from the rules)
 
-| # | Requirement | Status | Artifact |
+| # | Requirement (as written) | Status | Artifact / where |
 |---|---|---|---|
-| 1 | Public GitHub repo, MIT license | 🟢 | **https://github.com/muhammadegaa/mneme** (public, MIT [`LICENSE`](./LICENSE)). |
-| 2 | Backend runs on Alibaba Cloud; proof of Alibaba Cloud API calls | 🟢 | **LIVE on Alibaba Cloud ECS** (Singapore, `47.84.61.162`, `backend=qwen`, persistent `systemd` service). Health: `{"ok":true,"backend":"qwen"}`. All reasoning on DashScope; `npm run proof` → `Qwen/DashScope OK · embed dims=1024`. FC + ApsaraDB pgvector are the wired **scale** path ([`s.yaml`](./s.yaml), [`Dockerfile`](./Dockerfile), [`pg-store.ts`](./packages/memory-engine/src/store/pg-store.ts)); move persistence with `MEMORY_STORE=postgres`. |
-| 3 | Architecture diagram | 🟢 | [`docs/architecture.png`](./docs/architecture.png) embedded in [README](./README.md) (source: [`.html`](./docs/architecture.html) / [`.mmd`](./docs/architecture.mmd)). |
-| 4 | ~3-min demo video | 🟢 | **[`docs/DEMO_SCRIPT.md`](./docs/DEMO_SCRIPT.md)** — the real substance-complete demo recording script (stack, architecture, mechanism, Track 1 mapping, live proof). **You screen-record it.** A rendered 1:42 promo teaser is at `videos/engram-launch/renders/video.mp4`. |
-| 5 | ~30s "backend on Alibaba Cloud" proof recording | 🟢 script | [`docs/PROOF_RECORDING.md`](./docs/PROOF_RECORDING.md); `npm run proof` shows the live Qwen call. **Recording pending (manual).** |
-| 6 | README: problem, features, architecture, how-to-run, benchmark | 🟢 | [README](./README.md) — leads with the benchmark + the failure-then-fix grounding story. |
-| 7 | Qwen for reasoning (plus/max agent, turbo cheap ops, Qwen embeddings) | 🟢 | [`qwen-client.ts`](./packages/memory-engine/src/model/qwen-client.ts) — tiered routing + embeddings. Mistake *detection* is deterministic (a signature registry), Qwen does extraction/review/embeddings. |
+| 1 | Public code repo with all source + instructions; **open-source LICENSE detectable in the About section** | 🟡 | Repo public + MIT [`LICENSE`](./LICENSE) present. **YOU: confirm the license shows in the GitHub *About* panel** (set it in repo settings). |
+| 2 | **Proof of Alibaba Cloud Deployment = a link to a code file** that demonstrates use of Alibaba Cloud services/APIs | 🟢 | Link **[`packages/memory-engine/src/model/qwen-client.ts`](./packages/memory-engine/src/model/qwen-client.ts)** (calls `dashscope.aliyuncs.com` — Alibaba Cloud) and **[`alibaba/proof.ts`](./alibaba/proof.ts)**. *(A live URL is NOT required — a code file is.)* |
+| 3 | Architecture diagram (Qwen Cloud ↔ backend/db/frontend) | 🟢 | [`docs/architecture.png`](./docs/architecture.png) (source [`.html`](./docs/architecture.html)) |
+| 4 | Video **~3 min** demonstrating it functioning; public on **YouTube/Vimeo/Facebook** | 🟡 | `videos/engram-launch/renders/demo.mp4` (3:17 — "about 3 minutes" ✓). **YOU: upload to YouTube, set public, paste the link.** |
+| 5 | Text description of features/functionality | 🟢 | [`DEVPOST.md`](./DEVPOST.md) — paste-ready |
+| 6 | Identify the Track | 🟢 | **Track 1: MemoryAgent** |
+| 7 | *Optional:* blog/social post → Blog Post Award ($500 × 10) | 🟢 | [`docs/BLOG.md`](./docs/BLOG.md) — **YOU: publish it (Medium/Dev.to/X) + paste the link** for the extra prize |
 
-## Memory engine components (technical depth)
+## Judging criteria → our evidence
 
-| Component | Status | Artifact |
-|---|---|---|
-| WRITE: extract → embed → dedupe → **reinforce/supersede** → store | 🟢 | [`extract.ts`](./packages/memory-engine/src/extract.ts), [`engine.ts`](./packages/memory-engine/src/engine.ts) |
-| RETRIEVAL: hybrid semantic + recency + salience | 🟢 | [`scoring.ts`](./packages/memory-engine/src/scoring.ts) |
-| FORGETTING: decay + contradiction resolution + audit trail | 🟢 | [`decay.ts`](./packages/memory-engine/src/decay.ts) |
-| REINFORCEMENT: recurring mistakes get louder (demo hero) | 🟢 | [`engine.ts`](./packages/memory-engine/src/engine.ts) + tests |
-| CONTEXT PACKING: 0/1 knapsack under a token budget | 🟢 | [`packing.ts`](./packages/memory-engine/src/packing.ts) |
-| **GROUNDING: mistakes detected from real code; catches never fabricated** | 🟢 | [`mistakes.ts`](./packages/memory-engine/src/mistakes.ts), [`grounding.ts`](./packages/memory-engine/src/grounding.ts) |
-| CROSS-SESSION persistence | 🟢 | [`json-store.ts`](./packages/memory-engine/src/store/json-store.ts) (atomic) offline; [`pg-store.ts`](./packages/memory-engine/src/store/pg-store.ts) pgvector on Alibaba |
-
-## Benchmark + real-repo evidence (the moat)
-
-| Item | Status |
+| Criterion (weight) | Evidence |
 |---|---|
-| Synthetic A/B/B+/C harness (recall, contradiction acc, stale leakage, tokens) | 🟢 `npm run bench` (free; `--qwen` for live) |
-| Results table in README | 🟢 [`bench/results/table.md`](./bench/results/table.md) → README lead |
-| **Real unseen repos, grounded**: codehere (var ×3, empty-catch ×2), ravenote (0) | 🟢 [`real-codehere.md`](./bench/results/real-codehere.md), [`real-ravenote.md`](./bench/results/real-ravenote.md) |
-| Reproducible held-out catch (learn → catch a fresh diff, grounded) | 🟢 `npm run demo:catch` (free) |
+| **Technical Depth & Engineering (30%)** — sophisticated Qwen use, MCP, custom components, perf | MCP server (4 tools); Qwen model routing (turbo/plus/max + text-embedding-v3); **Qwen judgment+fix** on grounded catches; 0/1-knapsack packer; salience decay. `npm run demo:mcp`, `npm run bench:scale` |
+| **Innovation & AI Creativity (30%)** — architecture quality, modularity, error handling, clean code | Standalone `@engram/memory-engine` package · **47 tests** · atomic store + per-commit resilience · grounding gate. `npm test` |
+| **Problem Value & Impact (25%)** — real pain, productization potential | Recurring-mistake pain (everyone ships the same bug); **the memory compounds** (a data moat, not a model patch); grounded on real unseen repos. `npm run demo:catch` |
+| **Presentation & Documentation (15%)** — clear demo, visualized logic, architecture docs | The demo video + [`docs/architecture.png`](./docs/architecture.png) + this README |
 
-## Engineering standards
+## Track-1 spec mapping (say these words in the submission)
 
-| Item | Status |
-|---|---|
-| Memory engine as a standalone, clean-interface package | 🟢 `@engram/memory-engine` |
-| Deterministic unit tests (scoring / packing / decay / reinforce / grounding) | 🟢 **47 tests passing** |
-| Adversarial code review done + findings fixed (engine, apps, stores) | 🟢 |
-| Live box hardened (metered `/api/review` + `/api/reset`, atomic store) | 🟢 code done — **redeploy pending** (see [`docs/DEPLOY.md`](./docs/DEPLOY.md)) |
-| npm scripts: dev / test / bench / demo:catch / proof | 🟢 |
-| No placeholders/TODOs in shipped paths | 🟢 |
+*"efficient memory storage & retrieval"* → hybrid rank · *"timely forgetting of outdated
+information"* → decay + supersession · *"recalling critical memories within a limited context
+window"* → 0/1-knapsack packer · *"increasingly accurate across sessions"* → reinforcement +
+`npm run demo:persist`.
 
-## Remaining before submit (all manual — need the box/screen)
-
-1. **Lock + redeploy the box** — run the runbook in [`docs/DEPLOY.md`](./docs/DEPLOY.md): lock SSH to your IP, strip unused keys, `git pull` + restart, verify the getUser hero still fires. (Protects the coupon + ships all hardening.)
-2. **Record the video** (`docs/VIDEO_SCRIPT.md`) + the ~30s Alibaba proof (`docs/PROOF_RECORDING.md`).
-3. **Submit on Devpost** — paste [`DEVPOST.md`](./DEVPOST.md), attach video + repo + live URL.
+## What's left — all yours (I can't do these)
+1. **GitHub *About*:** set the MIT license so it's detectable; add a one-line description + the live URL.
+2. **Upload the video** to YouTube (public) and paste the link into the Devpost submission.
+3. **Publish the blog** (`docs/BLOG.md`) and paste its URL for the Blog Post Award.
+4. *(Optional, not required for proof)* redeploy the ECS box (`docs/DEPLOY.md`) so the live URL shows the latest code.
+5. **Submit on Devpost**, Track 1, before Jul 20 2:00pm PDT: repo link · proof code-file link · architecture diagram · video link · `DEVPOST.md` description.

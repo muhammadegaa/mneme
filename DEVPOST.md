@@ -10,6 +10,8 @@ your git history and catches the mistake you keep making — before it ships.
 
 **🟢 Live on Alibaba Cloud:** http://47.84.61.162 — the Memory Inspector on real Qwen (`backend=qwen`), ECS · Singapore.
 
+**Why it fits Track 1 (MemoryAgent):** the track asks for *efficient memory storage & retrieval, timely forgetting of outdated information, and recalling critical memories within a limited context window,* accumulating experience to make increasingly accurate decisions across sessions. Engram is that engine, for a developer: hybrid-ranked retrieval, salience **decay** + **contradiction resolution** (forgetting), a **0/1-knapsack** packer that recalls the critical memories under a token budget, and **reinforcement** so it gets *more accurate the more it sees you* — persisting across sessions (`npm run demo:persist`). **Qwen does the judgment a linter can't:** a deterministic signature grounds the catch (never fabricated), then Qwen reads the specific code, decides if it's a real bug here, **writes the fix**, and can suppress a false positive — exposed over **MCP**.
+
 ---
 
 ## Inspiration
