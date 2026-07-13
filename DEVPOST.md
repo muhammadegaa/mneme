@@ -43,9 +43,15 @@ from the real code (so they're grounded, never confabulated — see Challenges).
 Then, on any new diff, it runs a real memory pipeline you can watch happen:
 
 - **Retrieve** — hybrid ranking over your memories: `semantic + recency + salience`.
-- **Pack** — a 0/1 knapsack fits the best memory set under a fixed token budget
-  (it shows what it kept, what it dropped, and why).
-- **Ground** — every review comment cites the specific memory it came from.
+- **Pack** — a 0/1 knapsack fits the best memory set under a fixed token budget.
+  On a few memories that ties greedy top-k; when the budget binds it wins —
+  `npm run bench:scale` shows greedy dropping the relevant memory the knapsack keeps.
+- **Ground + judge** — a high-precision signature *grounds* the catch (the pattern
+  is really in the diff — it can never fabricate), then **Qwen judges it in context**:
+  is this a real bug *here*, and what's the fix? Real Qwen output on the `getUser`
+  diff: *"`res.json()` may throw… `user.profile` will crash with Cannot read property
+  'profile' of undefined"* → fix `if (!res.ok) throw…`. The regex finds the pattern;
+  Qwen does the reasoning a linter can't — and can decline to warn on a false positive.
 
 The hero mechanic is **reinforcement**: each time you repeat a mistake, it
 reinforces the *same* memory, so its salience climbs. The louder that memory

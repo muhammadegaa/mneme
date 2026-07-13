@@ -70,10 +70,13 @@ finding, and it's the point: on a handful of memories, **forgetting/supersession
 is the differentiator — not the ranking or the packer.** A vector store that never
 forgets leaks stale advice 100% of the time; add forgetting and that's fixed. What
 Engram's hybrid rerank + 0/1-knapsack add shows up *at scale*, when memory counts
-and token budgets actually bind — which you can watch happen live in the
-**packing-causality panel** (a real knapsack, re-run per state, flips a keep/drop
-decision) and on **a real 1,456-commit repo** below. We'd rather show you the fair
-baseline than a strawman the engine was built to beat.
+and token budgets actually bind — and we prove that, we don't just assert it:
+**`npm run bench:scale`.** With many memories of varied token cost under a binding
+budget, greedy top-k (B+) spends the budget on the single biggest-scoring memory
+and **drops the one relevant to the diff**; the 0/1 knapsack packs **+0.54 more
+total value AND recalls the gold memory greedy misses.** That's why C > B+ once
+the budget binds — the packer isn't decoration, it's just invisible on a
+handful of memories. We'd rather show you the fair baseline than a strawman.
 
 > Run it yourself: `npm run bench` runs **free** on the deterministic embedder
 > (no coupon spend); add `--qwen` to run B/B+/C on live `text-embedding-v3`. The
@@ -135,8 +138,17 @@ those numbers **offline for free** — no credits, no drift. Full writeups:
   token budget; the Inspector shows what was packed, what dropped, and **why**.
 - **Cross-session** — memories persist between runs (JSON store locally,
   ApsaraDB pgvector on Alibaba Cloud) so each session resumes instead of restarts.
-- **Grounded review** — every review comment cites the specific memory it came
-  from. Live retrieve → pack → ground is visible as the engine works.
+  Prove it in two real processes: `npm run demo:persist` (session 1 learns +
+  reinforces, exits; session 2, a fresh process, recalls it from disk, seen 3×).
+- **Grounded detection, Qwen judgment** — the split that makes it honest AND
+  smart. A high-precision **signature grounds** the catch: the pattern is really
+  in the diff (deterministic — it can never fabricate a mistake). Then **Qwen
+  judges it in context** — is this a real bug *here*? — writes a fix a linter
+  can't, and can *suppress a false positive* by declining to warn. Live example
+  on the `getUser` diff (real Qwen output): *"`res.json()` may throw… `user.profile`
+  will crash with Cannot read property 'profile' of undefined"* → fix
+  `if (!res.ok) throw new Error(\`HTTP ${res.status}\`)`. The regex found the
+  pattern; Qwen did the reasoning.
 
 ## 🔌 Use it as an MCP server (the production surface)
 
@@ -211,7 +223,11 @@ managed option. Source for the diagram: [`docs/architecture.html`](docs/architec
 ```bash
 npm install
 npm test                    # 47 deterministic tests (scoring / packing / decay / reinforce / grounding)
-npm run bench               # A/B/C benchmark — prints the table above
+npm run bench               # A/B/B+/C benchmark — prints the table above
+npm run bench:scale         # where the knapsack beats greedy top-k (proves the packer)
+npm run demo:catch          # learn a real unseen repo → catch a fresh mistake, grounded + fix
+npm run demo:persist        # cross-session memory in TWO processes (Track 1, demonstrated)
+npm run demo:mcp            # drive the MCP server like an agent would (add ENGRAM_BACKEND=qwen for live)
 
 # Live Memory Inspector UI + API (the demo hero):
 npm run dev                 # → http://127.0.0.1:5273
