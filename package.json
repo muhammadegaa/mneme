@@ -14,6 +14,7 @@
     "test": "npm run test --workspace packages/memory-engine",
     "bench": "tsx bench/run.ts",
     "demo:catch": "tsx bench/demo-catch.ts",
+    "demo:mcp": "node apps/mcp/demo.mjs",
     "hello": "tsx scripts/hello-qwen.ts",
     "engram": "tsx cli/engram.ts",
     "mcp": "tsx apps/mcp/server.ts",
