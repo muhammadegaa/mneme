@@ -77,6 +77,32 @@ VERIFIER ROUND 2 fixes (all DONE + DOM-verified): reinforce-on-catch (count clim
 (was stuck 0 tok); faded memories dropped from main list (Bun no longer double-labeled);
 DEVPOST benchmark table aligned to README order. Round-2 confirmed round-1 fixes all landed.
 
+## ✅ WIN-HARDER BATCH (2026-07-13) — answered a self-run devil's-advocate teardown
+
+Ran an adversarial self-assessment of the whole submission; the 3 sharpest critiques + fixes:
+1. "On a Qwen hackathon, the catch is regex — Qwen just phrases it." FIXED (commit `999c770`):
+   reframed honestly — the signature GROUNDS (deterministic, never fabricates), **Qwen JUDGES in
+   context + writes a code-specific fix + can suppress a false positive** (returns info not warn).
+   Added `fix` to ReviewComment + registry; rewrote the review prompt around judgment. LIVE-VALIDATED:
+   Qwen reasoned "res.json() may throw… user.profile will crash with Cannot read property 'profile'",
+   gave `if(!res.ok) throw…`, and caught a 2nd downstream issue — real reasoning a linter can't.
+   Surfaced in MCP/CLI/demo:catch. README+DEVPOST reframed with the real quote.
+2. "Benchmark shows B+ ties C, so knapsack/ranker are dead weight." FIXED (`eeb60f8`): `bench/scale.ts`
+   (`npm run bench:scale`) — with a binding budget + varied token costs, greedy top-k drops the RELEVANT
+   memory; the 0/1 knapsack keeps it +0.54 value. Proven, not asserted. README updated.
+3. "Cross-session persistence (the literal Track 1 ask) is asserted, never shown." FIXED (`eeb60f8`):
+   `bench/demo-persist.ts` (`npm run demo:persist`) — TWO real processes, session 2 recalls seen-3×
+   from disk with no relearn. 47 tests, tsc clean throughout.
+DEMO VIDEO assessment (from a frame-by-frame audit of demo.mp4): the "asserted curl" was actually a
+user-verified fact (box returns {"ok":true,"backend":"qwen"}), NOT fabrication — fine. Remaining video
+items are polish only: (a) 6 reused frames' visuals finish a few seconds before the new plain-English VO
+(desync — full fix = 6-frame rebuild + re-render, modest benefit); (b) 3:05 length may exceed a hard
+platform cap. Neither is an integrity issue; left as user-choice.
+OTHER teardown findings still open (honest, for later): mistake detection is 3 high-precision signatures
+(not open-ended — deliberate); pgvector store code is sound but never run against real Postgres; the live
+box runs STALE pre-grounding code until the user redeploys; the demo video is authored (real DATA, not a
+live screen capture). Full teardown lives in the 2026-07-13 session.
+
 ## ✅ PRODUCTION-HARDENING BATCH (2026-07-12, autonomous loop) — thru commit 9ff827f
 
 Ran an adversarial 3-agent code review of the whole system + fixed every real finding. 30/30
