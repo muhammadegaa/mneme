@@ -1,8 +1,12 @@
 import type { Memory, MemoryInput, MemoryKind } from "../types.js";
+import { SUPERSEDABLE_KINDS } from "../types.js";
 import type { CommitSource, MentorModel, ReviewComment, ReviewResult } from "./mentor.js";
 import type { QwenUsage } from "./qwen-client.js";
 import { diffAddedText } from "../grounding.js";
 import { MISTAKE_SIGNATURES } from "../mistakes.js";
+
+/** Strip the leading verb so a fix/message reads naturally ("uses Redux" -> "Redux"). */
+const noun = (text: string) => text.replace(/^(uses|writes|prefers|tried)\s+/i, "");
 
 /**
  * Deterministic, zero-credit stand-in for Qwen. Same interface as the real
@@ -137,6 +141,20 @@ export class MockMentorModel implements MentorModel {
           citedMemoryId: cited?.id,
           evidence,
           fix: p.fix,
+        });
+      } else if (cited && cited.text.trim() !== p.text.trim() && SUPERSEDABLE_KINDS.has(cited.kind)) {
+        // MEMORY-GROUNDED catch — the reasoning a regex can't do. The diff fills a
+        // slot the developer already decided differently (e.g. reintroduces Redux
+        // after a Zustand migration). No "mistake" signature fires; only reading
+        // the cited memory reveals it repeats a choice they superseded. Grounded by
+        // the verbatim evidence quote, so it can't be fabricated.
+        comments.push({
+          file: req.file,
+          severity: "warn",
+          message: `You're reintroducing ${noun(p.text)} here, but you'd moved to ${noun(cited.text)} (memory ${cited.id}, salience ${cited.salience.toFixed(2)}). This repeats a choice you superseded.`,
+          citedMemoryId: cited.id,
+          evidence,
+          fix: `Drop the ${noun(p.text)} and keep ${noun(cited.text)} — the direction you already committed to.`,
         });
       } else if (cited) {
         comments.push({

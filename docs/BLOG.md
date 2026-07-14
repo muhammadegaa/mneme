@@ -82,6 +82,16 @@ And live on Qwen, on the classic `getUser` bug, the review read like a senior en
 
 It even caught a second, downstream issue the pattern-match never could.
 
+But the tier I'm proudest of is the one **no regex could ever cover**. Engram remembers decisions,
+not just mistakes — including that this project migrated its state layer from Redux to Zustand (the
+old choice is superseded, with an audit trail). So when a later diff quietly reintroduces
+`createStore(`, no signature fires — there's no `var`, no empty catch, nothing to grep. Yet the
+review flags it: *"you're reintroducing Redux here, but you'd moved to Zustand."* Only a model
+reading the accumulated memory can catch that. And it's still grounded the same way — Qwen has to
+quote the real `createStore(` line from the diff, so it can't invent the catch. This is the
+"increasingly accurate across sessions" property made literal: **the more the memory holds, the more
+the model catches — beyond any fixed rule set.**
+
 ## What I learned
 
 **Memory is a systems problem, not a prompt.** The interesting parts — salience decay, knapsack

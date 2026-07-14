@@ -23,6 +23,7 @@ import {
   recencyScore,
   isRepeatMistakeCatch,
   isGroundedInDiff,
+  classifyCatch,
   DEFAULT_WEIGHTS,
   type Memory,
   type MemoryStore,
@@ -241,6 +242,13 @@ app.post("/api/review", async (c) => {
   const caught = comments.filter((cm) => isRepeatMistakeCatch(cm, diff, citedOf(cm)));
   catches += caught.length;
 
+  // MEMORY-TIER catches: a grounded warn that repeats/contradicts a cited
+  // style/tech/project memory — the catch a regex can't make. Surfaced and
+  // celebrated, but NOT reinforced through the mistake path (it isn't a mistake
+  // memory), so the signature tally above stays clean.
+  const tierOf = (cm: (typeof comments)[number]) => classifyCatch(cm, diff, citedOf(cm));
+  const memoryCaught = comments.filter((cm) => citedOf(cm)?.kind !== "mistake" && tierOf(cm) === "memory");
+
   // Catching the bug again IS another occurrence of it — so REINFORCE the memory:
   // its salience climbs and the "seen N×" count rises, everywhere, from one source.
   // This is the hero mechanic made causal (not a cosmetic counter): repeat it, it
@@ -288,13 +296,15 @@ app.post("/api/review", async (c) => {
     ...cm,
     cited: cm.citedMemoryId ? view(packedById.get(cm.citedMemoryId)!) : undefined,
     grounded: cm.severity === "warn" ? isGroundedInDiff(cm, diff) : undefined,
-    caught: caught.includes(cm),
+    caught: caught.includes(cm) || memoryCaught.includes(cm),
+    catchTier: tierOf(cm) ?? undefined,
   }));
 
   return c.json({
     degraded,
     catches,
     newCatches: caught.length,
+    memoryCatches: memoryCaught.length,
     budget: pack.budget,
     usedTokens: pack.usedTokens,
     packingCausality,

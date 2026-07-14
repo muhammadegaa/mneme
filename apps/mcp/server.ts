@@ -28,6 +28,7 @@ import {
   effectiveSalience,
   recencyScore,
   isRepeatMistakeCatch,
+  classifyCatch,
   DEFAULT_WEIGHTS,
   type Memory,
   type MentorModel,
@@ -104,26 +105,31 @@ server.tool(
     // A catch = a warn cited to a past-mistake memory AND grounded in the diff
     // (the flagged code is actually present). Hallucinated flags are dropped, not
     // counted or reinforced.
-    const caught = comments.filter((cm) =>
-      isRepeatMistakeCatch(cm, diff, cm.citedMemoryId ? packedById.get(cm.citedMemoryId) : undefined),
-    );
+    const citedOf = (cm: (typeof comments)[number]) => (cm.citedMemoryId ? packedById.get(cm.citedMemoryId) : undefined);
+    const caught = comments.filter((cm) => isRepeatMistakeCatch(cm, diff, citedOf(cm)));
     // Catching it again IS another occurrence -> reinforce, so it gets louder.
     for (const cm of caught) {
       const m = packedById.get(cm.citedMemoryId!)!;
       await store.insert({ ...m, reinforcements: m.reinforcements + 1, salience: Math.min(1, m.salience + 0.15), lastAccessedAt: now });
     }
+    // Memory-tier catches: grounded warns that repeat a style/tech/project memory
+    // (the catch a regex can't make). Surfaced, not reinforced as a mistake.
+    const memoryCaught = comments.filter((cm) => citedOf(cm)?.kind !== "mistake" && classifyCatch(cm, diff, citedOf(cm)) === "memory");
 
     const lines = comments.map((cm) => {
-      const cited = cm.citedMemoryId ? packedById.get(cm.citedMemoryId) : undefined;
+      const cited = citedOf(cm);
+      const tier = classifyCatch(cm, diff, cited);
       const tag = cm.severity === "warn" ? "⚠ WARN" : cm.severity === "praise" ? "✓ praise" : "· info";
+      const how = tier === "signature" ? " [grounded: signature]" : tier === "memory" ? " [grounded: your memory]" : "";
       const ground = cited ? `\n    ↳ grounded in your memory "${cited.text}" (seen ${cited.reinforcements + 1}×)` : "";
       const fix = cm.fix ? `\n    ↳ fix: ${cm.fix}` : "";
-      return `${tag}  ${cm.message}${ground}${fix}`;
+      return `${tag}${how}  ${cm.message}${ground}${fix}`;
     });
     const header =
       `Reviewed against ${pack.packed.length} of your memories (packed ${pack.usedTokens}/${BUDGET} tok, dropped ${pack.dropped.length}). ` +
       `backend=${model.backend}.` +
-      (caught.length ? `\n\n${caught.length} repeat mistake${caught.length > 1 ? "s" : ""} caught before shipping — reinforced.` : "");
+      (caught.length ? `\n\n${caught.length} repeat mistake${caught.length > 1 ? "s" : ""} caught before shipping — reinforced.` : "") +
+      (memoryCaught.length ? `\n${memoryCaught.length} memory-grounded repeat${memoryCaught.length > 1 ? "s" : ""} caught (a regex can't — only your memory reveals it).` : "");
     return { content: [{ type: "text", text: `${header}\n\n${lines.join("\n") || "(clean — nothing flagged)"}` }] };
   },
 );

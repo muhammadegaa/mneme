@@ -19,17 +19,26 @@ does exactly this, for a developer:
 | efficient storage & retrieval | hybrid rank (`semantic + recency + salience`) over a persistent store ([`scoring.ts`](packages/memory-engine/src/scoring.ts)) |
 | timely forgetting of outdated info | salience **decay** + **contradiction resolution** (superseded, with an audit trail) ([`decay.ts`](packages/memory-engine/src/decay.ts)) |
 | recall critical memories in a limited context window | a **0/1-knapsack** packer selects the optimal set under a token budget ([`packing.ts`](packages/memory-engine/src/packing.ts)) |
-| increasingly accurate across sessions | **reinforcement** — a repeated mistake grows *louder*; recall survives restart (`npm run demo:persist`) |
+| increasingly accurate across sessions | **reinforcement** — a repeated mistake grows *louder*; and Qwen catches *more* as memory accumulates (below); recall survives restart (`npm run demo:persist`) |
 
-**How Qwen does the hard part.** A deterministic signature *grounds* the catch (the pattern is
-really in the diff — it can never fabricate). Then **Qwen** provides the judgment a linter can't:
-it reads the specific code, decides whether it's a real bug *here*, **writes the fix**, and can
-*suppress a false positive* by declining to warn. Live example: on `getUser`, Qwen reasoned
-*"`res.json()` may throw… `user.profile` will crash with Cannot read property 'profile' of
-undefined"* → fix `if (!res.ok) throw…`. Qwen also powers extraction (`qwen-turbo`), the review
-agent (`qwen-plus`), and embeddings (`text-embedding-v3`), exposed over **MCP** so any coding agent
-can call it. ([`qwen-client.ts`](packages/memory-engine/src/model/qwen-client.ts) is the single
-Alibaba Cloud choke point — the proof-of-deployment file.)
+**How Qwen does the hard part.** Engram catches at two grounded tiers, and Qwen is the reasoning
+in both:
+
+- **Signature tier** — a deterministic regex *grounds* one of 3 mistake classes (the pattern is
+  really in the diff, never fabricated); **Qwen** judges it in context, **writes the fix**, and can
+  *suppress a false positive* by declining to warn. On `getUser`: *"`res.json()` may throw…
+  `user.profile` will crash with Cannot read property 'profile' of undefined"* → fix `if (!res.ok) throw…`.
+- **Memory tier — the catch a regex can't make.** Qwen flags a diff that repeats or contradicts one
+  of *your own* memories — e.g. reintroducing `createStore(` after this project migrated to Zustand,
+  a decision Engram remembers and superseded. No signature exists for that; only a model reading
+  your memory finds it. Still grounded: Qwen must quote the real offending line (verified in the
+  diff), so it can't invent the catch. `npm run demo:memory` shows **0** signatures firing while
+  Qwen catches the reintroduction — *"increasingly accurate across sessions"* made literal.
+
+Qwen also powers extraction (`qwen-turbo`), the review agent (`qwen-plus`), and embeddings
+(`text-embedding-v3`), exposed over **MCP** so any coding agent can call it.
+([`qwen-client.ts`](packages/memory-engine/src/model/qwen-client.ts) is the single Alibaba Cloud
+choke point — the proof-of-deployment file.)
 
 ---
 
@@ -252,6 +261,7 @@ npm test                    # 47 deterministic tests (scoring / packing / decay 
 npm run bench               # A/B/B+/C benchmark — prints the table above
 npm run bench:scale         # where the knapsack beats greedy top-k (proves the packer)
 npm run demo:catch          # learn a real unseen repo → catch a fresh mistake, grounded + fix
+npm run demo:memory         # the catch a regex CAN'T make: Qwen catches a superseded choice reintroduced
 npm run demo:persist        # cross-session memory in TWO processes (Track 1, demonstrated)
 npm run demo:mcp            # drive the MCP server like an agent would (add ENGRAM_BACKEND=qwen for live)
 

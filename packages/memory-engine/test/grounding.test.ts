@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { diffAddedText, isGroundedInDiff, isRepeatMistakeCatch } from "../src/grounding.js";
+import { diffAddedText, isGroundedInDiff, isRepeatMistakeCatch, classifyCatch } from "../src/grounding.js";
 import { detectMistakes, signatureFires, mistakeSignature } from "../src/mistakes.js";
 import { parseExtraction } from "../src/extract.js";
 import type { ReviewComment } from "../src/model/mentor.js";
@@ -60,6 +60,36 @@ describe("isRepeatMistakeCatch (the review guard)", () => {
   it("ignores non-warn or non-mistake comments", () => {
     expect(isRepeatMistakeCatch({ severity: "info", message: "x", citedMemoryId: "m1", evidence: "var x = 1" }, diff, cited)).toBe(false);
     expect(isRepeatMistakeCatch(warn("var x = 1"), diff, { kind: "tech", predicate: "var_usage" })).toBe(false);
+  });
+});
+
+describe("classifyCatch (catch tiers: signature vs memory)", () => {
+  it("a grounded, signature-matched mistake catch is tier 'signature'", () => {
+    const cited = { kind: "mistake" as const, predicate: "var_usage" };
+    expect(classifyCatch({ severity: "warn", message: "x", citedMemoryId: "m1", evidence: "var x = 1" }, "+  var x = 1", cited)).toBe("signature");
+  });
+  it("a grounded warn citing a TECH memory repeat is tier 'memory' (the regex-can't catch)", () => {
+    // No mistake signature fires; only the cited memory reveals a reintroduced choice.
+    const diff = "+import { createStore } from 'redux'";
+    const cited = { kind: "tech" as const, predicate: "state_mgmt" };
+    const cm: ReviewComment = { severity: "warn", message: "reintroducing Redux after moving to Zustand", citedMemoryId: "m9", evidence: "import { createStore } from 'redux'" };
+    expect(classifyCatch(cm, diff, cited)).toBe("memory");
+    // ...and it is NOT a mistake catch, so it never reinforces through the mistake path.
+    expect(isRepeatMistakeCatch(cm, diff, cited)).toBe(false);
+  });
+  it("a self-reported mistake with no signature falls back to tier 'memory' (grounded by the quote)", () => {
+    const cited = { kind: "mistake" as const, predicate: "off_by_one" };
+    const cm: ReviewComment = { severity: "warn", message: "off-by-one again", citedMemoryId: "m3", evidence: "for (let i = 0; i <= n; i++)" };
+    expect(classifyCatch(cm, "+for (let i = 0; i <= n; i++)", cited)).toBe("memory");
+  });
+  it("a memory-tier warn still requires the evidence quote to be in the diff (no fabrication)", () => {
+    const cited = { kind: "tech" as const, predicate: "state_mgmt" };
+    const cm: ReviewComment = { severity: "warn", message: "x", citedMemoryId: "m9", evidence: "import { createStore } from 'redux'" };
+    expect(classifyCatch(cm, "+const x = 1", cited)).toBeNull();
+  });
+  it("returns null without a cited memory, or on a non-warn", () => {
+    expect(classifyCatch({ severity: "warn", message: "x", evidence: "var x = 1" }, "+var x = 1", { kind: "mistake", predicate: "var_usage" })).toBeNull();
+    expect(classifyCatch({ severity: "info", message: "x", citedMemoryId: "m1", evidence: "var x = 1" }, "+var x = 1", { kind: "tech", predicate: "state_mgmt" })).toBeNull();
   });
 });
 

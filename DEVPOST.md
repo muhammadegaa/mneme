@@ -10,7 +10,7 @@ your git history and catches the mistake you keep making — before it ships.
 
 **🟢 Live on Alibaba Cloud:** http://47.84.61.162 — the Memory Inspector on real Qwen (`backend=qwen`), ECS · Singapore.
 
-**Why it fits Track 1 (MemoryAgent):** the track asks for *efficient memory storage & retrieval, timely forgetting of outdated information, and recalling critical memories within a limited context window,* accumulating experience to make increasingly accurate decisions across sessions. Engram is that engine, for a developer: hybrid-ranked retrieval, salience **decay** + **contradiction resolution** (forgetting), a **0/1-knapsack** packer that recalls the critical memories under a token budget, and **reinforcement** so it gets *more accurate the more it sees you* — persisting across sessions (`npm run demo:persist`). **Qwen does the judgment a linter can't:** a deterministic signature grounds the catch (never fabricated), then Qwen reads the specific code, decides if it's a real bug here, **writes the fix**, and can suppress a false positive — exposed over **MCP**.
+**Why it fits Track 1 (MemoryAgent):** the track asks for *efficient memory storage & retrieval, timely forgetting of outdated information, and recalling critical memories within a limited context window,* accumulating experience to make increasingly accurate decisions across sessions. Engram is that engine, for a developer: hybrid-ranked retrieval, salience **decay** + **contradiction resolution** (forgetting), a **0/1-knapsack** packer that recalls the critical memories under a token budget, and **reinforcement** so it gets *more accurate the more it sees you* — persisting across sessions (`npm run demo:persist`). **Qwen does the reasoning a linter can't:** for the 3 grounded mistake classes it judges each in context, writes the fix, and can suppress a false positive; and — the part a regex *cannot* do — it catches a diff that **repeats a decision you already superseded** (reintroducing Redux after a Zustand migration Engram remembers), grounded by a verbatim quote so it never fabricates (`npm run demo:memory`). Exposed over **MCP**.
 
 ---
 
@@ -48,12 +48,21 @@ Then, on any new diff, it runs a real memory pipeline you can watch happen:
 - **Pack** — a 0/1 knapsack fits the best memory set under a fixed token budget.
   On a few memories that ties greedy top-k; when the budget binds it wins —
   `npm run bench:scale` shows greedy dropping the relevant memory the knapsack keeps.
-- **Ground + judge** — a high-precision signature *grounds* the catch (the pattern
-  is really in the diff — it can never fabricate), then **Qwen judges it in context**:
-  is this a real bug *here*, and what's the fix? Real Qwen output on the `getUser`
-  diff: *"`res.json()` may throw… `user.profile` will crash with Cannot read property
-  'profile' of undefined"* → fix `if (!res.ok) throw…`. The regex finds the pattern;
-  Qwen does the reasoning a linter can't — and can decline to warn on a false positive.
+- **Ground + judge** — two catch tiers, both grounded so nothing is ever fabricated:
+  - **Signature tier** — a high-precision regex *grounds* one of 3 mistake classes
+    (the pattern is really in the diff), then **Qwen judges it in context**: real bug
+    *here*, and the fix? Real Qwen output on the `getUser` diff: *"`res.json()` may
+    throw… `user.profile` will crash with Cannot read property 'profile' of undefined"*
+    → fix `if (!res.ok) throw…`. Qwen can also *decline* to warn on a false positive.
+  - **Memory tier — the catch a regex CAN'T make.** Qwen flags a diff that repeats or
+    contradicts one of *your own* accumulated memories — e.g. reintroducing `createStore(`
+    after this project migrated to Zustand (a decision Engram remembers and superseded).
+    No signature exists for that; only a model reading your memory finds it. It stays
+    honest the same way: Qwen must quote the real offending line from the diff (verified
+    present), so it can't invent the catch. `npm run demo:memory` shows the regex firing
+    **zero** signatures while Qwen catches the reintroduction. This is *"increasingly
+    accurate across sessions"* made literal — the more memory accumulates, the more the
+    model catches, beyond any fixed rule set.
 
 The hero mechanic is **reinforcement**: each time you repeat a mistake, it
 reinforces the *same* memory, so its salience climbs. The louder that memory

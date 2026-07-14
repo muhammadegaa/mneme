@@ -15,6 +15,7 @@
     "bench": "tsx bench/run.ts",
     "bench:scale": "tsx bench/scale.ts",
     "demo:catch": "tsx bench/demo-catch.ts",
+    "demo:memory": "tsx bench/demo-memory-catch.ts",
     "demo:mcp": "node apps/mcp/demo.mjs",
     "demo:persist": "tsx bench/demo-persist.ts write && tsx bench/demo-persist.ts read",
     "hello": "tsx scripts/hello-qwen.ts",

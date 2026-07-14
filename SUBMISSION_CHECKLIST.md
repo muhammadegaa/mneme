@@ -19,7 +19,7 @@ Deadline: **Jul 20, 2026, 2:00pm PDT**. 🟢 done · 🟡 needs you · 🔴 miss
 
 | Criterion (weight) | Evidence |
 |---|---|
-| **Technical Depth & Engineering (30%)** — sophisticated Qwen use, MCP, custom components, perf | MCP server (4 tools); Qwen model routing (turbo/plus/max + text-embedding-v3); **Qwen judgment+fix** on grounded catches; 0/1-knapsack packer; salience decay. `npm run demo:mcp`, `npm run bench:scale` |
+| **Technical Depth & Engineering (30%)** — sophisticated Qwen use, MCP, custom components, perf | MCP server (4 tools); Qwen routing (turbo/plus/max + text-embedding-v3); **two grounded catch tiers** — regex-signature *and* the catch only Qwen can make (repeats/contradicts your own memory, e.g. a superseded tech choice reintroduced), grounded so it never fabricates; 0/1-knapsack packer; salience decay. `npm run demo:memory`, `npm run demo:mcp`, `npm run bench:scale` |
 | **Innovation & AI Creativity (30%)** — architecture quality, modularity, error handling, clean code | Standalone `@engram/memory-engine` package · **47 tests** · atomic store + per-commit resilience · grounding gate. `npm test` |
 | **Problem Value & Impact (25%)** — real pain, productization potential | Recurring-mistake pain (everyone ships the same bug); **the memory compounds** (a data moat, not a model patch); grounded on real unseen repos. `npm run demo:catch` |
 | **Presentation & Documentation (15%)** — clear demo, visualized logic, architecture docs | The demo video + [`docs/architecture.png`](./docs/architecture.png) + this README |
