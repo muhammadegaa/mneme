@@ -8,6 +8,29 @@ Judging: Technical Depth 30% · Innovation 30% · Problem Value 25% · Presentat
 
 ---
 
+## 2026-07-14 · Memory-tier catches — made Qwen central to the catch (branch `memory-tier-catch`, commit `49d722f`)
+
+Codex second opinion was BLOCKED (usage limit until Jul 19); user said skip it, act on the
+known #1 risk directly: on a Qwen-sponsored track the catch was regex-grounded with Qwen "only
+judging" → reads as garnish. FIX (honest, no hallucination reopened): Qwen now produces a second
+grounded catch tier a regex CANNOT — it flags a diff that repeats/contradicts one of the dev's
+OWN memories (reintroducing `createStore(` after a remembered Zustand migration). The existing
+evidence-quote guard still forces Qwen to quote the real offending line, so it can't fabricate.
+
+- `grounding.ts`: `classifyCatch() → "signature" | "memory" | null` (one shared def);
+  `isRepeatMistakeCatch` kept for the mistake tally/reinforcement (unchanged behavior).
+- mock + qwen mentors emit a memory-grounded warn on a superseded-choice repeat; API/MCP surface
+  the tier but do NOT reinforce it as a mistake (tally stays clean).
+- `bench/demo-memory-catch.ts` (`npm run demo:memory`): 0 signatures fire, catch still fires.
+- Tests 47 → **55 pass**. **LIVE QWEN VERIFIED** (`demo:memory --qwen`): qwen-plus caught the
+  Redux reintroduction, quoted `const store = createStore(checkoutReducer)` (guard held on live
+  output), wrote a context fix + reasoned bundle size; 2192 tok / 7 calls. Maps to Track-1
+  "increasingly accurate across sessions" — more memory, more caught, beyond any fixed rule set.
+- Docs reframed (DEVPOST/README/BLOG/CHECKLIST): two grounded catch tiers, Qwen central to both.
+- NOT pushed; deployed ECS box still runs pre-tier code (redeploy optional — proof is the code file).
+
+---
+
 ## STRATEGIC PIVOT (2026-07-10 · CEO review, founder-approved: Approach A)
 
 **North star changed.** The old loop optimized a presentation proxy ("judge gets it in 3s")
