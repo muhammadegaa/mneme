@@ -27,7 +27,10 @@ evidence-quote guard still forces Qwen to quote the real offending line, so it c
   output), wrote a context fix + reasoned bundle size; 2192 tok / 7 calls. Maps to Track-1
   "increasingly accurate across sessions" — more memory, more caught, beyond any fixed rule set.
 - Docs reframed (DEVPOST/README/BLOG/CHECKLIST): two grounded catch tiers, Qwen central to both.
-- NOT pushed; deployed ECS box still runs pre-tier code (redeploy optional — proof is the code file).
+- PUSHED to `origin/main` (verified 2026-07-16: HEAD==origin/main==`8be9f59`; `49d722f` on origin).
+  So the public repo a judge clones HAS the memory-tier code + 55 tests. Only the deployed ECS box
+  still runs pre-tier code (redeploy optional — the judge-facing proof is the repo + code file, and
+  DEVPOST doesn't claim the memory tier is live on the box).
 
 ---
 
