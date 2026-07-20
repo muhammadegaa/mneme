@@ -1,0 +1,34 @@
+
+> engram@0.1.0 demo:memory
+> tsx bench/demo-memory-catch.ts --qwen
+
+
+◐ Engram — memory-grounded catch (the one a regex can't make) · backend=qwen
+  · "migrates from Redux to Zustand for state management" superseded 1 older decision(s) — audit trail kept
+  · "uses functional components with hooks" superseded 1 older decision(s) — audit trail kept
+
+  what the memory holds now:
+    ✓ active     "migrates from Redux to Zustand for state management" (m_2_g80iik)
+    ⌫ superseded "uses Redux for state management" (m_0_zm29oa) — kept for the audit trail
+    ⌫ superseded "writes functional components" (m_1_pcymnh) — kept for the audit trail
+
+  your next diff (checkout/store.ts):
+    + import { createStore } from 'react-redux'
+    + // quick store for the checkout island
+    + const store = createStore(checkoutReducer)
+
+  deterministic mistake signatures firing on this diff: 0 ← the regex is blind to this
+
+  ⚠ CATCH — GROUNDED by your memory · JUDGED by Qwen (no signature, no regex):
+     Introduces Redux store creation in a codebase that has migrated to Zustand for state management. This contradicts the established architecture and risks fragmentation, inconsistency, and unnecessary bundle size bloat.
+     ↳ grounded in memory "migrates from Redux to Zustand for state management" (m_2_g80iik)
+     ↳ evidence quoted from the diff: "const store = createStore(checkoutReducer)" — verified present, not asserted
+     ↳ tier=memory · is-mistake-catch=false (false — never reinforced as a mistake)
+     ↳ fix: Replace Redux store with a Zustand store — e.g., `createStore` → `create` from 'zustand', and refactor `checkoutReducer` into a Zustand slice with `set`/`get` logic.
+
+  → A regex can only ever catch its 3 shapes. This catch exists only because
+    Qwen read the developer's own memory. More memory = more caught. That's the
+    "increasingly accurate across sessions" property, made literal.
+
+  qwen usage: {"promptTokens":1882,"completionTokens":368,"totalTokens":2250,"calls":8}
+
