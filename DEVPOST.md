@@ -1,37 +1,37 @@
-# Engram — Devpost submission
+# Engram: Devpost submission
 
 > Paste-ready. Sections map to Devpost's standard fields. Every claim maps to a
-> command you can run in the repo.
+> command you can run in the repo. Copy from the `**Track:**` line down.
 
 **Tagline:** The code reviewer that remembers you. It learns how *you* code from
-your git history and catches the mistake you keep making — before it ships.
+your git history and catches the mistake you keep making, before it ships.
 
-**Track:** Track 1 — MemoryAgent · **Repo:** https://github.com/muhammadegaa/mneme (MIT)
+**Track:** Track 1, MemoryAgent · **Repo:** https://github.com/muhammadegaa/mneme (MIT)
 
-**🟢 Live on Alibaba Cloud:** http://47.84.61.162 — the Memory Inspector on real Qwen (`backend=qwen`), ECS · Singapore.
+**🟢 Live on Alibaba Cloud:** http://47.84.61.162 (the Memory Inspector on real Qwen, `backend=qwen`, ECS Singapore)
 
-**Why it fits Track 1 (MemoryAgent):** the track asks for *efficient memory storage & retrieval, timely forgetting of outdated information, and recalling critical memories within a limited context window,* accumulating experience to make increasingly accurate decisions across sessions. Engram is that engine, for a developer: hybrid-ranked retrieval, salience **decay** + **contradiction resolution** (forgetting), a **0/1-knapsack** packer that recalls the critical memories under a token budget, and **reinforcement** so it gets *more accurate the more it sees you* — persisting across sessions (`npm run demo:persist`). **Qwen does the reasoning a linter can't:** for the 3 grounded mistake classes it judges each in context, writes the fix, and can suppress a false positive; and — the part a regex *cannot* do — it catches a diff that **repeats a decision you already superseded** (reintroducing Redux after a Zustand migration Engram remembers), grounded by a verbatim quote so it never fabricates (`npm run demo:memory`). Exposed over **MCP**.
+**Why it fits Track 1 (MemoryAgent):** the track asks for *efficient memory storage & retrieval, timely forgetting of outdated information, and recalling critical memories within a limited context window,* accumulating experience to make increasingly accurate decisions across sessions. Engram is that engine, built for a developer: hybrid-ranked retrieval, salience **decay** plus **contradiction resolution** (forgetting), a **0/1-knapsack** packer that recalls the critical memories under a token budget, and **reinforcement** so it gets *more accurate the more it sees you*, persisting across sessions (`npm run demo:persist`). **Qwen does the reasoning a linter can't:** for the 3 grounded mistake classes it judges each in context, writes the fix, and can suppress a false positive. And, the part a regex genuinely cannot do, it catches a diff that **repeats a decision you already superseded** (reintroducing Redux after a Zustand migration Engram remembers), grounded by a verbatim quote so it never fabricates (`npm run demo:memory -- --qwen`). Exposed over **MCP**.
 
 ---
 
 ## Inspiration
 
 Linters know the language. Copilot forgets you the moment the session ends. But
-the bugs that actually reach production aren't exotic — they're the *same* handful
+the bugs that actually reach production aren't exotic. They're the *same* handful
 of mistakes each of us makes over and over: forgetting to check `res.ok` before
 parsing JSON, swallowing errors in an empty catch, reaching for `var`. No tool
 remembers that *you specifically* keep doing this. We wanted a reviewer with a
-memory of the developer — one that gets sharper the more it sees you code.
+memory of the developer, one that gets sharper the more it sees you code.
 
 That's also the honest core of "MemoryAgent." Most "AI memory" is just
 `topK(cosine)` over a vector store: it can recall, but it can't forget, can't
 resolve a contradiction, and can't tell a one-off from a habit. We wanted to
 build the memory *engine* those demos skip.
 
-And it's not CodeRabbit: tools like that learn from the review comments you
-*write* — Engram learns from the mistakes you already *shipped* and never
+And it isn't CodeRabbit. Tools like that learn from the review comments you
+*write*, while Engram learns from the mistakes you already *shipped* and never
 commented on, mined from git history. The bug class it targets is the hardest to
-catch — an **omission** (a missing `res.ok`, an empty `catch {}`): there's no bad
+catch: an **omission** (a missing `res.ok`, an empty `catch {}`). There's no bad
 token to grep for, only the *absence* of a guard, which a linter can't flag.
 Engram reinforces that missing-guard pattern into one memory that gets louder each
 time you repeat it.
@@ -39,40 +39,41 @@ time you repeat it.
 ## What it does
 
 Engram reads your commit history and extracts atomic memories about how you
-code, classified as **style · tech · mistake · project** — Qwen handles the
+code, classified as **style · tech · mistake · project**. Qwen handles the
 fuzzy style/tech/project facts, while **mistakes are detected deterministically**
-from the real code (so they're grounded, never confabulated — see Challenges).
+from the real code, so they're grounded and never confabulated (see Challenges).
 Then, on any new diff, it runs a real memory pipeline you can watch happen:
 
-- **Retrieve** — hybrid ranking over your memories: `semantic + recency + salience`.
-- **Pack** — a 0/1 knapsack fits the best memory set under a fixed token budget.
-  On a few memories that ties greedy top-k; when the budget binds it wins —
+- **Retrieve.** Hybrid ranking over your memories: `semantic + recency + salience`.
+- **Pack.** A 0/1 knapsack fits the best memory set under a fixed token budget.
+  On a few memories that ties greedy top-k. When the budget binds it wins:
   `npm run bench:scale` shows greedy dropping the relevant memory the knapsack keeps.
-- **Ground + judge** — two catch tiers, both grounded so nothing is ever fabricated:
-  - **Signature tier** — a high-precision regex *grounds* one of 3 mistake classes
+- **Ground and judge.** Two catch tiers, both grounded so nothing is ever fabricated:
+  - **Signature tier.** A high-precision regex *grounds* one of 3 mistake classes
     (the pattern is really in the diff), then **Qwen judges it in context**: real bug
     *here*, and the fix? Real Qwen output on the `getUser` diff: *"`res.json()` may
     throw… `user.profile` will crash with Cannot read property 'profile' of undefined"*
-    → fix `if (!res.ok) throw…`. Qwen can also *decline* to warn on a false positive.
-  - **Memory tier — the catch a regex CAN'T make.** Qwen flags a diff that repeats or
-    contradicts one of *your own* accumulated memories — e.g. reintroducing `createStore(`
+    with the fix `if (!res.ok) throw…`. Qwen can also *decline* to warn on a false positive.
+  - **Memory tier, the catch a regex CAN'T make.** Qwen flags a diff that repeats or
+    contradicts one of *your own* accumulated memories, such as reintroducing `createStore(`
     after this project migrated to Zustand (a decision Engram remembers and superseded).
-    No signature exists for that; only a model reading your memory finds it. It stays
+    No signature exists for that. Only a model reading your memory finds it. It stays
     honest the same way: Qwen must quote the real offending line from the diff (verified
-    present), so it can't invent the catch. `npm run demo:memory` shows the regex firing
-    **zero** signatures while Qwen catches the reintroduction. This is *"increasingly
-    accurate across sessions"* made literal — the more memory accumulates, the more the
+    present), so it can't invent the catch. `npm run demo:memory -- --qwen` shows the regex
+    firing **zero** signatures while live Qwen catches the reintroduction (the flagless
+    `npm run demo:memory` runs the free offline mock). This is *"increasingly
+    accurate across sessions"* made literal: the more memory accumulates, the more the
     model catches, beyond any fixed rule set.
 
-The hero mechanic is **reinforcement**: each time you repeat a mistake, it
+The hero mechanic is **reinforcement**. Each time you repeat a mistake, it
 reinforces the *same* memory, so its salience climbs. The louder that memory
 gets, the harder it is to miss. When Engram catches the bug on your next diff it
-says: *"I've seen this one. N times."* — where N is literally the number of times
+says: *"I've seen this one. N times."*, where N is literally the number of times
 you'd have shipped the same bug. It also **forgets on purpose** (a tool you tried
 once decays away so it stops polluting advice) and **resolves contradictions**
-(Redux → Zustand supersedes the old choice, with an audit trail kept).
+(Redux to Zustand supersedes the old choice, with an audit trail kept).
 
-## How we built it — and how it uses Qwen + Alibaba Cloud
+## How we built it, and how it uses Qwen + Alibaba Cloud
 
 Every piece of reasoning runs on **Qwen via Alibaba Cloud DashScope**:
 
@@ -84,81 +85,80 @@ Every piece of reasoning runs on **Qwen via Alibaba Cloud DashScope**:
 | Embeddings for retrieval (1024-dim) | `text-embedding-v3` |
 
 The engine is a standalone, unit-tested TypeScript package (`@engram/memory-engine`)
-with pure, tested scoring / packing / decay / grounding math (47 deterministic tests). A single
+with pure, tested scoring / packing / decay / grounding math (55 deterministic tests). A single
 Qwen client handles tiered routing, retries, timeouts, JSON repair, and token
 accounting against the OpenAI-compatible DashScope endpoint. The demo is a Hono
-API serving a self-contained Memory Inspector; memories persist across sessions
+API serving a self-contained Memory Inspector, and memories persist across sessions
 (JSON store locally, ApsaraDB PostgreSQL + pgvector on Alibaba Cloud).
 
-We proved the moat with a **benchmark** (`npm run bench`, live `text-embedding-v3`):
-
-Every config hits 100% Recall@5 (facts are retrievable) — so recall isn't the
+We proved the moat with a **benchmark** (`npm run bench`, live `text-embedding-v3`).
+Every config hits 100% Recall@5 (facts are retrievable), so recall isn't the
 story. It's the two columns a *forgetting-blind* store can't touch:
 
 | Config | Contradiction acc. | Stale-fact leakage | Avg tokens | Recall@5 |
 |---|---|---|---|---|
-| A — full-context stuffing | 50% | 100% | 446 | 100% |
-| B — naive vector top-k *(status-blind)* | 50% | 100% | 67 | 100% |
-| **B+ — top-k + forgetting** *(fair baseline)* | **100%** | **0%** | 69 | 100% |
-| **C — Engram (hybrid + forget + knapsack)** | **100%** | **0%** | 69 | 100% |
+| A, full-context stuffing | 50% | 100% | 446 | 100% |
+| B, naive vector top-k *(status-blind)* | 50% | 100% | 67 | 100% |
+| **B+, top-k + forgetting** *(fair baseline)* | **100%** | **0%** | 69 | 100% |
+| **C, Engram (hybrid + forget + knapsack)** | **100%** | **0%** | 69 | 100% |
 
-The status-blind strategies leak superseded facts 100% of the time; add forgetting
+The status-blind strategies leak superseded facts 100% of the time. Add forgetting
 and it's fixed. We deliberately put a *fair* baseline (B+ = top-k **with**
-forgetting, nothing else) in the ring — and it ties Engram on this small set.
-That's the honest point: **forgetting/supersession is the differentiator here, not
+forgetting, nothing else) in the ring, and it ties Engram on this small set.
+That's the honest point: **forgetting and supersession are the differentiator here, not
 the ranking or the packer.** Engram's hybrid rerank + knapsack earn their keep at
-scale — visible live in the packing-causality panel and on the real repo below.
+scale, visible live in the packing-causality panel and on the real repo below.
 
 That bench is synthetic, so we ran it on **two real repos it had never seen** and
 checked every claim against the actual code. On **`ravenote`**, live Qwen first
-*invented* three recurring mistakes that don't exist in the repo — so we moved
+*invented* three recurring mistakes that don't exist in the repo, so we moved
 mistake detection **off the model** to a deterministic, grounded signature scan.
-After the fix: `ravenote` (no fetch/var/empty-catch anywhere) → **0 mistakes,
-correct silence**; **`codehere`** (1,456 commits, unseen) → **two real recurring
+After the fix: `ravenote` (no fetch/var/empty-catch anywhere) gives **0 mistakes,
+correct silence**, and **`codehere`** (1,456 commits, unseen) gives **two real recurring
 mistakes, `var` ×3 and empty-catch ×2**, each verifiable in the commits
-(`var onSpend=…`, `}catch(e){}`). Same machinery catches the real thing and invents
-nothing — and because detection is deterministic you can reproduce it offline for
+(`var onSpend=…`, `}catch(e){}`). The same machinery catches the real thing and invents
+nothing, and because detection is deterministic you can reproduce it offline for
 free. Writeups: `bench/results/real-codehere.md`, `real-ravenote.md`.
 
 ## Challenges we ran into
 
-- **The model hallucinated mistakes — so we stopped trusting it for them.** Asked
+- **The model hallucinated mistakes, so we stopped trusting it for them.** Asked
   to extract a developer's mistakes, Qwen confabulated plausible ones that weren't
   in the code (on a repo with no `fetch`/`var` it "found" both). We root-caused it
   (extraction had no grounding) and moved mistake detection to a deterministic
   signature scan over the real added code, with a guard that only counts a catch
-  when the pattern is genuinely in the diff. Qwen keeps the fuzzy work; the mistake
+  when the pattern is genuinely in the diff. Qwen keeps the fuzzy work. The mistake
   memory is now grounded and reproducible. This turned a real failure into the
   system's honesty property.
-- **Making reinforcement/supersession reliable.** Qwen returned inconsistent
+- **Making reinforcement and supersession reliable.** Qwen returned inconsistent
   "subjects" (sometimes a commit SHA, sometimes a filename), which broke slot
   matching. Normalizing the subject by memory kind fixed contradiction resolution
   and forgetting end-to-end on live Qwen.
-- **Honesty over polish.** The mock model is CI-only and labeled `backend: mock`;
-  live Qwen is opt-in (`ENGRAM_BACKEND=qwen`). We verified every real-repo claim
+- **Honesty over polish.** The mock model is CI-only and labeled `backend: mock`.
+  Live Qwen is opt-in (`ENGRAM_BACKEND=qwen`). We verified every real-repo claim
   against the actual code and show the failure, not just the win.
 
 ## Accomplishments we're proud of
 
-A memory system that actually completes the loop — recall, reinforce, forget,
-resolve — not just retrieval; a benchmark that *proves* it beats the two obvious
-baselines; and a demo where you watch the engine retrieve, pack under budget, and
+A memory system that actually completes the loop (recall, reinforce, forget,
+resolve) rather than just retrieval. A benchmark that *proves* it beats the two obvious
+baselines. And a demo where you watch the engine retrieve, pack under budget, and
 ground its verdict in one of your own memories in real time.
 
 ## What we learned
 
-Memory is a *systems* problem, not a prompt. The hard, interesting parts —
-salience decay, knapsack packing under a token budget, contradiction audit trails,
-turning a repeat mistake into a rising signal — live in the engine around the
-model, not in the model call itself.
+Memory is a *systems* problem, not a prompt. The hard, interesting parts live in
+the engine around the model rather than in the model call itself: salience decay,
+knapsack packing under a token budget, contradiction audit trails, and turning a
+repeat mistake into a rising signal.
 
 ## What's next
 
-Engram is **live on Alibaba Cloud** — an ECS instance in Singapore serving the
-Memory Inspector on real Qwen (`backend=qwen`) at **http://47.84.61.162**, as a
-persistent auto-restarting service. Next: move persistence from the on-disk JSON
+Engram is **live on Alibaba Cloud**, an ECS instance in Singapore serving the
+Memory Inspector on real Qwen (`backend=qwen`) at **http://47.84.61.162**, running
+as a persistent auto-restarting service. Next: move persistence from the on-disk JSON
 store to the already-wired **ApsaraDB pgvector** adapter (`MEMORY_STORE=postgres`)
-and the serverless **Function Compute** deploy (`s.yaml`, `Dockerfile`); then a Git
+and the serverless **Function Compute** deploy (`s.yaml`, `Dockerfile`), then a Git
 hook / CI check so Engram reviews every PR, and per-team memory so a whole
 codebase's habits compound.
 
